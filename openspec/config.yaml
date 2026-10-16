@@ -1,0 +1,38 @@
+schema: spec-driven
+
+context: |
+  Write all artifacts in Spanish; keep standard technical terms in English.
+  Multi-tenancy is database-per-club: central DB sportiva_platform plus one MySQL DB per club. Never replace it with a shared schema plus tenant_id columns.
+  Production runs on Laravel Cloud, which builds from Git and does not run custom Docker images. Docker is for local development and CI only.
+  Most developers use Windows; local setup instructions must work from PowerShell with Docker Desktop on WSL 2.
+
+# Project context (optional)
+# Add only constraints that should guide OpenSpec artifacts and workflows.
+# Include constraints an agent cannot infer by reading the code.
+# Keep general project documentation and discoverable codebase facts out.
+# Example:
+#   context: |
+#     Designs and tasks must cover Windows, macOS, and Linux
+#     Write all artifacts in Spanish
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

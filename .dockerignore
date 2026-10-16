@@ -1,0 +1,39 @@
+# La imagen de desarrollo no copia el código (se monta desde el host), pero el
+# contexto de build igual se envía al daemon: esto lo mantiene chico y sin secretos.
+.git
+.github
+.claude
+.engram
+openspec
+docs
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+compose.override.yaml
+auth.json
+
+# Dependencias y artefactos generados
+vendor
+node_modules
+public/build
+public/hot
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*.php
+.phpunit.cache
+
+# Dumps y datos
+*.sql
+*.sql.gz
+*.sqlite
+*.sqlite-journal
+
+# Editor / SO
+.idea
+.vscode
+.DS_Store
+Thumbs.db

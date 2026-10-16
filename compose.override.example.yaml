@@ -1,0 +1,13 @@
+# Acceso opcional a MySQL desde el host (por ejemplo, con DBeaver).
+#
+#   Copy-Item compose.override.example.yaml compose.override.yaml    # PowerShell
+#   cp compose.override.example.yaml compose.override.yaml           # WSL / Linux / macOS
+#   docker compose up -d
+#
+# compose.override.yaml está en .gitignore. El puerto queda atado a 127.0.0.1, nunca a todas
+# las interfaces. Por defecto es el 3310 para no chocar con un MySQL nativo en el 3306/3307.
+
+services:
+  mysql:
+    ports:
+      - "127.0.0.1:${DB_FORWARD_PORT:-3310}:3306"
