@@ -31,6 +31,9 @@ param(
     # Ruta dentro de WSL, relativa a $HOME. Sin espacios (se pasa a bash).
     [ValidatePattern('^[A-Za-z0-9._/-]+$')]
     [string]$TargetDir = 'repos/api-sportiva',
+    # Usuario de GitHub para la identidad de git en WSL (si falta). Sin el, se pregunta.
+    [ValidatePattern('^$|^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$')]
+    [string]$GitHubUser = '',
     [switch]$Yes,
     [switch]$NoOpen
 )
@@ -99,6 +102,11 @@ function Test-DockerDaemon([string]$DockerExe) {
     $ErrorActionPreference = 'Continue'
     & $DockerExe info *> $null
     return ($LASTEXITCODE -eq 0)
+}
+
+# Para pasar un valor a bash entre comillas simples: ' -> '\''
+function ConvertTo-BashLiteral([string]$Value) {
+    return "'" + ($Value -replace "'", "'\''") + "'"
 }
 
 # C:\Program Files\x -> /mnt/c/Program Files/x
@@ -225,6 +233,43 @@ if ($isRemote -and ((Invoke-InWsl "GIT_TERMINAL_PROMPT=0 git ls-remote '$RepoUrl
     if ((Invoke-InWsl "git ls-remote '$RepoUrl' > /dev/null") -ne 0) { Stop-WithHelp "Sigue sin haber acceso al repo. Revisa que tu usuario de GitHub tenga permisos." }
 }
 Write-Ok "git tiene acceso a $RepoUrl"
+
+# El git de WSL es otro git, distinto del de Windows, y arranca sin identidad: sin esto el primer
+# commit falla, o queda con un email que GitHub no asocia a la cuenta (commit "sin usuario").
+# Se usa el email noreply de GitHub (<id>+<usuario>@users.noreply.github.com): siempre se asocia
+# a la cuenta y no expone el email personal.
+Write-Step "Verificando la identidad de git en WSL"
+
+$gitName = Get-FromWsl 'git config --global user.name'
+$gitEmail = Get-FromWsl 'git config --global user.email'
+if ($gitName -and $gitEmail) {
+    Write-Ok "git en WSL firma como: $gitName <$gitEmail>"
+} else {
+    Write-Host "    git en WSL no tiene nombre y/o email configurados."
+    if (-not $GitHubUser) {
+        if ($Yes) { Stop-WithHelp "Falta la identidad de git en WSL. Volve a correr con -GitHubUser <tu-usuario-de-GitHub>." }
+        $GitHubUser = (Read-Host "    Tu usuario de GitHub (por ejemplo, nobodyh-ctrl)").Trim()
+    }
+    if ($GitHubUser -notmatch '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$') { Stop-WithHelp "'$GitHubUser' no es un usuario de GitHub valido." }
+
+    try {
+        $account = Invoke-RestMethod -Uri "https://api.github.com/users/$GitHubUser" -Headers @{ 'User-Agent' = 'api-sportiva-setup' }
+    } catch {
+        Stop-WithHelp "No se pudo consultar el usuario '$GitHubUser' en GitHub (existe? hay internet?). Detalle: $($_.Exception.Message)"
+    }
+
+    $newName = if ($gitName) { $gitName } elseif ($account.name) { $account.name } else { $account.login }
+    $newEmail = if ($gitEmail) { $gitEmail } else { "$($account.id)+$($account.login)@users.noreply.github.com" }
+
+    if (-not (Confirm-Action "Configurar git en WSL (git config --global) como: $newName <$newEmail>?")) {
+        Stop-WithHelp ("Configura la identidad manualmente en WSL: git config --global user.name ""Tu Nombre"" " +
+            "y git config --global user.email ""<id>+<usuario>@users.noreply.github.com"".")
+    }
+    $configured = Invoke-InWsl ("git config --global user.name " + (ConvertTo-BashLiteral $newName) +
+        " && git config --global user.email " + (ConvertTo-BashLiteral $newEmail))
+    if ($configured -ne 0) { Stop-WithHelp "No se pudo configurar la identidad de git en WSL." }
+    Write-Ok "git en WSL firma como: $newName <$newEmail>"
+}
 
 # ---------------------------------------------------------------------------
 # 5. Clonar dentro de WSL

@@ -305,7 +305,14 @@ Swagger UI se carga desde jsDelivr: revisá tu conexión. Si en la consola del b
 
 ### Todo anda muy lento
 
-Seguramente el repo está en `C:\`. Cloná dentro de WSL ([por qué](#opción-1-setup-automático-en-windows-recomendado)).
+Seguramente el repo está en `C:\` (o en `/mnt/c/...` desde WSL). `scripts/setup.sh` lo detecta y lo avisa con un mensaje `!! ATENCION`. Esto lo medimos el 2026-10-16 con `/api/health`, pidiéndolo desde Windows:
+
+| Ubicación del repo | Tiempo por request |
+| --- | --- |
+| `C:\...` (filesystem de Windows) | 0,2 s, con picos de 2,1-2,3 s (la primera vez que el request cae en cada worker) |
+| `~/...` dentro de WSL | 0,03 s |
+
+Cloná dentro de WSL con `scripts/setup-windows.ps1` ([por qué](#opción-1-setup-automático-en-windows-recomendado)). Antes de pasarte, commiteá y pusheá tus cambios, y bajá el entorno viejo con `docker compose down` (**sin** `-v`). El clon de WSL usa el mismo volumen de MySQL (`api-sportiva_mysql-data`), así que tus datos locales se mantienen. OPcache no ayuda en este caso: desde `C:\` lo probamos y fue más lento.
 
 ## Limitaciones y seguridad
 
