@@ -7,6 +7,7 @@ Cómo levantar la API Sportiva en tu máquina. **No hace falta instalar PHP, Com
 - [Opción 2: paso a paso (flujo A, build local)](#opción-2-paso-a-paso-flujo-a-build-local)
 - [Flujo B: usar una imagen publicada (futuro)](#flujo-b-usar-una-imagen-publicada-futuro)
 - [Uso diario](#uso-diario)
+- [Documentación de la API (Swagger)](#documentación-de-la-api-swagger)
 - [Acceso a MySQL desde el host](#acceso-a-mysql-desde-el-host)
 - [Resetear la base local (destruye datos)](#resetear-la-base-local-destruye-datos)
 - [Troubleshooting](#troubleshooting)
@@ -45,6 +46,20 @@ Requisitos: Windows 10/11 y Git for Windows (si ya lo tenés, no lo reinstales).
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\setup-windows.ps1
    ```
+
+**Si el repo es público**, en lugar de los pasos 1 a 3 alcanza con un comando en PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/finalproyectogrupo8-max/API_Sportiva/main/scripts/setup-windows.ps1 | iex
+```
+
+Con parámetros (por ejemplo, para pasar tu usuario de GitHub):
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/finalproyectogrupo8-max/API_Sportiva/main/scripts/setup-windows.ps1))) -GitHubUser tu-usuario
+```
+
+`irm | iex` ejecuta lo que esté en `main` en ese momento, sin que lo leas. Si preferís algo fijo y revisado, reemplazá `main` por un tag o un commit (`.../API_Sportiva/<tag>/scripts/...`). Si el script se detiene, la ventana de PowerShell no se cierra: leé el mensaje, resolvé lo que pide y volvé a correr el comando.
 
 El script:
 
@@ -174,6 +189,7 @@ Todos los comandos se corren desde la raíz del repo (en WSL, en `~/repos/api-sp
 | Migrar | `docker compose exec backend php artisan migrate` |
 | Tests | `docker compose exec backend php artisan test` |
 | Lint | `docker compose exec backend vendor/bin/pint --test` (sin `--test` corrige) |
+| Regenerar el contrato OpenAPI | `docker compose exec backend php artisan scramble:export` |
 | Logs de Laravel | `docker compose exec backend tail -f storage/logs/laravel.log` |
 | Detener (conserva datos) | `docker compose stop` o `docker compose down` |
 | Reconstruir la imagen | `HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose build backend` (o `bash scripts/setup.sh`) |
@@ -181,6 +197,44 @@ Todos los comandos se corren desde la raíz del repo (en WSL, en `~/repos/api-sp
 Usá la **terminal de Ubuntu** (o la terminal integrada de VS Code en modo WSL). Desde PowerShell, entrá primero a WSL: `wsl -d Ubuntu --cd ~/repos/api-sportiva`.
 
 `docker compose down` **conserva** los datos: borra los contenedores y la red, no el volumen.
+
+## Documentación de la API (Swagger)
+
+Con el entorno levantado, abrí **http://127.0.0.1:8000/api/docs**: Swagger UI con todos los endpoints. "Try it out" viene activo, así que podés ejecutar requests reales contra tu API local.
+
+| Ruta | Qué es |
+| --- | --- |
+| `/api/docs` | Swagger UI |
+| `/api/docs/openapi.json` | El contrato OpenAPI 3.1 en JSON |
+
+El contrato lo genera **Scramble** a partir del código: rutas, Form Requests y API Resources. No se escribe a mano. Por eso conviene validar con Form Requests y responder con API Resources: así Scramble infiere los tipos.
+
+### El contrato versionado (`docs/api/openapi.json`)
+
+El contrato también se versiona en `docs/api/openapi.json`. Desde ese archivo el frontend genera sus tipos de TypeScript, y en cada PR muestra cómo cambia la API.
+
+**Si cambiás un endpoint** (una ruta, un Form Request o un Resource), regenerá el contrato y commitealo junto con tu cambio:
+
+```bash
+docker compose exec backend php artisan scramble:export
+git add docs/api/openapi.json
+```
+
+La CI regenera el contrato y **falla si el archivo commiteado quedó desactualizado** (paso *Contrato OpenAPI al día*).
+
+No uses `php artisan scramble:cache` en local: si existe ese caché, el export podría usar un contrato viejo. Si ya lo corriste, limpialo con `php artisan scramble:clear`.
+
+### Quién puede ver la documentación
+
+| Entorno (`APP_ENV`) | Acceso |
+| --- | --- |
+| `local` | Abierta |
+| `staging` | HTTP Basic con `API_DOCS_USERNAME` / `API_DOCS_PASSWORD` (variables del entorno en Laravel Cloud). Si falta alguna, responde 404 |
+| `production` y cualquier otro | 404, como si no existiera |
+
+En producción las rutas de documentación ni siquiera se registran. **Ningún entorno desplegado tiene que usar `APP_ENV=local`**, porque eso abre la documentación sin credenciales.
+
+Swagger UI se carga desde jsDelivr con versión fija e integridad SRI (ver "Swagger UI fijado" en [decisions.md](decisions.md)). Necesita internet para mostrarse; el contrato JSON no.
 
 ## Acceso a MySQL desde el host
 
@@ -255,9 +309,24 @@ El volumen se creó antes de que existiera el script de init (o con otra configu
 
 Compose interpreta `$` como variable. Escribilo como `$$`.
 
+### La CI falla en "Contrato OpenAPI al día"
+
+Cambiaste un endpoint sin regenerar el contrato. Corré `docker compose exec backend php artisan scramble:export` y commiteá `docs/api/openapi.json`.
+
+### `/api/docs` no muestra nada (página en blanco)
+
+Swagger UI se carga desde jsDelivr: revisá tu conexión. Si en la consola del browser aparece un error de *integrity*, el archivo del CDN no coincide con el hash fijado (ver "Swagger UI fijado" en [decisions.md](decisions.md)). Mientras tanto, el contrato sigue disponible en `/api/docs/openapi.json`.
+
 ### Todo anda muy lento
 
-Seguramente el repo está en `C:\`. Cloná dentro de WSL ([por qué](#opción-1-setup-automático-en-windows-recomendado)).
+Seguramente el repo está en `C:\` (o en `/mnt/c/...` desde WSL). `scripts/setup.sh` lo detecta y lo avisa con un mensaje `!! ATENCION`. Esto lo medimos el 2026-10-16 con `/api/health`, pidiéndolo desde Windows:
+
+| Ubicación del repo | Tiempo por request |
+| --- | --- |
+| `C:\...` (filesystem de Windows) | 0,2 s, con picos de 2,1-2,3 s (la primera vez que el request cae en cada worker) |
+| `~/...` dentro de WSL | 0,03 s |
+
+Cloná dentro de WSL con `scripts/setup-windows.ps1` ([por qué](#opción-1-setup-automático-en-windows-recomendado)). Antes de pasarte, commiteá y pusheá tus cambios, y bajá el entorno viejo con `docker compose down` (**sin** `-v`). El clon de WSL usa el mismo volumen de MySQL (`api-sportiva_mysql-data`), así que tus datos locales se mantienen. OPcache no ayuda en este caso: desde `C:\` lo probamos y fue más lento.
 
 ## Limitaciones y seguridad
 

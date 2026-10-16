@@ -25,6 +25,24 @@ Resueltas el 2026-10-16 con `docker buildx imagetools inspect <tag>`. El digest 
 
 **Cómo actualizar:** correr `docker buildx imagetools inspect php:8.5-cli-trixie` (y lo mismo con `mysql:8.4` y `composer:2`), reemplazar el tag y el digest en el Dockerfile y en `compose.yaml`, actualizar esta tabla y abrir un PR para que la CI valide el build.
 
+## Swagger UI fijado
+
+Lo usa `/api/docs` (change `add-api-docs`). Se carga desde jsDelivr con integridad SRI. Se eligió la última versión publicada hace al menos 14 días, para no adoptar una release recién publicada.
+
+| Archivo | Versión | SRI |
+|---|---|---|
+| `swagger-ui.css` | `swagger-ui-dist@5.33.1` (2026-10-01) | `sha384-Ov4/wv3j2bmct8cDc5X4ngJZohVPzEmc6uDPH8WeljUxO5vtoykvMEfbu9Vh6RaW` |
+| `swagger-ui-bundle.js` | `swagger-ui-dist@5.33.1` (2026-10-01) | `sha384-ZPehFMQommnnuaZ4rpxgkgTT2DKFVp4hZC/7pLit+9Lek9T1YGSo23eHFbvNkXkw` |
+
+Verificado el 2026-10-16: los archivos de jsDelivr son idénticos a los del tarball de npm, cuyo `sha512` coincide con el `dist.integrity` del registry.
+
+**Cómo actualizar:**
+
+1. Elegir una versión publicada hace al menos 14 días (`https://registry.npmjs.org/swagger-ui-dist`, campo `time`).
+2. Descargar los dos archivos de `https://cdn.jsdelivr.net/npm/swagger-ui-dist@<versión>/<archivo>` y calcular cada hash con `openssl dgst -sha384 -binary <archivo> | openssl base64 -A`.
+3. Comparar con los mismos archivos del tarball de npm.
+4. Actualizar `config/scramble.php` (`renderers.swagger`) y esta tabla.
+
 ## Open decisions
 
 | Question | Options | Needed by | Owner |

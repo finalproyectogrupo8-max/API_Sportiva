@@ -22,9 +22,10 @@ Todos corren en Docker, desde la raíz del repo. Guía completa: [docs/desarroll
 | Migrar | `docker compose exec backend php artisan migrate` |
 | Test | `docker compose exec backend php artisan test` |
 | Lint | `docker compose exec backend vendor/bin/pint --test` |
+| Regenerar el contrato OpenAPI | `docker compose exec backend php artisan scramble:export` |
 | Build de la imagen | `HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose build backend` |
 
-- La API no tiene frontend (sin Vite, npm ni `resources/`): la UI del producto es el repo Front-Sportiva. El setup es siempre `bash scripts/setup.sh`.
+- La API no tiene frontend (sin Vite ni npm): la UI del producto es el repo Front-Sportiva. La única vista es Swagger UI (`resources/views/api-docs/`). El setup es siempre `bash scripts/setup.sh`.
 - No uses `docker compose down -v` salvo que quieras **borrar** la base local.
 
 ## Conventions
@@ -32,6 +33,8 @@ Todos corren en Docker, desde la raíz del repo. Guía completa: [docs/desarroll
 - Todas las rutas de la API van bajo `/api` y siempre responden JSON, también en los errores.
 - Validación con Form Requests (`php artisan make:request`): nunca validar a mano en el controller. Un error de validación responde 422 con `{ message, errors: { campo: [...] } }`.
 - Respuestas con API Resources, no modelos ni arrays sueltos (lo necesita `dedoc/scramble` para el contrato tipado).
+- **Contrato:** `docs/api/openapi.json` lo genera Scramble desde el código. Si cambiás una ruta, un Form Request o un Resource, regeneralo con `scramble:export` y commitealo con el cambio: la CI falla si quedó desactualizado.
+- Documentación: `/api/docs` (Swagger UI) y `/api/docs/openapi.json`. Abierta en `local`, con HTTP Basic en `staging` (`API_DOCS_USERNAME` y `API_DOCS_PASSWORD`) y 404 en el resto (`App\Http\Middleware\ApiDocsAccess`). No la expongas en producción.
 - `GET /api/health` responde un cuerpo fijo (`status`, `checks`): no le agregues versiones, hosts ni detalles de excepciones.
 - Claves en `snake_case`, fechas ISO 8601 con zona horaria, enums en inglés.
 - El contrato con el frontend está en `docs/integracion-api-laravel.md` del repo Front-Sportiva.

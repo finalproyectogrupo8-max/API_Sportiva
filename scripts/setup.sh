@@ -19,6 +19,25 @@ cd "$(dirname "$0")/.."
 info() { printf '\n==> %s\n' "$*"; }
 fail() { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
 
+# Si el repo está en el filesystem de Windows (C:\), Docker monta el código cruzando de Windows a
+# Linux y Laravel lee miles de archivos en cada request: medido, 0,2-2,3 s por request contra
+# 0,03 s con el repo dentro de WSL. No se bloquea (funciona igual), pero se avisa.
+warn_windows_filesystem() {
+    printf '\n'
+    printf '!! ATENCION: el repo está en el filesystem de Windows (%s).\n' "$1"
+    printf '!! Funciona, pero la API va a responder MUY lento (medido: 0,2-2,3 s por request,\n'
+    printf '!! contra 0,03 s con el repo dentro de WSL).\n'
+    printf '!! Solución: cloná el repo dentro de WSL con scripts/setup-windows.ps1\n'
+    printf '!! (ver "Opción 1" en docs/desarrollo-local.md).\n'
+}
+
+case "$(uname -s)" in
+    MINGW* | MSYS* | CYGWIN*) warn_windows_filesystem "Git Bash sobre Windows" ;;
+esac
+if grep -qi microsoft /proc/version 2> /dev/null && [[ "$PWD" == /mnt/* ]]; then
+    warn_windows_filesystem "WSL, pero en $PWD"
+fi
+
 command -v docker > /dev/null || fail "No se encontró 'docker'. Instalá Docker Desktop (ver docs/desarrollo-local.md)."
 docker compose version > /dev/null 2>&1 || fail "No se encontró 'docker compose' (v2)."
 docker info > /dev/null 2>&1 || fail "El daemon de Docker no responde. ¿Está abierto Docker Desktop?"
