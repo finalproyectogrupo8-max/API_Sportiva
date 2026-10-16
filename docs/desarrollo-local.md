@@ -238,14 +238,74 @@ Swagger UI se carga desde jsDelivr con versión fija e integridad SRI (ver "Swag
 
 ## Acceso a MySQL desde el host
 
-MySQL no publica puertos por defecto. Para conectarte con DBeaver u otro cliente:
+MySQL **no publica puertos por defecto**: la API no los necesita (ver abajo), y así la base no queda expuesta. Para entrar con DBeaver u otro cliente, hay que activar el override.
+
+### Activar y desactivar
 
 ```bash
+# Activar (WSL / Linux / macOS)
 cp compose.override.example.yaml compose.override.yaml
+docker compose up -d
+
+# Desactivar
+rm compose.override.yaml
 docker compose up -d
 ```
 
-Conexión: host `127.0.0.1`, puerto `3310` (cambialo con `DB_FORWARD_PORT` en `.env`), usuario y contraseña de `DB_USERNAME`/`DB_PASSWORD`. El puerto queda atado a `127.0.0.1`: no es accesible desde otras máquinas de la red. `compose.override.yaml` está en `.gitignore`. Para cerrarlo, borrá el archivo y corré `docker compose up -d`.
+En PowerShell: `Copy-Item compose.override.example.yaml compose.override.yaml` y `Remove-Item compose.override.yaml`.
+
+`compose.override.yaml` está en `.gitignore`: es solo tuyo. Docker Compose lo combina automáticamente con `compose.yaml`.
+
+### Qué hace el mapeo de puertos
+
+El override agrega esta línea al servicio `mysql`:
+
+```yaml
+ports:
+  - "127.0.0.1:${DB_FORWARD_PORT:-3310}:3306"
+```
+
+Se lee de izquierda a derecha:
+
+| Parte | Valor | Significado |
+| --- | --- | --- |
+| IP del host | `127.0.0.1` | Solo escucha en tu propia máquina, no en la red |
+| Puerto del host | `3310` | El puerto que abre tu máquina. Sale de `DB_FORWARD_PORT` en `.env`; si no está, vale 3310 |
+| Puerto del contenedor | `3306` | Donde escucha MySQL **dentro** del contenedor |
+
+Es decir: el puerto **3310 de tu máquina** reenvía al **3306 del contenedor**.
+
+```
+DBeaver (Windows)
+   │  127.0.0.1:3310
+   ▼
+Docker Desktop  ── reenvía ──▶  contenedor "mysql" :3306   (MySQL 8.4 del proyecto)
+
+API (contenedor "backend") ── red interna de Docker ──▶  mysql:3306   (no usa el 3310)
+```
+
+- **Por qué 3310 y no 3306:** dos procesos no pueden escuchar en el mismo puerto, y en muchas máquinas el 3306 (o el 3307) ya lo ocupa un MySQL instalado en Windows (XAMPP o MySQL Server). Si el 3310 también está ocupado, cambiá `DB_FORWARD_PORT` en `.env`.
+- **La API no pasa por acá:** el contenedor `backend` se conecta por la red interna de Docker como `mysql:3306` (por eso `DB_HOST=mysql`). La API funciona igual con el override o sin él: el override existe solo para que vos entres desde el host.
+- **Por qué `127.0.0.1:` adelante:** con solo `"3310:3306"`, Docker escucha en **todas las interfaces** (`0.0.0.0`), y cualquier máquina de tu red (por ejemplo, el Wi-Fi de la facultad) podría intentar conectarse a tu base. Con `127.0.0.1`, el puerto solo existe para tu máquina.
+
+Para ver qué está escuchando en cada puerto (PowerShell): `netstat -ano | findstr ":3306 :3307 :3310"`. Si aparece en `0.0.0.0`, es accesible desde la red; si aparece en `127.0.0.1`, solo desde tu máquina.
+
+### Conectarse con DBeaver
+
+1. **Nueva conexión → MySQL**. En la pestaña **Main**:
+
+   | Campo | Valor |
+   | --- | --- |
+   | Server Host | `127.0.0.1` |
+   | Port | **`3310`** (no 3306: ese es otro MySQL, si tenés uno instalado en Windows) |
+   | Database | `sportiva_platform` (la de tests es `sportiva_testing`) |
+   | Username / Password | `DB_USERNAME` / `DB_PASSWORD` de tu `.env` |
+
+2. En la pestaña **Driver properties**: `allowPublicKeyRetrieval` = `true` y `useSSL` = `false`.
+
+   MySQL 8 autentica con `caching_sha2_password`. Sin SSL, el driver JDBC necesita pedirle al servidor su clave pública para cifrar la contraseña, y por seguridad lo tiene bloqueado (de ahí el error *"Public Key Retrieval is not allowed"*). Habilitarlo es aceptable **solo** contra tu base local en `127.0.0.1`: contra una base remota, usá SSL. La API no tiene este problema, porque usa otro driver (PDO).
+
+3. **Test Connection**.
 
 ## Resetear la base local (destruye datos)
 
@@ -304,6 +364,13 @@ Si el repo está en `C:\` en lugar de WSL, los permisos son emulados y pueden fa
 ### `sportiva_testing` no existe (los tests fallan con `Unknown database`)
 
 El volumen se creó antes de que existiera el script de init (o con otra configuración). La app no usa root: su contraseña es aleatoria y solo aparece una vez en los logs de la primera inicialización (`GENERATED ROOT PASSWORD`). La solución es [resetear la base](#resetear-la-base-local-destruye-datos): al recrear el volumen, el script de init vuelve a correr.
+
+### DBeaver: "Public Key Retrieval is not allowed"
+
+Lo da el driver JDBC de MySQL 8. Antes de tocar nada, revisá **a qué puerto** te estás conectando:
+
+- **El 3306 no es el MySQL de Docker.** Si tenés un MySQL instalado en Windows (XAMPP o MySQL Server), te estás conectando a ese. El de Docker no expone puertos por defecto: activalo como explica [Acceso a MySQL desde el host](#acceso-a-mysql-desde-el-host) y usá el **3310**.
+- En la conexión de DBeaver, pestaña **Driver properties**, poné `allowPublicKeyRetrieval` = `true` y `useSSL` = `false`. Es seguro solo porque es tu base local en `127.0.0.1`: no lo uses contra bases remotas.
 
 ### Un valor del `.env` con `$` se rompe
 
