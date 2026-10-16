@@ -30,6 +30,29 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Script de setup ejecutable con irm
+        # Simula "irm <url> | iex": decodifica los bytes sin descartar un BOM (como irm) y parsea.
+        # Un BOM o un caracter no ASCII rompe la instalacion con un comando.
+        shell: pwsh
+        run: |
+          $path = 'scripts/setup-windows.ps1'
+          $bytes = [IO.File]::ReadAllBytes($path)
+          if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+            Write-Output "::error file=$path::Tiene BOM: rompe 'irm | iex'. Guardalo como UTF-8 sin BOM."
+            exit 1
+          }
+          if ($bytes | Where-Object { $_ -gt 127 }) {
+            Write-Output "::error file=$path::Tiene caracteres no ASCII: Windows PowerShell 5.1 los lee mal."
+            exit 1
+          }
+          $tokens = $null; $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseInput([Text.Encoding]::UTF8.GetString($bytes), [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Output "::error file=$path,line=$($_.Extent.StartLineNumber)::$($_.Message)" }
+            exit 1
+          }
+          Write-Output "OK: $path se parsea sin errores tal como lo recibe irm."
+
       - name: Setup (build, MySQL, composer install, APP_KEY, migraciones)
         run: bash scripts/setup.sh
 

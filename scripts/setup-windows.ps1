@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Bootstrap del entorno de desarrollo de la API Sportiva en Windows (WSL 2 + Docker Desktop).
 
@@ -15,8 +15,9 @@
     Toda instalacion o cambio de configuracion global pide confirmacion, salvo con -Yes.
     El script nunca borra datos ni cambia la execution policy global.
 
-    El archivo es ASCII a proposito: Windows PowerShell 5.1 lee los .ps1 sin BOM como ANSI,
-    y asi la codificacion nunca rompe el script (tampoco si se descargo con otra codificacion).
+    El archivo es ASCII a proposito y SIN BOM: Windows PowerShell 5.1 lee los .ps1 sin BOM como
+    ANSI (con ASCII da igual), y con "irm <url> | iex" un BOM queda pegado delante de "<#" y rompe
+    el parseo de todo el script. La CI lo verifica (paso "Script de setup ejecutable con irm").
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\setup-windows.ps1
