@@ -39,6 +39,16 @@ jobs:
       - name: Tests
         run: docker compose exec -T backend php artisan test
 
+      - name: Contrato OpenAPI al día
+        # Regenera docs/api/openapi.json desde el código y falla si difiere del commiteado.
+        # No publica nada: el contrato versionado es el que consume el frontend.
+        run: |
+          docker compose exec -T backend php artisan scramble:export
+          if ! git diff --exit-code -- docs/api/openapi.json; then
+            echo "::error file=docs/api/openapi.json::El contrato OpenAPI está desactualizado. Regeneralo con: docker compose exec backend php artisan scramble:export (y commiteá docs/api/openapi.json)"
+            exit 1
+          fi
+
       - name: Logs de los servicios
         if: failure()
         # El entrypoint de MySQL imprime la contraseña de root aleatoria: se filtra de los logs.

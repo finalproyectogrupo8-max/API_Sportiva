@@ -13,6 +13,8 @@ No hace falta instalar PHP, Composer ni MySQL: todo corre en Docker.
 
 Después: `http://127.0.0.1:8000/api/health` → `{"status":"ok","checks":{"database":"ok"}}`.
 
+Documentación de la API (Swagger UI): `http://127.0.0.1:8000/api/docs`. El contrato OpenAPI versionado está en [docs/api/openapi.json](docs/api/openapi.json).
+
 Detalles, comandos del día a día y troubleshooting: **[docs/desarrollo-local.md](docs/desarrollo-local.md)**.
 
 ## Documentación
@@ -22,13 +24,14 @@ Detalles, comandos del día a día y troubleshooting: **[docs/desarrollo-local.m
 | [docs/desarrollo-local.md](docs/desarrollo-local.md) | Setup, uso diario, reset de datos, troubleshooting |
 | [docs/arquitectura-multi-tenant.md](docs/arquitectura-multi-tenant.md) | Base central + una base por club: qué existe y qué falta |
 | [docs/adr/](docs/adr/) | Decisiones de arquitectura |
+| [docs/api/openapi.json](docs/api/openapi.json) | Contrato OpenAPI (generado por Scramble; lo consume el frontend) |
 | [docs/decisions.md](docs/decisions.md) | Log de decisiones cortas, imágenes fijadas y decisiones abiertas |
 | [openspec/](openspec/) | Specs y changes (OpenSpec) |
 | [AGENTS.md](AGENTS.md) | Convenciones y comandos (para personas y agentes) |
 
 ## Estado
 
-Fase 1: entorno Docker, endpoint de health, errores JSON en `/api/*` y CI. Todavía **no** hay autenticación, multi-tenancy implementado ni módulos de negocio.
+Fase 1: entorno Docker, endpoint de health, errores JSON en `/api/*` y CI. Documentación con Swagger UI en `/api/docs`. Todavía **no** hay autenticación, multi-tenancy implementado ni módulos de negocio.
 
 ## Deploy
 
