@@ -1,0 +1,52 @@
+# CI de la API Sportiva: build de la imagen de desarrollo, lint y tests contra MySQL.
+# Usa el mismo compose.yaml y el mismo scripts/setup.sh que los devs: si se rompe el
+# entorno local, se rompe la CI.
+#
+# NO publica imágenes ni artefactos (la publicación en GHCR es un change futuro).
+
+name: CI
+
+on:
+  # pull_request (y no pull_request_target): los PRs de forks corren sin secrets ni permisos de escritura.
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # Solo se cancelan corridas viejas de un PR. Cada push a main tiene su CI completa.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup (build, MySQL, composer install, APP_KEY, migraciones)
+        run: bash scripts/setup.sh
+
+      - name: Lint (Pint)
+        run: docker compose exec -T backend vendor/bin/pint --test
+
+      - name: Tests
+        run: docker compose exec -T backend php artisan test
+
+      - name: Logs de los servicios
+        if: failure()
+        # El entrypoint de MySQL imprime la contraseña de root aleatoria: se filtra de los logs.
+        run: |
+          docker compose logs --no-color | grep -v 'GENERATED ROOT PASSWORD' || true
+          docker compose exec -T backend sh -c 'tail -n 200 storage/logs/laravel.log 2>/dev/null' || true
+
+      - name: Bajar servicios
+        if: always()
+        # Sin -v: el runner se descarta igual al terminar el job.
+        run: docker compose down

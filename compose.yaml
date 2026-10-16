@@ -1,0 +1,71 @@
+# Entorno de desarrollo local de la API Sportiva.
+# Guía: docs/desarrollo-local.md. Setup en un comando: bash scripts/setup.sh
+#
+# Las variables (${...}) se leen del .env de la raíz, que es el mismo archivo que usa Laravel.
+
+name: api-sportiva
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: dev
+      args:
+        # El UID/GID del usuario del host (lo exporta scripts/setup.sh).
+        UID: ${HOST_UID:-1000}
+        GID: ${HOST_GID:-1000}
+    image: api-sportiva-dev:local
+    # Init mínimo como PID 1: reenvía SIGTERM a "artisan serve" para que se detenga enseguida
+    # (sin esto, Docker espera 10 s y lo mata con exit 137).
+    init: true
+    # Laravel lee la configuración del .env montado. No se duplica en "environment".
+    volumes:
+      - .:/var/www/html
+    ports:
+      # Solo accesible desde la propia máquina.
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    depends_on:
+      mysql:
+        # Espera el healthcheck: que el contenedor esté iniciado no alcanza.
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 8000) ? 0 : 1);"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  mysql:
+    image: mysql:8.4.11@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:?Falta DB_DATABASE en .env}
+      MYSQL_USER: ${DB_USERNAME:?Falta DB_USERNAME en .env}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en .env}
+      # La app nunca usa root. La contraseña de root es aleatoria y nadie la necesita.
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      # La lee docker/mysql/init/01-testing-db.sh. Tiene que coincidir con DB_DATABASE de phpunit.xml.
+      MYSQL_TESTING_DATABASE: sportiva_testing
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # Los scripts de init solo corren cuando el volumen está vacío (primer arranque).
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    # No se publican puertos. Para acceder desde el host, ver compose.override.example.yaml.
+    healthcheck:
+      # Por TCP a propósito: durante la inicialización MySQL corre sin red, así que
+      # el ping recién pasa cuando el servidor definitivo está escuchando.
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  # Datos locales de MySQL. Borrar este volumen destruye la base local (ver docs/desarrollo-local.md).
+  mysql-data:
