@@ -47,6 +47,20 @@ Requisitos: Windows 10/11 y Git for Windows (si ya lo tenés, no lo reinstales).
    powershell -ExecutionPolicy Bypass -File .\setup-windows.ps1
    ```
 
+**Si el repo es público**, en lugar de los pasos 1 a 3 alcanza con un comando en PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/finalproyectogrupo8-max/API_Sportiva/main/scripts/setup-windows.ps1 | iex
+```
+
+Con parámetros (por ejemplo, para pasar tu usuario de GitHub):
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/finalproyectogrupo8-max/API_Sportiva/main/scripts/setup-windows.ps1))) -GitHubUser tu-usuario
+```
+
+`irm | iex` ejecuta lo que esté en `main` en ese momento, sin que lo leas. Si preferís algo fijo y revisado, reemplazá `main` por un tag o un commit (`.../API_Sportiva/<tag>/scripts/...`). Si el script se detiene, la ventana de PowerShell no se cierra: leé el mensaje, resolvé lo que pide y volvé a correr el comando.
+
 El script:
 
 1. Verifica WSL 2 con Ubuntu. Si falta, ofrece instalarlo (`wsl --install -d Ubuntu`). Necesita PowerShell **como administrador** y, quizás, reiniciar. Después abrí Ubuntu desde el menú Inicio, creá tu usuario de Linux y volvé a correr el script.

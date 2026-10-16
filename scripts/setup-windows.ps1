@@ -47,7 +47,11 @@ function Write-Ok([string]$Message) { Write-Host "    OK: $Message" -ForegroundC
 function Stop-WithHelp([string]$Message) {
     Write-Host "`n$Message" -ForegroundColor Yellow
     Write-Host "Cuando este resuelto, volve a correr este script." -ForegroundColor Yellow
-    exit 1
+    # Desde un archivo (-File), exit 1 termina el script con codigo de error.
+    # Desde "irm <url> | iex" no hay archivo ($PSCommandPath vacio): exit cerraria la ventana de
+    # PowerShell del usuario antes de que lea las instrucciones, asi que se corta con throw.
+    if ($PSCommandPath) { exit 1 }
+    throw 'Setup detenido (ver el mensaje de arriba).'
 }
 
 function Confirm-Action([string]$Question) {
@@ -281,7 +285,9 @@ if ((Invoke-InWsl "test -d ~/$TargetDir/.git") -eq 0) {
 } elseif ((Invoke-InWsl "test -e ~/$TargetDir") -eq 0) {
     Stop-WithHelp "~/$TargetDir ya existe y no es un repo git. Movelo o usa otro -TargetDir."
 } else {
-    if ((Invoke-InWsl "mkdir -p ~/$TargetDir && git clone '$RepoUrl' ~/$TargetDir") -ne 0) {
+    # Solo se crea la carpeta padre: git clone crea la de destino. Si el clone falla, no queda
+    # una carpeta vacia que haga fallar la siguiente corrida ("ya existe y no es un repo git").
+    if ((Invoke-InWsl "mkdir -p `$(dirname ~/$TargetDir) && git clone '$RepoUrl' ~/$TargetDir") -ne 0) {
         Stop-WithHelp "Fallo el git clone."
     }
     Write-Ok "Clonado en ~/$TargetDir"
