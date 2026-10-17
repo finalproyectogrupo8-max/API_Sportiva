@@ -15,9 +15,11 @@ class StoreTenantRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/', 'unique:tenants,slug'],
-            'database_name' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/', 'unique:tenants,database_name'],
-            'status' => ['sometimes', 'string', 'in:provisioning,active,suspended,failed'],
+            // club_ (5) + slug (máx. 50) = 55 caracteres, bajo el límite de 64 de MySQL
+            'slug' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9_]+$/', 'unique:tenants,slug'],
+            // El nombre de la base lo deriva el servidor (club_<slug>)
+            'database_name' => ['prohibited'],
+            'status' => ['prohibited'],
         ];
     }
 }

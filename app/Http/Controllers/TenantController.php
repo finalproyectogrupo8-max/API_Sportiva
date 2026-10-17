@@ -32,10 +32,14 @@ class TenantController extends Controller
 
     public function store(StoreTenantRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $data['status'] ??= 'provisioning';
+        $slug = $request->validated('slug');
 
-        $tenant = Tenant::create($data);
+        $tenant = Tenant::create([
+            'name' => $request->validated('name'),
+            'slug' => $slug,
+            'database_name' => 'club_'.$slug,
+            'status' => 'provisioning',
+        ]);
 
         return response()->json($tenant, 201);
     }
@@ -47,7 +51,7 @@ class TenantController extends Controller
 
     public function update(UpdateTenantRequest $request, Tenant $tenant): JsonResponse
     {
-        $tenant->update($request->validated());
+        $tenant->update($request->safe()->only(['name', 'status']));
 
         return response()->json($tenant);
     }

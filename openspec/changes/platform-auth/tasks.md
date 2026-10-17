@@ -3,7 +3,7 @@
 - [ ] 1.1 Migración: `tenant_id` nullable (FK, cascade) en `personal_access_tokens`
 - [ ] 1.2 Modelo `PersonalAccessToken` propio y registro en `AppServiceProvider`
 - [ ] 1.3 `HasApiTokens` en `User`
-- [ ] 1.4 Sacar `is_platform_admin` de `#[Fillable]`
+- [x] 1.4 Sacar `is_platform_admin` de `#[Fillable]`
 - [ ] 1.5 Resolver la pregunta abierta sobre `suspended` y alinear migración, guía y código
 
 ## 2. Sanctum
@@ -19,8 +19,8 @@
 
 ## 4. ABM de clubes
 
-- [ ] 4.1 `database_name` derivado (`club_<slug>`); quitarlo de Store/Update
-- [ ] 4.2 `slug` inmutable en `UpdateTenantRequest`
+- [x] 4.1 `database_name` derivado (`club_<slug>`); quitarlo de Store/Update
+- [x] 4.2 `slug` inmutable en `UpdateTenantRequest`
 - [ ] 4.3 `TenantResource`, `IndexTenantRequest`, paginación 20/100
 - [ ] 4.4 `TenantPolicy` y `Gate::authorize`
 - [ ] 4.5 Estados unificados

@@ -19,8 +19,7 @@ El servidor SHALL derivar `database_name` como `club_<slug>` y MUST NOT aceptarl
 - **THEN** el club se guarda con `database_name = club_river`
 
 #### Scenario: Intento de elegir la base
-- **WHEN** el request incluye `database_name` o intenta cambiar el `slug`
-- **THEN** el valor se ignora o responde 422
+- **THEN** responde 422
 
 ### Requirement: Listado paginado
 El listado SHALL paginar con 20 elementos por defecto y 100 como máximo, validar sus filtros con un Form Request y responder con `TenantResource`.

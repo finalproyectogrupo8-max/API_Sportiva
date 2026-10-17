@@ -308,14 +308,14 @@
                             }
                         }
                     },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             },
@@ -368,28 +368,21 @@
                     },
                     "slug": {
                         "type": "string",
+                        "description": "club_ (5) + slug (m\u00e1x. 50) = 55 caracteres, bajo el l\u00edmite de 64 de MySQL",
                         "pattern": "^[a-z0-9_]+$",
-                        "maxLength": 100
+                        "maxLength": 50
                     },
                     "database_name": {
                         "type": "string",
-                        "pattern": "^[a-z0-9_]+$",
-                        "maxLength": 100
+                        "description": "El nombre de la base lo deriva el servidor (club_<slug>)"
                     },
                     "status": {
-                        "type": "string",
-                        "enum": [
-                            "provisioning",
-                            "active",
-                            "suspended",
-                            "failed"
-                        ]
+                        "type": "string"
                     }
                 },
                 "required": [
                     "name",
-                    "slug",
-                    "database_name"
+                    "slug"
                 ],
                 "title": "StoreTenantRequest"
             },
@@ -444,16 +437,6 @@
                         "type": "string",
                         "maxLength": 255
                     },
-                    "slug": {
-                        "type": "string",
-                        "pattern": "^[a-z0-9_]+$",
-                        "maxLength": 100
-                    },
-                    "database_name": {
-                        "type": "string",
-                        "pattern": "^[a-z0-9_]+$",
-                        "maxLength": 100
-                    },
                     "status": {
                         "type": "string",
                         "enum": [
@@ -462,6 +445,13 @@
                             "suspended",
                             "failed"
                         ]
+                    },
+                    "slug": {
+                        "type": "string",
+                        "description": "Inmutables: rechazar expl\u00edcitamente en vez de ignorar"
+                    },
+                    "database_name": {
+                        "type": "string"
                     }
                 },
                 "title": "UpdateTenantRequest"
