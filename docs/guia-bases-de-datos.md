@@ -185,8 +185,8 @@ database/migrations/                          ← base CENTRAL (sportiva_platfor
 ├── 2026_10_20_000001_create_tenants_table.php     🟡 PLANIFICADO
 ├── 2026_10_20_000002_create_tenant_memberships... 🟡 PLANIFICADO
 └── tenant/                                   ← CADA CLUB (club_*)    🟡 PLANIFICADO
-    ├── 2026_10_25_000001_create_jugadores_table.php
-    └── 2026_10_25_000002_create_partidos_table.php
+    ├── 2026_10_25_000001_create_players_table.php
+    └── 2026_10_25_000002_create_matches_table.php
 ```
 
 Para crear una migración:
@@ -196,7 +196,7 @@ Para crear una migración:
 docker compose exec backend php artisan make:migration create_tenants_table
 
 # Tabla de CADA CLUB: la misma orden, con --path
-docker compose exec backend php artisan make:migration create_jugadores_table \
+docker compose exec backend php artisan make:migration create_players_table \
     --path=database/migrations/tenant
 ```
 
@@ -217,12 +217,12 @@ Schema::create('tenants', function (Blueprint $table) {
 Ejemplo de migración de club (🟡 planificado, ilustrativo):
 
 ```php
-// database/migrations/tenant/2026_10_25_000001_create_jugadores_table.php
+// database/migrations/tenant/2026_10_25_000001_create_players_table.php
 // No dice a qué club: se aplica en el que esté apuntada la conexión "tenant".
-Schema::create('jugadores', function (Blueprint $table) {
+Schema::create('players', function (Blueprint $table) {
     $table->id();
-    $table->string('nombre');
-    $table->date('fecha_nacimiento');
+    $table->string('name');
+    $table->date('birth_date');
     $table->timestamps();
 });
 ```
@@ -232,7 +232,7 @@ Ejemplo de modelos:
 ```php
 class Tenant extends Model { }            // base central: conexión por defecto
 
-class Jugador extends Model               // base del club
+class Player extends Model               // base del club
 {
     protected $connection = 'tenant';     // siempre la conexión del club actual
 }
@@ -259,29 +259,29 @@ foreach (Tenant::where('status', 'active')->get() as $tenant) {
 
 ### Ejemplo paso a paso
 
-**Situación inicial:** hay dos clubes, y la carpeta `tenant/` tiene una sola migración, `create_jugadores`.
+**Situación inicial:** hay dos clubes, y la carpeta `tenant/` tiene una sola migración, `create_players`.
 
 ```
 sportiva_platform.tenants       club_river.migrations       club_boca.migrations
-  slug    database_name           create_jugadores   OK       create_jugadores   OK
+  slug    database_name           create_players   OK       create_players   OK
   river   club_river
   boca    club_boca
 ```
 
-**Un dev agrega** `create_partidos` en `database/migrations/tenant/` y se corre `php artisan tenants:migrate`:
+**Un dev agrega** `create_matches` en `database/migrations/tenant/` y se corre `php artisan tenants:migrate`:
 
 ```
 Vuelta 1 → conexión tenant = club_river
-           carpeta:               create_jugadores, create_partidos
-           club_river.migrations: create_jugadores
-           → falta create_partidos → la corre en club_river   OK
+           carpeta:               create_players, create_matches
+           club_river.migrations: create_players
+           → falta create_matches → la corre en club_river   OK
 
 Vuelta 2 → conexión tenant = club_boca
            misma carpeta, misma comparación
-           → falta create_partidos → la corre en club_boca    OK
+           → falta create_matches → la corre en club_boca    OK
 ```
 
-**Resultado:** los dos clubes tienen la tabla `partidos`, cada uno en su base y con sus propios datos.
+**Resultado:** los dos clubes tienen la tabla `matches`, cada uno en su base y con sus propios datos.
 
 **Si mañana se da de alta "Racing":**
 
@@ -289,7 +289,7 @@ Vuelta 2 → conexión tenant = club_boca
 2. se apunta la conexión `tenant` ahí;
 3. se corre `migrate` sobre `tenant/`.
 
-Como su tabla `migrations` está vacía, corre **todas** (`create_jugadores` y `create_partidos`). Racing queda exactamente igual a los demás.
+Como su tabla `migrations` está vacía, corre **todas** (`create_players` y `create_matches`). Racing queda exactamente igual a los demás.
 
 **En el deploy, siempre en este orden:**
 
@@ -429,14 +429,14 @@ Se resuelve en el change que implementa el alta:
 2. POST /api/auth/select-tenant    (tenant = river)
        → la API verifica la membresía en tenant_memberships
        → emite un token ATADO a ese club (tenant_id dentro del token)
-3. GET  /api/jugadores             (con el token del club)
+3. GET  /api/players             (con el token del club)
        middleware:
          a. token válido y no vencido                  (si no → 401)
          b. el token tiene tenant_id                   (si no → 403 tenant_required)
          c. usuario, club y membresía siguen activos   (si no → 403)
          d. busca tenants.database_name y apunta la conexión "tenant"
          e. permisos del rol en ese club               (si no → 403 forbidden)
-       controller: Jugador::all()   → consulta club_river.jugadores
+       controller: Player::all()   → consulta club_river.players
 ```
 
 > ⚠️ **El club nunca lo manda el cliente**: sale del token. Nunca se acepta `tenant_id` ni el slug del club en el body o en la URL como fuente de autorización. Así, nadie puede pedir datos de otro club cambiando un parámetro.
@@ -488,6 +488,7 @@ Se resuelve en el change que implementa el alta:
 | Nunca edites una migración que ya está mergeada | Ya corrió en las bases de otros devs y de los clubes, así que tu cambio no se aplicaría. En su lugar, creá una migración nueva |
 | Nada de `USE <base>` ni de nombres de base fijos en el código | La base del club la decide el middleware o el loop |
 | Los modelos de club declaran `$connection = 'tenant'` | Si no la declaran, consultan la base central |
+| Nombres de tablas, modelos, rutas y campos **en inglés** (`players`, `Player`, `birth_date`) | Es la decisión del equipo (ver [decisions.md](decisions.md)): coherente con los enums y con la pluralización de Laravel. La UI la traduce el front |
 | Si cambiás un endpoint, regenerá el contrato | Corré `php artisan scramble:export` y commiteá `docs/api/openapi.json`: si quedó desactualizado, la CI falla |
 
 ## 11. Comandos
@@ -583,7 +584,7 @@ Sí, cuando esté implementado: los clubes van a ser bases dentro del mismo cont
 | --- | --- | --- |
 | 1 | ADR de multi-tenancy | Implementación propia (la recomendada) o el paquete `stancl/tenancy`; el nombre de las bases (`club_<slug>` o `club_<id>`); los usuarios de MySQL de operación y de provisión |
 | 2 | Change `platform-auth` | Las tablas `tenants` y `tenant_memberships`, el campo `is_platform_admin`, el `tenant_id` en los tokens, Sanctum (login, selección de club, `me` y logout) y el comando `platform:create-admin` |
-| 3 | Change `platform-admin-and-provisioning` | Los endpoints `/api/admin/*` y la auditoría; la conexión `tenant` y el middleware; el job `ProvisionTenant`; el servicio `queue` (worker) en Compose; la conexión `provisioning`; los comandos `tenants:create` y `tenants:migrate`; los permisos de MySQL en local |
+| 3 | Change `platform-admin-and-provisioning` | Los endpoints `/api/admin/*` y la auditoría; la conexión `tenant` y el middleware; el job `ProvisionTenant`; el servicio `queue` (worker) en Compose; la conexión `provisioning`; los comandos `tenants:create` y `tenants:migrate`; los permisos de MySQL en local. Además, la **guía de ABM**: estructura, rutas, controllers, Requests, Resources, paginación, policies, bajas y tests, con el ABM de usuarios y clubes como ejemplo de referencia |
 | 4 | Front-Sportiva | El login, el selector de club y las páginas `/admin`, contra estos endpoints |
 | 5 | Módulos del club | Jugadores, partidos, pedidos..., con sus migraciones en `tenant/` |
 

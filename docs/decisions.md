@@ -12,6 +12,9 @@ Decisiones cortas que no necesitan un ADR completo. Cuando una decisión se vuel
 | 2026-10-16 | Imágenes base fijadas por tag de patch y digest (ver la tabla de abajo) | Builds reproducibles; nunca `latest` | Tags flotantes (`8.5`, `8.4`) | Dueño del repo |
 | 2026-10-16 | Debian trixie como base de la imagen PHP | Es el stable vigente (Debian 13); bookworm ya es oldstable | bookworm, Alpine | Dueño del repo |
 | 2026-10-16 | Setup automatizado con `scripts/setup.sh` y `scripts/setup-windows.ps1` | Los devs no tienen que configurar WSL ni Docker a mano | Dev Container; solo documentar | Dueño del repo |
+| 2026-10-17 | Nombres de código en **inglés**: tablas, modelos, rutas, campos y enums (`players`, `Player`, `/api/players`, `birth_date`). La UI sigue en español: la traduce el front | Coherente con los enums (ya en inglés), con la pluralización de Laravel y con el contrato que consume el front | Español (`jugadores`, `Jugador`) | Dueño del repo |
+| 2026-10-17 | El panel de administración de plataforma va en el front (páginas `/admin` de Front-Sportiva). La API expone `/api/admin/*` y no tiene UI | Respeta el BFF y la decisión de que la API no tenga frontend | Filament dentro de la API; solo comandos | Dueño del repo |
+| 2026-10-17 | La guía de ABM (estructura, rutas, controllers, Requests, Resources, paginación, policies, bajas y tests) se escribe con el primer ABM real (usuarios y clubes del panel admin) | Documenta código que existe y funciona, no un ejemplo inventado | Escribirla antes como convención | Dueño del repo |
 
 ## Imágenes fijadas
 

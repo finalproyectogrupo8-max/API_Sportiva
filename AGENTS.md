@@ -37,6 +37,7 @@ Todos corren en Docker, desde la raíz del repo. Guía completa: [docs/desarroll
 - Documentación: `/api/docs` (Swagger UI) y `/api/docs/openapi.json`. Abierta en `local`, con HTTP Basic en `staging` (`API_DOCS_USERNAME` y `API_DOCS_PASSWORD`) y 404 en el resto (`App\Http\Middleware\ApiDocsAccess`). No la expongas en producción.
 - `GET /api/health` responde un cuerpo fijo (`status`, `checks`): no le agregues versiones, hosts ni detalles de excepciones.
 - Claves en `snake_case`, fechas ISO 8601 con zona horaria, enums en inglés.
+- Nombres de código en **inglés**: tablas, modelos, rutas y campos (`players`, `Player`, `/api/players`, `birth_date`). La documentación y la UI van en español.
 - El contrato con el frontend está en `docs/integracion-api-laravel.md` del repo Front-Sportiva.
 - Los tests viven en `tests/` y usan PHPUnit, contra la base MySQL `sportiva_testing` (no SQLite).
 - Las imágenes Docker se fijan por tag y digest. Para actualizarlas, ver "Imágenes fijadas" en `docs/decisions.md`.
