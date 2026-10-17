@@ -4,7 +4,7 @@ API REST de **Sportiva**, una plataforma de gestión operativa de clubes deporti
 
 El frontend es el repo [Front-Sportiva](https://github.com/finalproyectogrupo8-max/Front-Sportiva) (Next.js): su servidor es el único cliente de esta API (patrón BFF).
 
-## Empezar
+## Empezar.
 
 No hace falta instalar PHP, Composer ni MySQL: todo corre en Docker.
 
