@@ -30,7 +30,7 @@ Por qué una base por club: aislamiento fuerte entre clubes (un bug en una consu
 | Conexión `mysql` → `sportiva_platform` | ✅ Configurada por variables `DB_*`. El nombre no está hardcodeado |
 | Migraciones de la base central (`database/migrations/`) | ✅ Las default de Laravel (`users`, `cache`, `jobs`) |
 | Conexión `tenant` | ❌ Futura |
-| `database/migrations/tenant/` | ❌ Futura |
+| `database/migrations/tenant/` | ❌ Futura. El esquema propuesto está en el [modelo de datos de la base de cada club](modelo-datos-club/README.md) |
 | Alta de clubes, `tenants:migrate` | ❌ Futuros |
 | Auth (Sanctum, token atado al tenant) | ❌ Futuro |
 
