@@ -8,7 +8,11 @@ El frontend es el repo [Front-Sportiva](https://github.com/finalproyectogrupo8-m
 
 No hace falta instalar PHP, Composer ni MySQL: todo corre en Docker.
 
-- **Windows:** descargá y ejecutá `scripts/setup-windows.ps1`. Instala o verifica WSL 2 y Docker Desktop, clona el repo dentro de WSL y deja todo andando.
+- **Windows** (PowerShell normal, no como administrador), desde una máquina sin nada instalado:
+  ```powershell
+  irm https://raw.githubusercontent.com/finalproyectogrupo8-max/API_Sportiva/main/scripts/setup-windows.ps1 | iex
+  ```
+  Instala WSL, Ubuntu, Docker Desktop, Git y VS Code si faltan, clona el repo dentro de WSL y deja todo andando. Con `-WhatIf` solo muestra qué haría.
 - **Con el repo ya clonado** (WSL, Linux o macOS): `bash scripts/setup.sh`
 
 Después: `http://127.0.0.1:8000/api/health` → `{"status":"ok","checks":{"database":"ok"}}`.

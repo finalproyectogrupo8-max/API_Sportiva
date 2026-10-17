@@ -27,50 +27,60 @@ Fuente de verdad: Git tiene el código, `compose.yaml` y `docker/` definen el en
 
 ## Opción 1: setup automático en Windows (recomendado)
 
-Requisitos: Windows 10/11 y Git for Windows (si ya lo tenés, no lo reinstales).
+Requisitos: Windows 10 (22H2) u 11, con winget (viene con Windows). No hace falta nada más instalado: el script instala WSL, Ubuntu, Docker Desktop, Git for Windows y VS Code si faltan.
 
-1. Descargá el script. El repo es privado, así que `irm <url> | iex` no funciona. Usá una de estas opciones:
-   - Con GitHub CLI ya logueado (`gh auth login`), en PowerShell:
-
-     ```powershell
-     $token = gh auth token
-     Invoke-WebRequest -Uri https://api.github.com/repos/finalproyectogrupo8-max/API_Sportiva/contents/scripts/setup-windows.ps1 `
-       -Headers @{ Authorization = "Bearer $token"; Accept = "application/vnd.github.raw" } -OutFile setup-windows.ps1
-     ```
-
-   - O desde GitHub: abrí `scripts/setup-windows.ps1`, botón **Raw** y guardalo como `setup-windows.ps1`.
-
-2. **Leelo antes de ejecutarlo.** Es un script que instala software: no ejecutes scripts que no revisaste.
-3. Ejecutalo. `-ExecutionPolicy Bypass` aplica solo a este proceso, no cambia la configuración de tu sistema:
-
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\setup-windows.ps1
-   ```
-
-**Si el repo es público**, en lugar de los pasos 1 a 3 alcanza con un comando en PowerShell:
+Abrí **PowerShell normal**, no "como administrador", y corré:
 
 ```powershell
 irm https://raw.githubusercontent.com/finalproyectogrupo8-max/API_Sportiva/main/scripts/setup-windows.ps1 | iex
 ```
 
-Con parámetros (por ejemplo, para pasar tu usuario de GitHub):
+> **Correlo como usuario normal.** El script pide permisos de administrador **solo** para activar WSL: vas a ver un aviso de UAC una vez. Si lo corrés entero como administrador, WSL y Docker pueden quedar configurados para otro contexto que no es el tuyo. En ese caso el script te avisa.
+
+`irm | iex` ejecuta lo que esté en `main` en ese momento, sin que lo leas. Si preferís revisarlo antes, bajalo, leelo y ejecutalo como archivo:
 
 ```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/finalproyectogrupo8-max/API_Sportiva/main/scripts/setup-windows.ps1))) -GitHubUser tu-usuario
+irm https://raw.githubusercontent.com/finalproyectogrupo8-max/API_Sportiva/main/scripts/setup-windows.ps1 -OutFile setup-windows.ps1
+powershell -ExecutionPolicy Bypass -File .\setup-windows.ps1
 ```
 
-`irm | iex` ejecuta lo que esté en `main` en ese momento, sin que lo leas. Si preferís algo fijo y revisado, reemplazá `main` por un tag o un commit (`.../API_Sportiva/<tag>/scripts/...`). Si el script se detiene, la ventana de PowerShell no se cierra: leé el mensaje, resolvé lo que pide y volvé a correr el comando.
+`-ExecutionPolicy Bypass` aplica solo a ese proceso y no cambia la configuración de tu sistema. Para fijar una versión, reemplazá `main` por un tag o un commit en la URL.
 
-El script:
+### Qué hace solo y qué te va a preguntar
 
-1. Verifica WSL 2 con Ubuntu. Si falta, ofrece instalarlo (`wsl --install -d Ubuntu`). Necesita PowerShell **como administrador** y, quizás, reiniciar. Después abrí Ubuntu desde el menú Inicio, creá tu usuario de Linux y volvé a correr el script.
-2. Verifica Docker Desktop. Si falta, ofrece instalarlo con `winget`. Después abrilo una vez, aceptá los términos y volvé a correr el script.
-3. Verifica que `docker` funcione **dentro de Ubuntu**. Si no funciona, te dice cómo activar la integración (ver [Troubleshooting](#docker-command-not-found-dentro-de-ubuntu)).
-4. Verifica que git en WSL tenga acceso al repo. Si no tiene, ofrece usar el Git Credential Manager de Windows (el mismo login que ya usás en Windows).
-5. Clona el repo en `~/repos/api-sportiva` **dentro de WSL**.
-6. Corre `scripts/setup.sh` y abre VS Code en modo Remote WSL.
+| Paso | Qué hace el script | Qué tenés que hacer vos |
+| --- | --- | --- |
+| 1. WSL 2 | Lo activa si falta | Aceptar el **UAC**, una sola vez. Si Windows pide reiniciar, aceptar: **el script sigue solo** cuando volvés a iniciar sesión |
+| 2. Ubuntu | Lo instala sin la ventana de primer uso y lo deja como distro predeterminada | Elegir **usuario y contraseña de Linux**. La contraseña es para `sudo` |
+| 3. Docker Desktop | Lo instala **por usuario**, sin admin y con la licencia aceptada. Después lo arranca y espera a que el motor responda | Nada |
+| 4. Docker dentro de Ubuntu | Si Ubuntu no ve `docker`, lo repara: reinicia la distro (`wsl --terminate`) y, si hace falta, Docker Desktop | Confirmar los reinicios |
+| 5. Git en WSL | Configura el acceso al repo con el Git Credential Manager de Windows, y tu identidad con el email noreply de GitHub | Escribir tu usuario de GitHub, si te lo pide |
+| 6. Proyecto | Clona en `~/repos/api-sportiva` **dentro de WSL** y corre `scripts/setup.sh` | Nada |
+| 7. VS Code | Lo instala si falta, agrega la extensión **WSL** y abre el proyecto | Aceptar las **extensiones recomendadas** cuando VS Code las ofrezca |
 
-Todo lo que instala o cambia configuración global pregunta antes. Con `-Yes` acepta todo. Parámetros útiles: `-Distro Ubuntu-24.04`, `-TargetDir repos/otro-nombre`, `-NoOpen`.
+Todo lo que instala o cambia configuración pregunta antes. Con `-Yes` acepta todo.
+
+### Parámetros útiles
+
+| Parámetro | Para qué |
+| --- | --- |
+| `-WhatIf` | **Simulación:** muestra qué instalaría o cambiaría, sin tocar nada |
+| `-Yes` | Acepta todas las confirmaciones |
+| `-GitHubUser <usuario>` | Tu usuario de GitHub, para no tener que escribirlo. Es obligatorio con `-Yes` |
+| `-Distro <nombre>` | Otra distro de WSL. Por defecto es `Ubuntu` |
+| `-TargetDir <ruta>` | Otra carpeta dentro de WSL. Por defecto es `repos/api-sportiva` |
+| `-NoOpen` | No abrir VS Code al final |
+
+Con `irm`, los parámetros se pasan así:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/finalproyectogrupo8-max/API_Sportiva/main/scripts/setup-windows.ps1))) -WhatIf
+```
+
+### Si algo falla
+
+- Leé el mensaje, resolvé lo que pide y **volvé a correr el mismo comando**. El script retoma desde donde quedó, sin repetir lo que ya está hecho, y la ventana de PowerShell no se cierra.
+- Cada corrida deja un **log** en `%TEMP%\api-sportiva-setup-<fecha>.log`, y el script muestra la ruta al final. Si pedís ayuda, pasá ese archivo: no contiene contraseñas.
 
 > **¿Por qué dentro de WSL y no en `C:\repos`?** Docker monta el código en el contenedor. Desde `C:\` ese montaje cruza del sistema de archivos de Windows al de Linux y es **muy lento** con los miles de archivos de `vendor/`, además de tener permisos emulados. Desde WSL es nativo. Para editar, usá VS Code con la extensión **WSL** (`code .` desde la terminal de Ubuntu). En el Explorador de Windows, los archivos aparecen en `\\wsl$\Ubuntu\home\<usuario>\repos\api-sportiva`.
 
@@ -328,7 +338,13 @@ Nunca uses `docker compose down -v` como forma "normal" de bajar el entorno: par
 
 ### `docker: command not found` dentro de Ubuntu
 
-Falta la integración de Docker Desktop con la distro: **Settings → Resources → WSL integration** → activá **Ubuntu** → *Apply & restart*. Después, en PowerShell: `wsl --terminate Ubuntu` y abrí Ubuntu de nuevo.
+`setup-windows.ps1` lo intenta reparar solo. Si lo resolvés a mano, probá en este orden:
+
+1. Que Ubuntu sea la distro predeterminada, porque Docker se integra con esa: `wsl --set-default Ubuntu`.
+2. Reiniciar la distro: `wsl --terminate Ubuntu`, y abrir Ubuntu de nuevo. Suele alcanzar con esto.
+3. Reiniciar Docker Desktop: `docker desktop restart`, o cerrarlo y abrirlo. Después esperá hasta un minuto y medio: la integración tarda en reconectarse.
+4. Reiniciar WSL completo: `wsl --shutdown`, y después `docker desktop restart`. Hace falta cuando la carpeta compartida entre distros (`/mnt/wsl`) queda desincronizada; pasa, por ejemplo, después de instalar o borrar otra distro. El log de Docker Desktop lo muestra como *"waiting ... for the backend socket"*. Ojo: detiene **todas** las distros.
+5. Activar la integración a mano: **Settings → Resources → WSL integration** → activá **Ubuntu** → *Apply & restart*. Después, `wsl --terminate Ubuntu`.
 
 ### `docker` no se encuentra en PowerShell o VS Code
 
