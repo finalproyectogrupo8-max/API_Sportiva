@@ -584,7 +584,7 @@ Sí, cuando esté implementado: los clubes van a ser bases dentro del mismo cont
 | --- | --- | --- |
 | 1 | ADR de multi-tenancy | Implementación propia (la recomendada) o el paquete `stancl/tenancy`; el nombre de las bases (`club_<slug>` o `club_<id>`); los usuarios de MySQL de operación y de provisión |
 | 2 | Change `platform-auth` | Las tablas `tenants` y `tenant_memberships`, el campo `is_platform_admin`, el `tenant_id` en los tokens, Sanctum (login, selección de club, `me` y logout) y el comando `platform:create-admin` |
-| 3 | Change `platform-admin-and-provisioning` | Los endpoints `/api/admin/*` y la auditoría; la conexión `tenant` y el middleware; el job `ProvisionTenant`; el servicio `queue` (worker) en Compose; la conexión `provisioning`; los comandos `tenants:create` y `tenants:migrate`; los permisos de MySQL en local. Además, la **guía de ABM**: estructura, rutas, controllers, Requests, Resources, paginación, policies, bajas y tests, con el ABM de usuarios y clubes como ejemplo de referencia |
+| 3 | Change `platform-admin-and-provisioning` | Los endpoints `/api/admin/*` y la auditoría; la conexión `tenant` y el middleware; el job `ProvisionTenant`; el servicio `queue` (worker) en Compose; la conexión `provisioning`; los comandos `tenants:create` y `tenants:migrate`; los permisos de MySQL en local. Además, se **confirma la [guía de ABM](guia-abm.md)** (hoy es una propuesta), con el ABM de usuarios y clubes como ejemplo de referencia |
 | 4 | Front-Sportiva | El login, el selector de club y las páginas `/admin`, contra estos endpoints |
 | 5 | Módulos del club | Jugadores, partidos, pedidos..., con sus migraciones en `tenant/` |
 

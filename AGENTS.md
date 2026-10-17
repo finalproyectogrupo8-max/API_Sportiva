@@ -38,6 +38,7 @@ Todos corren en Docker, desde la raíz del repo. Guía completa: [docs/desarroll
 - `GET /api/health` responde un cuerpo fijo (`status`, `checks`): no le agregues versiones, hosts ni detalles de excepciones.
 - Claves en `snake_case`, fechas ISO 8601 con zona horaria, enums en inglés.
 - Nombres de código en **inglés**: tablas, modelos, rutas y campos (`players`, `Player`, `/api/players`, `birth_date`). La documentación y la UI van en español.
+- **ABM (CRUD):** seguir [docs/guia-abm.md](docs/guia-abm.md): `Route::apiResource`, el controller fino con `Gate::authorize`, `Store/Update<Model>Request`, `<Model>Resource`, paginación (20 por defecto, 100 como máximo), soft delete en entidades de negocio y los 10 tests mínimos (incluido el aislamiento entre clubes).
 - El contrato con el frontend está en `docs/integracion-api-laravel.md` del repo Front-Sportiva.
 - Los tests viven en `tests/` y usan PHPUnit, contra la base MySQL `sportiva_testing` (no SQLite).
 - Las imágenes Docker se fijan por tag y digest. Para actualizarlas, ver "Imágenes fijadas" en `docs/decisions.md`.
