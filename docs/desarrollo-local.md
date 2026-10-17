@@ -381,6 +381,14 @@ Si el repo está en `C:\` en lugar de WSL, los permisos son emulados y pueden fa
 
 El volumen se creó antes de que existiera el script de init (o con otra configuración). La app no usa root: su contraseña es aleatoria y solo aparece una vez en los logs de la primera inicialización (`GENERATED ROOT PASSWORD`). La solución es [resetear la base](#resetear-la-base-local-destruye-datos): al recrear el volumen, el script de init vuelve a correr.
 
+### DBeaver: "Communications link failure" / "Connection refused" en el 3310
+
+MySQL no está publicando el puerto. `compose.override.yaml` es local (está en `.gitignore`), así que **cada clon tiene que tener el suyo**: si te pasaste a un clon nuevo (por ejemplo, a WSL), no está. Activalo en el clon que estás usando, como explica [Acceso a MySQL desde el host](#acceso-a-mysql-desde-el-host). Para comprobarlo:
+
+```bash
+docker compose ps    # mysql tiene que mostrar 127.0.0.1:3310->3306/tcp
+```
+
 ### DBeaver: "Public Key Retrieval is not allowed"
 
 Lo da el driver JDBC de MySQL 8. Antes de tocar nada, revisá **a qué puerto** te estás conectando:
