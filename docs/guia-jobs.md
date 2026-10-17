@@ -198,10 +198,12 @@ ProvisionTenant::dispatch($tenant->id);                        // a la cola, cua
 ProvisionTenant::dispatch($tenant->id)->afterCommit();         // recién cuando se confirme la transacción
 
 SendMatchReminder::dispatch($tenantId, $matchId)
-    ->delay(now()->addHours(2));                               // dentro de 2 horas
+    ->delay(now()->addMinutes(10));                            // dentro de 10 minutos (máximo 15 en producción)
 
 ProvisionTenant::dispatch($tenant->id)->onQueue('provisioning');   // en una cola con nombre (sección 9)
 ```
+
+> ⚠️ **Demoras largas.** En producción (managed queues de Laravel Cloud, sección 12), una cola estándar admite **como máximo 15 minutos** de demora. Para algo que tiene que pasar "en 2 horas" o "mañana a las 9", no uses `delay()`: guardá la fecha en la base y que una **tarea programada** (sección 11) despache los jobs cuando llegue el momento.
 
 **Por qué `afterCommit()`.** Si dentro de una transacción creás el club y despachás el job, el worker puede tomarlo **antes** del commit: no encuentra el club y falla. Con `afterCommit()`, el job se encola recién cuando la transacción se confirma (y no se encola si hace rollback). En `config/queue.php`, `after_commit` está en `false`, así que hay que pedirlo en cada caso.
 
@@ -241,7 +243,11 @@ php artisan queue:work --queue=default,notifications,provisioning
 
 Con un solo worker alcanza al principio. Si las altas empiezan a demorar el resto, se agrega un worker dedicado a `provisioning`.
 
+> ⚠️ **En producción, con el plan Starter, hay UNA sola cola.** Las managed queues de Laravel Cloud permiten 1 cola por entorno en Starter (10 en Growth). Hasta que cambie el plan, **todo va a la cola por defecto**: no uses `->onQueue(...)` en el código. Separar colas queda como opción para un plan superior. En local da igual, porque el worker atiende la cola `default`.
+
 ## 10. Errores, reintentos y jobs fallidos
+
+> ⚠️ **Los comandos de esta sección son para local** (cola `database`). En producción, con managed queues, `queue:failed`, `queue:retry`, `queue:clear` y `queue:pause` **no funcionan**: los fallidos se ven, reintentan y borran desde el dashboard **Queues** de Laravel Cloud (pestaña *Monitoring*) o con su API.
 
 **Qué pasa cuando un intento falla (lanza una excepción):**
 
@@ -273,7 +279,9 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();          // limp
 Schedule::job(new RecalculateAllStats)->dailyAt('03:00')->onOneServer();  // un job, una vez por día
 ```
 
-- El scheduler necesita un proceso que corra `php artisan schedule:work`, o `schedule:run` cada minuto. Hoy **no existe**: se agrega junto con el worker (sección 12).
+- El scheduler necesita un proceso que corra `php artisan schedule:work`, o `schedule:run` cada minuto. Hoy **no existe** en local: se agrega junto con el worker (sección 12). En Laravel Cloud es un *toggle* (sección 12).
+- **En producción, la lista de tareas se toma en cada deploy:** un cambio en `routes/console.php` recién vale después del siguiente deploy.
+- **No programes tareas más seguido que el tiempo de *Scale to Zero*** del entorno. Si una tarea corre cada 5 minutos y la app se duerme a los 5 minutos de inactividad, nunca llega a dormirse, y eso cuesta.
 - `onOneServer()` evita que la tarea corra dos veces si hay más de un servidor.
 - Las tareas pesadas conviene que **despachen un job** en lugar de hacer el trabajo ahí mismo.
 
@@ -294,7 +302,7 @@ php artisan schedule:test                 # ejecutar una a mano, para probarla
 # 🟡 ilustrativo
   queue:
     image: api-sportiva-dev:local
-    command: php artisan queue:work --queue=default,notifications,provisioning --tries=3 --timeout=60
+    command: php artisan queue:work --tries=3 --timeout=60      # una sola cola (default), como en producción con Starter
     volumes: [".:/var/www/html"]
     depends_on: { mysql: { condition: service_healthy } }
 
@@ -312,7 +320,35 @@ php artisan schedule:test                 # ejecutar una a mano, para probarla
 | Ver los fallidos | `docker compose exec backend php artisan queue:failed` |
 | Probar un job sin el worker | En un test, con `QUEUE_CONNECTION=sync` (sección 13) |
 
-**Producción (Laravel Cloud):** se configura un *queue worker* y el scheduler en el entorno. Queda pendiente verificar qué incluye el plan y si suma costo, en el change de deploy. En cada deploy los workers se reinician solos para tomar el código nuevo (`queue:restart`).
+### Producción: Laravel Cloud
+
+En Laravel Cloud **no se sube nada de Docker**: compila desde Git, y la cola y el scheduler se configuran en su panel. Verificado en la documentación oficial ([colas](https://laravel.com/cloud/docs/queues), [cómputo](https://laravel.com/cloud/docs/compute) y [tareas programadas](https://laravel.com/cloud/docs/scheduled-tasks)), 2026-10-17.
+
+| | **Managed queues** (recomendado) | Worker propio (`queue:work`) |
+| --- | --- | --- |
+| Qué es | Laravel Cloud opera la cola (sobre SQS) y los workers, que escalan solos | Un proceso `queue:work` en un *Worker cluster* o en el *App cluster* |
+| Cómo se activa | Panel: **Add compute → Managed queue** → deploy | Panel: crear el Worker cluster con el comando |
+| Conexión | Laravel Cloud define `QUEUE_CONNECTION=cloud` | La que se elija (por ejemplo, `database`) |
+| Con *Scale to Zero* | **Sigue procesando** aunque la app duerma | **No procesa** mientras la app duerme, salvo que el worker quede siempre despierto |
+| Requisitos | Laravel ≥ 13.19 (tenemos 13.37) y `composer require aws/aws-sdk-php` | Ninguno |
+| Costo | Por segundo de worker, más US$1 por millón de operaciones, más aproximadamente US$0,13 por mes por cola | El cómputo del worker mientras corre |
+
+**Límites del plan Starter, con managed queues:**
+
+- **1 cola** por entorno y **hasta 3 workers**.
+- Workers Flex: **un job puede durar como máximo 90 s**. El `$timeout` de cada job tiene que quedar por debajo de eso. Para jobs más largos hace falta un worker Pro, que no está disponible en Starter.
+- Demora máxima de un job: **15 minutos**.
+- La entrega es **"al menos una vez"**: un job puede llegar dos veces, así que tiene que ser idempotente (sección 6).
+
+**Scheduler:** en el *App cluster* se activa el toggle **Scheduler** y se hace deploy. Laravel Cloud corre `schedule:run` cada minuto y, con *Scale to Zero*, despierta la app sola para las tareas programadas.
+
+**El código no cambia entre local y producción:** los jobs se despachan sin indicar una conexión (`ProvisionTenant::dispatch(...)`). En local van a la cola `database` y los procesa el servicio `queue`; en producción, Laravel Cloud define `QUEUE_CONNECTION=cloud` y van a la managed queue.
+
+🟡 **Pendiente para el change de deploy:**
+- decidir entre managed queue y worker propio (la recomendación es managed queue);
+- agregar `aws/aws-sdk-php` si se elige managed queue;
+- activar el scheduler;
+- confirmar que el alta de un club entra en 90 s.
 
 ## 13. Tests
 
@@ -364,7 +400,7 @@ Casos mínimos para cada job:
 3. **Constructor:** solo IDs. Si es de club, `tenantId` + `RunsInTenant` (sección 7).
 4. **`handle()` idempotente**, con `$tries`, `$backoff` y un `$timeout` menor a 90.
 5. **`failed()`**: qué estado queda y qué se loguea.
-6. **Despachalo** desde el controller, la Action o el comando. Usá `->afterCommit()` si estás dentro de una transacción, y `->onQueue(...)` si es pesado.
+6. **Despachalo** desde el controller, la Action o el comando. Usá `->afterCommit()` si estás dentro de una transacción. **No uses `->onQueue(...)`**: en Starter hay una sola cola (sección 9). Tampoco uses una demora (`delay`) de más de 15 minutos (sección 8).
 7. **Tests:** los 5 casos de la sección 13.
 8. **Probalo en local:** con el worker levantado (`docker compose logs -f queue`). Si cambiaste el código del job, `docker compose restart queue`.
 9. **PR:** la CI tiene que pasar y un compañero tiene que aprobarlo.

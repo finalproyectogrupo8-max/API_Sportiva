@@ -417,7 +417,7 @@ Se resuelve en el change que implementa el alta:
 | --- | --- |
 | Local | Un tercer servicio, `queue`, en `compose.yaml`: usa la misma imagen y el mismo código que `backend`, pero corre `php artisan queue:work`. Se levanta solo con `docker compose up -d` |
 | Tests | `QUEUE_CONNECTION=sync`: el job se ejecuta en el momento, sin worker, para poder testear el alta de punta a punta |
-| Laravel Cloud | Configurar un *queue worker* en el entorno. Falta verificar qué incluye el plan y si suma costo (se ve en el change de deploy) |
+| Laravel Cloud | No se sube Docker: se configura en el panel. Lo recomendado es una **managed queue** (Laravel Cloud define `QUEUE_CONNECTION=cloud`, y requiere `aws/aws-sdk-php`). En Starter: 1 cola, hasta 3 workers y **90 s como máximo por job**. Detalle en la [guía de jobs](guia-jobs.md#producción-laravel-cloud) |
 
 **Ojo con el worker local:** carga el código una sola vez, al arrancar. Si cambiás el código de un job, reinicialo con `docker compose restart queue`. Para ver qué está procesando: `docker compose logs -f queue`.
 
