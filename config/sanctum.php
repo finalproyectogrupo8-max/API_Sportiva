@@ -3,7 +3,6 @@
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Laravel\Sanctum\Http\Middleware\AuthenticateSession;
-use Laravel\Sanctum\Sanctum;
 
 return [
 
@@ -18,12 +17,7 @@ return [
     |
     */
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
-        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
-        Sanctum::currentApplicationUrlWithPort(),
-        // Sanctum::currentRequestHost(),
-    ))),
+    'stateful' => [],
 
     /*
     |--------------------------------------------------------------------------
@@ -37,7 +31,7 @@ return [
     |
     */
 
-    'guard' => ['web'],
+    'guard' => [],
 
     /*
     |--------------------------------------------------------------------------
@@ -50,7 +44,7 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' => 480,
 
     /*
     |--------------------------------------------------------------------------
@@ -65,7 +59,10 @@ return [
     |
     */
 
-    'token_prefix' => env('SANCTUM_TOKEN_PREFIX', ''),
+    'token_prefix' => env('SANCTUM_TOKEN_PREFIX', 'sportiva_'),
+
+    'pre_tenant_ttl' => (int) env('SANCTUM_PRE_TENANT_TTL', 15),
+    'tenant_ttl' => (int) env('SANCTUM_TENANT_TTL', 480),
 
     /*
     |--------------------------------------------------------------------------
