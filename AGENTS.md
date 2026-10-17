@@ -38,6 +38,7 @@ Todos corren en Docker, desde la raíz del repo. Guía completa: [docs/desarroll
 - `GET /api/health` responde un cuerpo fijo (`status`, `checks`): no le agregues versiones, hosts ni detalles de excepciones.
 - Claves en `snake_case`, fechas ISO 8601 con zona horaria, enums en inglés.
 - Nombres de código en **inglés**: tablas, modelos, rutas y campos (`players`, `Player`, `/api/players`, `birth_date`). La documentación y la UI van en español.
+- **Jobs:** seguir [docs/guia-jobs.md](docs/guia-jobs.md). Son idempotentes, reciben **IDs y no modelos** (obligatorio en los jobs de club: `tenantId` + apuntar la conexión en `handle()`), sin secretos en el payload, con `$timeout` menor que `retry_after` (90 s), con `->afterCommit()` si se despachan dentro de una transacción, y llevan sus tests (incluida la idempotencia).
 - **ABM (CRUD):** seguir [docs/guia-abm.md](docs/guia-abm.md): `Route::apiResource`, el controller fino con `Gate::authorize`, `Store/Update<Model>Request`, `<Model>Resource`, paginación (20 por defecto, 100 como máximo), soft delete en entidades de negocio y los 10 tests mínimos (incluido el aislamiento entre clubes).
 - El contrato con el frontend está en `docs/integracion-api-laravel.md` del repo Front-Sportiva.
 - Los tests viven en `tests/` y usan PHPUnit, contra la base MySQL `sportiva_testing` (no SQLite).

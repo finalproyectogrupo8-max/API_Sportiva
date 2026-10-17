@@ -315,6 +315,8 @@ Si un paso falla, el club queda en `status = failed`, y el alta se puede reinten
 
 ### Qué es un job y por qué el alta usa uno
 
+> Para crear, despachar, reintentar y testear jobs en general, ver la [guía de jobs](guia-jobs.md).
+
 En Laravel, un **job** es una tarea que se guarda para ejecutarla **después**, en segundo plano, en lugar de hacerla mientras el usuario espera la respuesta. Crear la base y correrle todas las migraciones tarda segundos. Si se hiciera dentro del request, el panel quedaría colgado, y un timeout podría dejar el club a medio crear.
 
 ```
