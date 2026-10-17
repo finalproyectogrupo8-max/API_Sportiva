@@ -26,6 +26,7 @@ Detalles, comandos del día a día y troubleshooting: **[docs/desarrollo-local.m
 | Documento | Contenido |
 | --- | --- |
 | [docs/desarrollo-local.md](docs/desarrollo-local.md) | Setup, uso diario, reset de datos, troubleshooting |
+| [docs/guia-bases-de-datos.md](docs/guia-bases-de-datos.md) | **Guía para devs:** base central y de cada club, migraciones paso a paso, alta de clubes (job), panel de admin y comandos |
 | [docs/arquitectura-multi-tenant.md](docs/arquitectura-multi-tenant.md) | Base central + una base por club: qué existe y qué falta |
 | [docs/adr/](docs/adr/) | Decisiones de arquitectura |
 | [docs/api/openapi.json](docs/api/openapi.json) | Contrato OpenAPI (generado por Scramble; lo consume el frontend) |

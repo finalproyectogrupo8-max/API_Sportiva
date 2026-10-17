@@ -3,6 +3,8 @@
 > **Estado:** decidido a nivel de producto (ADR 0001 y ADR 0002 del repo [Front-Sportiva](https://github.com/finalproyectogrupo8-max/Front-Sportiva), y su `docs/integracion-api-laravel.md` §5.6). **Solo la base central está implementada.** Este documento describe cómo se va a introducir el resto y qué decisiones faltan.
 >
 > Esos documentos del front todavía dicen `olim_platform`. El nombre vigente es `sportiva_platform` (ver [decisions.md](decisions.md)).
+>
+> **Para el paso a paso con ejemplos** (cómo se escriben y aplican las migraciones de club, el job que da de alta los clubes, el panel de administración y los comandos), ver la [guía para devs de bases de datos](guia-bases-de-datos.md).
 
 ## El modelo
 
