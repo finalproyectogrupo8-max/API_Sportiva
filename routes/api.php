@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Club\CategoryController;
+use App\Http\Controllers\Club\CoachController;
+use App\Http\Controllers\Club\SeasonController;
+use App\Http\Controllers\Club\SportController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\TenantController;
 use Dedoc\Scramble\Scramble;
@@ -30,6 +34,13 @@ Route::middleware(['auth:sanctum', 'platform.admin'])
     ->group(function () {
         Route::apiResource('tenants', TenantController::class);
     });
+
+Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
+    Route::apiResource('sports', SportController::class);
+    Route::apiResource('seasons', SeasonController::class);
+    Route::apiResource('categories', CategoryController::class);
+    Route::apiResource('coaches', CoachController::class);
+});
 
 // Documentación: Swagger UI y contrato OpenAPI. Fuera de local/staging (y de los tests) las
 // rutas no se registran: producción responde exactamente como ante una ruta inexistente.
