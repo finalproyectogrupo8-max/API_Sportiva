@@ -14,7 +14,7 @@ Una sola API con dos tipos de base: central (`sportiva_platform`) y una por club
 
 ## Decisions
 
-1. **Dos tokens.** Login emite un token con ability `pre-tenant` (vence en 15 min). `select-tenant` lo revoca y emite uno con ability `tenant` y `tenant_id`.
+1. **Dos tokens.** Login emite un token con ability `tenant:select` (vence en 15 min). `select-tenant` lo revoca y emite uno con abilities `tenant:select` y `tenant:operate`, atado a `tenant_id` (vence en 480 min).
 2. **Token de plataforma.** Un usuario con `is_platform_admin` usa el token `pre-tenant`/de plataforma para `/api/admin/*`, sin elegir club. Detalle de abilities a confirmar en la revisión.
 3. **`tenant_id` en `personal_access_tokens`** con un modelo `PersonalAccessToken` propio registrado con `Sanctum::usePersonalAccessTokenModel()`. Se completa con `forceFill` porque `createToken` no lo acepta.
 4. **`database_name` derivado:** `club_<slug>`, asignado por el servidor, sin campo en el Request. El `slug` valida `^[a-z0-9_]+$`, máximo 50 caracteres (el límite de nombre de base en MySQL es 64 y el prefijo ocupa 5). El prefijo `club_` impide chocar con `sportiva_platform`, `sportiva_testing`, `mysql` o `sys`.
@@ -32,5 +32,5 @@ Una sola API con dos tipos de base: central (`sportiva_platform`) y una por club
 ## Open Questions
 
 - **¿`suspended` es un estado válido?** La guía define `provisioning | active | failed`. Si lo es, hay que actualizar la guía y la migración. Si no, `destroy` necesita otro mecanismo (la guía pide soft delete en entidades de negocio).
-- **Duración del token de club** (propuesta: 8 horas) y del token `pre-tenant` (15 minutos).
+- Las duraciones son 15 minutos para el token pre-tenant y 480 minutos para el token de club.
 - **Qué abilities usa el token de un platform admin** para `/api/admin/*`.

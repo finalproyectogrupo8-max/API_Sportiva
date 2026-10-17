@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\TenantController;
 use Dedoc\Scramble\Scramble;
@@ -8,6 +9,21 @@ use Illuminate\Support\Facades\Route;
 // Todas las rutas de este archivo quedan bajo el prefijo /api (ver bootstrap/app.php).
 
 Route::get('/health', HealthController::class)->name('health');
+
+Route::prefix('auth')->group(function () {
+    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('select-tenant', [AuthController::class, 'selectTenant'])
+            ->middleware('abilities:tenant:select');
+        Route::post('logout', [AuthController::class, 'logout']);
+    });
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('me/tenants', [AuthController::class, 'meTenants']);
+    Route::get('me', [AuthController::class, 'me'])->middleware('tenant.token');
+});
 
 Route::middleware(['auth:sanctum', 'platform.admin'])
     ->prefix('admin')
