@@ -1,0 +1,11 @@
+{
+    // Extensiones recomendadas: VS Code ofrece instalarlas al abrir el proyecto.
+    // Abri el proyecto DENTRO de WSL (scripts/setup-windows.ps1 lo hace): asi se instalan del lado de WSL.
+    "recommendations": [
+        "ms-vscode-remote.remote-wsl",
+        "bmewburn.vscode-intelephense-client",
+        "laravel.vscode-laravel",
+        "ms-azuretools.vscode-containers",
+        "EditorConfig.EditorConfig"
+    ]
+}

@@ -45,6 +45,12 @@ jobs:
             Write-Output "::error file=$path::Tiene caracteres no ASCII: Windows PowerShell 5.1 los lee mal."
             exit 1
           }
+          # Caracteres de control (salvo tab, LF y CR): por ejemplo, un backspace que se colo al
+          # escapar mal "\b" en una ruta. Parsea bien pero rompe la ruta en silencio.
+          if ($bytes | Where-Object { $_ -lt 32 -and $_ -notin 9, 10, 13 }) {
+            Write-Output "::error file=$path::Tiene caracteres de control invisibles (revisa las rutas con barras invertidas)."
+            exit 1
+          }
           $tokens = $null; $errors = $null
           [void][System.Management.Automation.Language.Parser]::ParseInput([Text.Encoding]::UTF8.GetString($bytes), [ref]$tokens, [ref]$errors)
           if ($errors.Count -gt 0) {
