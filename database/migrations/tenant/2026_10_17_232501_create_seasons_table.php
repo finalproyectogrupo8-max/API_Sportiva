@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -15,9 +16,10 @@ return new class extends Migration
             $table->date('end_date');
             $table->string('status', 20);
             $table->timestamps();
-
-            $table->check('end_date >= start_date');
         });
+
+        // El Blueprint no tiene un método para CHECK: va en SQL.
+        DB::statement('ALTER TABLE seasons ADD CONSTRAINT seasons_dates_check CHECK (end_date >= start_date)');
     }
 
     public function down(): void

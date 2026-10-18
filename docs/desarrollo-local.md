@@ -18,7 +18,7 @@ Cómo levantar la API Sportiva en tu máquina. **No hace falta instalar PHP, Com
 | Pieza | Qué es |
 | --- | --- |
 | `backend` | Contenedor PHP 8.5 + Laravel 13. Sirve la API con `php artisan serve` en `http://127.0.0.1:8000` |
-| `mysql` | MySQL 8.4. Bases `sportiva_platform` (central) y `sportiva_testing` (tests). No se expone fuera de Docker |
+| `mysql` | MySQL 8.4. Bases `sportiva_platform` (central), `sportiva_testing` (tests) y las de club (`club_*`). No se expone fuera de Docker |
 | `mysql-data` | Volumen de Docker con los datos de MySQL. Sobrevive a reinicios y rebuilds |
 | `.env` | Configuración local (la copia `setup.sh` desde `.env.example`). La leen Compose y Laravel |
 | `scripts/setup.sh` | Deja todo levantado y migrado. Es idempotente: se puede correr siempre que haya dudas |
@@ -319,7 +319,7 @@ Para ver qué está escuchando en cada puerto (PowerShell): `netstat -ano | find
 
 ## Resetear la base local (destruye datos)
 
-> ⚠️ **Esto borra TODOS los datos de tu MySQL local** (`sportiva_platform` y `sportiva_testing`) y no se puede deshacer. No afecta a nadie más: el volumen solo existe en tu máquina.
+> ⚠️ **Esto borra TODOS los datos de tu MySQL local** (`sportiva_platform`, `sportiva_testing` y las bases `club_*`) y no se puede deshacer. No afecta a nadie más: el volumen solo existe en tu máquina.
 
 Opciones, de menos a más destructiva:
 
@@ -380,6 +380,33 @@ Si el repo está en `C:\` en lugar de WSL, los permisos son emulados y pueden fa
 ### `sportiva_testing` no existe (los tests fallan con `Unknown database`)
 
 El volumen se creó antes de que existiera el script de init (o con otra configuración). La app no usa root: su contraseña es aleatoria y solo aparece una vez en los logs de la primera inicialización (`GENERATED ROOT PASSWORD`). La solución es [resetear la base](#resetear-la-base-local-destruye-datos): al recrear el volumen, el script de init vuelve a correr.
+
+### Los tests de club fallan por permisos de MySQL
+
+Error típico: `Access denied for user 'sportiva'@'%' to database 'club_test_a'`.
+
+Los tests de club crean sus propias bases (`club_test_a` y `club_test_b`), y para eso el usuario de la app necesita permiso sobre las bases `club_*`. Ese permiso lo da `docker/mysql/init/02-club-dbs.sh`, que se agregó con el change `tenant-connection` (2026-10-18). Como los scripts de init solo corren con el volumen vacío, **si tu volumen es anterior, hay que recrearlo una vez**. El usuario de la app no se puede dar el permiso a sí mismo, y la contraseña de root es aleatoria.
+
+> ⚠️ **Recrear el volumen borra TODOS los datos de tu MySQL local** (`sportiva_platform`, `sportiva_testing` y las bases `club_*`). No afecta a nadie más.
+
+En la terminal de Ubuntu (WSL), desde la raíz del repo:
+
+```bash
+docker compose down -v        # -v BORRA el volumen mysql-data
+bash scripts/setup.sh         # lo recrea: corren los scripts de init y las migraciones
+```
+
+Desde PowerShell, lo mismo a través de WSL:
+
+```powershell
+wsl -d Ubuntu --cd ~/repos/api-sportiva -- bash -lc "docker compose down -v && bash scripts/setup.sh"
+```
+
+Para confirmar que el permiso quedó, `SHOW GRANTS` tiene que listar ``club\\_%``:
+
+```bash
+docker compose exec mysql sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u"$MYSQL_USER" -e "SHOW GRANTS"'
+```
 
 ### DBeaver: "Communications link failure" / "Connection refused" en el 3310
 

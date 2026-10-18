@@ -12,7 +12,8 @@ class TenantFactory extends Factory
 {
     public function definition(): array
     {
-        $slug = fake()->unique()->lexify('????????');
+        // test_*: en testing, TenantDatabase solo acepta bases club_test_* (las de un club real, nunca).
+        $slug = 'test_'.fake()->unique()->lexify('????????');
 
         return [
             'slug' => $slug,

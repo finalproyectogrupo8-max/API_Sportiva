@@ -17,8 +17,7 @@ No supongas el estado: verificalo, porque este documento puede quedar atrás del
 
 | Situación | Qué hacer |
 |---|---|
-| `tenant-connection` no está mergeado | Esperar la aprobación. Mientras tanto, se puede escribir la propuesta de `club-access-control` (paso 1) |
-| `tenant-connection` aprobado, con tareas pendientes | `/opsx:apply tenant-connection` |
+| `tenant-connection` no está mergeado | Esperar el merge. Mientras tanto, se puede escribir la propuesta de `club-access-control` (paso 1) |
 | C1–C4 existen y `club-access-control` no está propuesto | `/opsx:propose club-access-control` |
 | C1–C6 existen | Seguir con la siguiente ola de la [sección 4](#4-orden-de-implementación-olas) que no tenga change |
 | Algo de este documento contradice al código | Gana el código. Avisá y corregí el documento en el mismo PR |
@@ -36,7 +35,7 @@ Documentos que hay que leer antes, en este orden:
 | Trabajo | Responsable | Change de OpenSpec |
 |---|---|---|
 | Login, selección de club, tokens atados al club | Hecho (mergeado) | `platform-auth` (le quedan tareas del ABM de clubes) |
-| Conexión `tenant`, cambio de base por request y en jobs, servicio `TenantDatabase` (crear, migrar y conectar bases de club), permisos de MySQL local para `club_%`, soporte de tests multi-club | **Dev de ABM** | [`tenant-connection`](../../openspec/changes/tenant-connection/proposal.md) (propuesto, pendiente de aprobación) |
+| Conexión `tenant`, cambio de base por request y en jobs, servicio `TenantDatabase` (crear, migrar y conectar bases de club), permisos de MySQL local para `club_%`, soporte de tests multi-club | Hecho | [`tenant-connection`](../../openspec/changes/tenant-connection/proposal.md) (implementado) |
 | Módulo 1 (`club_users`, roles y permisos) y la resolución de permisos (`hasClubPermission`, `permissions[]` en `/me`) | **Dev de ABM** (ver [D10](#3-decisiones-que-hay-que-cerrar-antes-de-migrar)) | `club-access-control` (a proponer) |
 | ABM de los módulos 2 a 8 | **Dev de ABM** | Uno por ola (sección 4) |
 | Alta de clubes y usuarios, panel de admin, `ProvisionTenant`, `tenants:create`, `tenants:migrate`, conexión `provisioning`, worker de la cola, permisos de MySQL en Laravel Cloud | **Tiziano** | `platform-admin-and-provisioning`. Usa `TenantDatabase` de `tenant-connection` y el seeder de roles de `club-access-control` |
@@ -49,6 +48,8 @@ Son de Tiziano. Tocarlos genera conflictos y rompe la frontera entre los changes
 - El servicio `queue` (worker) en `compose.yaml`.
 - `database/migrations/` (la base central) y los modelos `User`, `Tenant` y `TenantMembership`.
 
+`tenant-connection` hizo una excepción acordada: `TenantFactory` genera slugs `test_*`, porque en `testing` `TenantDatabase` solo acepta bases `club_test_*`.
+
 Y Tiziano no toca lo que entrega `tenant-connection`: `config/database.php` (conexión `tenant`), `EnsureTenantContext`, `App\Tenancy\TenantDatabase`, `docker/mysql/init/02-club-dbs.sh` y `Tests\Concerns\InteractsWithTenants`. Si alguno necesita cambiar algo del otro, se acuerda y se anota en el change.
 
 ## 2. Qué tiene que existir antes
@@ -57,14 +58,14 @@ Los ABM de club **no se pueden probar** sin esto: el test 10 de la guía ABM (ai
 
 | # | Pieza | Qué necesita el dev de ABM | Cómo verificar que existe |
 |---|---|---|---|
-| C1 | Conexión `tenant` | Que los modelos de club usen `protected $connection = 'tenant';` y apunten a la base del club del token | `grep -n "'tenant' =>" config/database.php` |
-| C2 | Cambio de conexión por request | Que `tenant.token` apunte la conexión a la base del club y la desconecte al terminar | `grep -n "TenantDatabase" app/Http/Middleware/EnsureTenantContext.php` |
-| C3 | Migraciones de club | La carpeta `database/migrations/tenant/` y `TenantDatabase::migrate()`, que la usan los tests | `ls database/migrations/tenant` |
-| C4 | Soporte de tests multi-club | `Tests\Concerns\InteractsWithTenants`: `tenantA()`, `tenantB()`, `clubToken()`, `inTenant()` | `ls tests/Concerns` |
+| C1 | ✅ Conexión `tenant` (hecho) | Que los modelos de club usen `protected $connection = 'tenant';` y apunten a la base del club del token | `grep -n "'tenant' =>" config/database.php` |
+| C2 | ✅ Cambio de conexión por request (hecho) | Que `tenant.token` apunte la conexión a la base del club y la desconecte al terminar | `grep -n "TenantDatabase" app/Http/Middleware/EnsureTenantContext.php` |
+| C3 | ✅ Migraciones de club (hecho) | La carpeta `database/migrations/tenant/` y `TenantDatabase::migrate()`, que la usan los tests | `ls database/migrations/tenant` |
+| C4 | ✅ Soporte de tests multi-club (hecho) | `Tests\Concerns\InteractsWithTenants`: `tenantA()`, `tenantB()`, `clubToken()`, `inTenant()` | `ls tests/Concerns` |
 | C5 | Permisos | `hasClubPermission()` 🟡 y el seeder de roles y permisos del club 🟡 al que cada ABM agrega sus claves | `grep -rn "hasClubPermission" app/` |
 | C6 | `club_users` | La tabla y la forma de obtener el `club_user` del request actual 🟡 (lo necesitan `requested_by`, `performed_by`, `recorded_by`…) | `ls database/migrations/tenant \| grep club_users` |
 
-**C1 a C4 bloquean todo.** C5 y C6 bloquean desde la ola 1 los tests de permisos (caso 8) y, desde la ola 2, las tablas que referencian `club_users`. Los nombres con 🟡 se definen en `club-access-control`.
+**C1 a C4 ya están hechos** (`tenant-connection`). C5 y C6 bloquean desde la ola 1 los tests de permisos (caso 8) y, desde la ola 2, las tablas que referencian `club_users`. Los nombres con 🟡 se definen en `club-access-control`.
 
 **Sin el alta de clubes de Tiziano** se puede desarrollar y testear todo (los tests crean sus propias bases `club_test_*`). Lo único que falta es probar a mano desde Swagger contra un club local, que necesita `tenants:create`.
 

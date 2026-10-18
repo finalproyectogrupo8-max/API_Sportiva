@@ -7,6 +7,12 @@ use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
 {
+    /**
+     * Lo usa Concerns\InteractsWithTenants: las bases de club de prueba se migran una vez por proceso.
+     * Va acá y no en el trait porque una propiedad estática de un trait es una por cada clase que lo usa.
+     */
+    protected static bool $tenantDatabasesMigrated = false;
+
     protected function setUp(): void
     {
         parent::setUp();

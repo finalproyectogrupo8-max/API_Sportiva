@@ -68,7 +68,8 @@ return [
 
         // Base de un club: mismas credenciales que "mysql", sin base fija. La base se elige en runtime
         // reconfigurando esta conexión y llamando a DB::purge() (nunca con "USE <base>").
-        // Sin "url": un DB_URL con path pisaría el database => null.
+        // Sin "url": un DB_URL con path pisaría el database => null. La única clase que la toca es
+        // App\Tenancy\TenantDatabase (ADR 0002).
         'tenant' => [
             'driver' => 'mysql',
             'host' => env('DB_HOST', '127.0.0.1'),
@@ -83,6 +84,8 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // La base ya va en el DSN (dbname=...). Sin esto, Laravel además ejecuta "use `<base>`".
+            'use_db_after_connecting' => false,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
                 PDO::ATTR_TIMEOUT => (int) env('DB_CONNECT_TIMEOUT', 5),
