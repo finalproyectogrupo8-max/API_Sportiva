@@ -54,6 +54,7 @@ Cuando el endpoint dispara un job, responde **202 Accepted** (aceptado, en proce
 | Las tablas `jobs`, `job_batches` y `failed_jobs` | ✅ EXISTEN HOY (migración `0001_01_01_000002_create_jobs_table.php`) |
 | Los tests usan `QUEUE_CONNECTION=sync` (en `phpunit.xml`) | ✅ EXISTE HOY |
 | Algún job (`app/Jobs/`) | ❌ No hay ninguno |
+| Apuntar un job a la base de su club (`TenantDatabase::run`, sección 7) | ✅ EXISTE HOY |
 | **Un worker** (`queue:work`) en `compose.yaml` | ❌ **No existe**: un job encolado hoy quedaría en la tabla para siempre |
 | El scheduler (`schedule:work`) y alguna tarea programada | ❌ No existe |
 | `retry_after` de la cola | 90 s (en `config/queue.php`) |
@@ -138,49 +139,39 @@ class ProvisionTenant implements ShouldQueue        // ShouldQueue = va a la col
 
 ## 7. Jobs que trabajan sobre un club
 
-🟡 **PLANIFICADO.** Se implementa junto con la conexión `tenant` (ver [guia-bases-de-datos.md](guia-bases-de-datos.md)).
+✅ **EXISTE HOY** (change `tenant-connection`): `App\Tenancy\TenantDatabase::run`. Ver [guia-bases-de-datos.md](guia-bases-de-datos.md).
 
-**El problema.** La cola es una sola, en la base central. Cuando el worker toma un job de club, la conexión `tenant` **no apunta a ninguna base**: eso lo hace el middleware HTTP en cada request, y en el worker no hay request.
+**El problema.** La cola es una sola, en la base central. Cuando el worker toma un job de club, la conexión `tenant` **no apunta a ninguna base**: eso lo hace el middleware HTTP (`tenant.token`) en cada request, y en el worker no hay request.
 
-**La trampa de pasar modelos de club.** Si un job recibe un modelo (`Player $player`), Laravel guarda el **nombre de su conexión** (`tenant`) y **lo vuelve a buscar al deserializar el job**, *antes* de llamar a `handle()`. Está verificado en `SerializesAndRestoresModelIdentifiers`. En ese momento la conexión `tenant` está vacía, así que el job falla o lee de la base equivocada.
+**La trampa de pasar modelos de club.** Si un job recibe un modelo (`Player $player`), Laravel guarda el **nombre de su conexión** (`tenant`) y **lo vuelve a buscar al deserializar el job**, *antes* de llamar a `handle()`. Está verificado en `SerializesAndRestoresModelIdentifiers`. En ese momento la conexión `tenant` está vacía, así que el job falla.
 
 Pasa **por defecto**: el trait `Queueable` que genera `make:job` incluye `SerializesModels`.
 
-**La regla:** un job de club recibe el **`tenantId` y los IDs** que necesita, y apunta la conexión **antes** de tocar datos del club. Un trait común lo resuelve:
+**La regla:** un job de club recibe el **`tenantId` y los IDs** que necesita, y hace todo el trabajo del club **dentro de `TenantDatabase::run`**. `run` apunta la conexión a la base del club, ejecuta el callback y la deja sin base al terminar, también si el callback lanza una excepción:
 
 ```php
-// 🟡 ilustrativo: se define en el change de la conexión tenant
-trait RunsInTenant
-{
-    public int $tenantId;
-
-    protected function useTenant(): Tenant
-    {
-        $tenant = Tenant::where('status', 'active')->findOrFail($this->tenantId);
-        config(['database.connections.tenant.database' => $tenant->database_name]);
-        DB::purge('tenant');
-
-        return $tenant;
-    }
-}
+use App\Models\Tenant;
+use App\Tenancy\TenantDatabase;
 
 class RecalculatePlayerStats implements ShouldQueue
 {
-    use Queueable, RunsInTenant;
+    use Queueable;
 
-    public function __construct(int $tenantId, public int $playerId)   // IDs, NO el modelo Player
-    {
-        $this->tenantId = $tenantId;
-    }
+    public function __construct(public int $tenantId, public int $playerId) {}   // IDs, NO el modelo Player
 
-    public function handle(): void
+    public function handle(TenantDatabase $tenantDatabase): void
     {
-        $this->useTenant();                              // PRIMERO apuntar la conexión
-        $player = Player::findOrFail($this->playerId);   // recién ahora, datos del club
-        // ...
+        $tenant = Tenant::findOrFail($this->tenantId);     // base central: valida que el club exista
+
+        $tenantDatabase->run($tenant, function () {
+            $player = Player::findOrFail($this->playerId);  // recién acá, datos del club
+            // ...
+        });
     }
 }
 ```
+
+`handle()` recibe `TenantDatabase` por inyección (el container lo resuelve). Nunca toques `config('database.connections.tenant...')` ni hagas `DB::purge('tenant')` a mano: eso es trabajo de `TenantDatabase`. El job de ejemplo de los tests es `tests/Fixtures/CountTestItems.php`.
 
 Quién lo despacha, desde un request de club, toma el club del **contexto autenticado**, nunca del body:
 
@@ -188,7 +179,7 @@ Quién lo despacha, desde un request de club, toma el club del **contexto autent
 RecalculatePlayerStats::dispatch($currentTenant->id, $player->id);
 ```
 
-> El worker procesa jobs de distintos clubes uno detrás del otro, así que cada job apunta su propia conexión al empezar. Nunca asumas que la conexión `tenant` "ya quedó" apuntada por el job anterior.
+> El worker procesa jobs de distintos clubes uno detrás del otro. Como `run` desconecta al terminar, un job que consulte la conexión `tenant` fuera de `run` falla con `No database selected` en lugar de leer la base del job anterior.
 
 ## 8. Despachar un job
 
@@ -393,11 +384,28 @@ Casos mínimos para cada job:
 | 4 | El endpoint o el comando que lo dispara lo encola con los datos correctos (`Queue::fake()`) |
 | 5 | Para los jobs de club: trabaja sobre la base del club **correcto** |
 
+Para el caso 5, el trait `Tests\Concerns\InteractsWithTenants` da dos clubes de prueba con sus bases (ver [guia-abm.md](guia-abm.md#11-tests-mínimos-de-cada-abm)). El test de `tests/Feature/Tenancy/TenantContextTest.php` lo hace así:
+
+```php
+CountTestItems::$counts = [];
+$this->inTenant($this->tenantA(), fn () => TestItem::create(['name' => 'uno']));
+$this->inTenant($this->tenantB(), function () {
+    TestItem::create(['name' => 'uno']);
+    TestItem::create(['name' => 'dos']);
+});
+
+CountTestItems::dispatchSync($this->tenantA()->id);
+CountTestItems::dispatchSync($this->tenantB()->id);
+
+$this->assertSame([$this->tenantA()->id => 1, $this->tenantB()->id => 2], CountTestItems::$counts);
+$this->assertNull(config('database.connections.tenant.database'));   // al terminar, sin base
+```
+
 ## 14. Paso a paso con comandos (checklist)
 
 1. **Decidí si hace falta un job** (sección 1).
 2. **Crealo:** `php artisan make:job Club/<Nombre>` o `Platform/<Nombre>`.
-3. **Constructor:** solo IDs. Si es de club, `tenantId` + `RunsInTenant` (sección 7).
+3. **Constructor:** solo IDs. Si es de club, `tenantId`, y el trabajo dentro de `TenantDatabase::run` (sección 7).
 4. **`handle()` idempotente**, con `$tries`, `$backoff` y un `$timeout` menor a 90.
 5. **`failed()`**: qué estado queda y qué se loguea.
 6. **Despachalo** desde el controller, la Action o el comando. Usá `->afterCommit()` si estás dentro de una transacción. **No uses `->onQueue(...)`**: en Starter hay una sola cola (sección 9). Tampoco uses una demora (`delay`) de más de 15 minutos (sección 8).
@@ -416,4 +424,4 @@ Casos mínimos para cada job:
 | `$timeout` mayor o igual que `retry_after` | El mismo job corre dos veces en paralelo | `$timeout` < 90, o subir `retry_after` |
 | Un job que no es idempotente | Un reintento duplica datos (dos mails, dos registros) | Diseñarlo para correr N veces (sección 6) |
 | Secretos o datos personales en el constructor | Quedan en texto plano en la tabla `jobs` y en `failed_jobs` | Pasar IDs y buscar los datos en `handle()` |
-| Asumir que `tenant` ya apunta al club del job anterior | Datos de un club escritos en otro | Cada job de club llama a `useTenant()` al empezar |
+| Asumir que `tenant` ya apunta al club del job anterior | Datos de un club escritos en otro | Cada job de club trabaja dentro de `TenantDatabase::run` |

@@ -35,7 +35,7 @@ Esta guía explica la base central, la base de cada club, cómo se escriben y ap
 - Las migraciones se separan **por carpeta**: `database/migrations/` para la central y `database/migrations/tenant/` para los clubes. Hay **una sola carpeta para todos los clubes**, no una por club.
 - `php artisan migrate` migra la central. Un comando propio, `php artisan tenants:migrate`, recorre los clubes y aplica las migraciones de club en cada base.
 - Dar de alta un club crea su base y le corre todas las migraciones de club. Lo hace un **job en la cola** (`ProvisionTenant`), que se dispara desde el panel de administración del front (vía `/api/admin/*`) o por consola.
-- **Hoy en `main` solo existen las 3 migraciones que trae Laravel.** Todo lo multi-tenant está diseñado pero no implementado (ver la sección 3).
+- **Hoy en `main`** existen la base central con auth (`platform-auth`), la conexión `tenant` y el servicio `TenantDatabase` que la apunta a la base de un club (`tenant-connection`). El alta de clubes (`ProvisionTenant`, `tenants:*`) todavía no (ver la sección 3).
 
 ```
                 API Laravel (este repo, un solo deploy)
@@ -89,24 +89,24 @@ La idea es un **monolito modular**: una sola aplicación, con el código separad
 
 ## 3. Situación actual en main
 
-✅ **EXISTE HOY** (verificado en `main` `28e7df1`). Solo están las migraciones que trae Laravel por defecto, y todas van a la base central:
+✅ **EXISTE HOY:**
 
-| Archivo (`database/migrations/`) | Tablas que crea |
+| Pieza | Dónde |
 | --- | --- |
-| `0001_01_01_000000_create_users_table.php` | `users`, `password_reset_tokens`, `sessions` |
-| `0001_01_01_000001_create_cache_table.php` | `cache`, `cache_locks` |
-| `0001_01_01_000002_create_jobs_table.php` | `jobs`, `job_batches`, `failed_jobs` (la cola) |
+| Migraciones centrales: las de Laravel (`users`, `cache`, `jobs`), `tenants`, `tenant_memberships`, `is_platform_admin` y `personal_access_tokens` con `tenant_id` | `database/migrations/` |
+| Sanctum, los endpoints de auth (`login`, `select-tenant`, `me`, `logout`), `/api/admin/tenants` y `php artisan platform:create-admin` | change `platform-auth` |
+| Migraciones de club (`players`, `sports`, `seasons`, `categories`, `coaches`) | `database/migrations/tenant/` |
+| La conexión `tenant` (las mismas variables `DB_*` que `mysql`, sin base fija) | `config/database.php` |
+| `App\Tenancy\TenantDatabase`: la única clase que apunta la conexión `tenant` a la base de un club (`connect`, `disconnect`, `run`) y que crea, migra y borra bases de club (`create`, `migrate`, `drop`) | change `tenant-connection`, [ADR 0002](adr/0002-multi-tenancy-implementacion-propia.md) |
+| El middleware `tenant.token` apunta la conexión a la base del club del token y la desconecta al terminar el request | `app/Http/Middleware/EnsureTenantContext.php` |
+| El permiso del usuario MySQL local sobre las bases `club_*` | `docker/mysql/init/02-club-dbs.sh` (hay que recrear el volumen una vez: ver [desarrollo-local.md](desarrollo-local.md#los-tests-de-club-fallan-por-permisos-de-mysql)) |
+| Tests multi-club: dos clubes de prueba (`club_test_a` y `club_test_b`) con sus bases migradas | `tests/Concerns/InteractsWithTenants.php` |
 
-🟡 **Todavía NO existe en `main`:**
+🟡 **Todavía NO existe en `main`** (change `platform-admin-and-provisioning`, que usa `TenantDatabase`):
 
-- la carpeta `database/migrations/tenant/`;
-- la conexión `tenant` en `config/database.php`;
-- las tablas `tenants` y `tenant_memberships`;
-- la columna `tenant_id` en los tokens;
-- Sanctum y los endpoints de auth y de admin;
-- el job `ProvisionTenant` y un worker de la cola;
-- los comandos `tenants:create`, `tenants:migrate` y `platform:create-admin`;
-- el permiso del usuario MySQL local para crear bases `club_*`.
+- el job `ProvisionTenant` y un worker de la cola: hoy `POST /api/admin/tenants` deja el club en `provisioning` y **no crea su base**;
+- los comandos `tenants:create` y `tenants:migrate`;
+- la tabla `club_users` (change `club-access-control`).
 
 Para comprobarlo vos mismo:
 
@@ -114,12 +114,11 @@ Para comprobarlo vos mismo:
 # Qué migraciones existen y cuáles corrieron en la base central
 docker compose exec backend php artisan migrate:status
 
-# Conexiones configuradas. Hoy aparecen las que trae Laravel (sqlite, mysql, mariadb,
-# pgsql, sqlsrv): se usa "mysql" y todavía NO hay ninguna "tenant"
-docker compose exec backend php artisan config:show database.connections
+# La conexión "tenant": database es null fuera de un request de club
+docker compose exec backend php artisan config:show database.connections.tenant
 
-# Bases que hay en el MySQL local (hoy: sportiva_platform y sportiva_testing)
-docker compose exec mysql sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SHOW DATABASES"'
+# Bases que hay en el MySQL local (sportiva_platform, sportiva_testing y las club_test_* de los tests)
+docker compose exec mysql sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u"$MYSQL_USER" -e "SHOW DATABASES"'
 ```
 
 > La migración de `users` también crea la tabla `sessions`, que una API sin sesiones no usa. Se revisa en el change `platform-auth`, donde además se le agrega a `users` el campo `is_platform_admin`.
@@ -128,14 +127,14 @@ docker compose exec mysql sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "S
 
 ### Pieza 1: una conexión es una dirección a una base
 
-En `config/database.php`, cada **conexión** dice a qué servidor y a qué base conectarse. Se va a agregar una segunda conexión, `tenant`, con el **mismo servidor** y la base **vacía a propósito**:
+En `config/database.php`, cada **conexión** dice a qué servidor y a qué base conectarse. Hay una segunda conexión, `tenant`, con el **mismo servidor** y la base **vacía a propósito**:
 
 ```php
 'mysql' => [                          // ✅ EXISTE HOY: la de siempre
     'host'     => env('DB_HOST'),          // "mysql" en local
     'database' => env('DB_DATABASE'),      // sportiva_platform
 ],
-'tenant' => [                         // 🟡 PLANIFICADO
+'tenant' => [                         // ✅ EXISTE HOY
     'host'     => env('DB_HOST'),          // el MISMO servidor
     'database' => null,                    // se completa en el momento
 ],
@@ -143,13 +142,18 @@ En `config/database.php`, cada **conexión** dice a qué servidor y a qué base 
 
 Es como una dirección con el número de la casa en blanco: el código lo completa justo antes de usarla.
 
+Eso lo hace **solo** `App\Tenancy\TenantDatabase` (ADR 0002). Por dentro, valida el nombre, setea `database.connections.tenant.database` y llama a `DB::purge('tenant')` para olvidar la conexión anterior. En el código de un ABM o de un job nunca se toca la conexión a mano:
+
 ```php
-config(['database.connections.tenant.database' => 'club_river']);  // el número de la casa
-DB::purge('tenant');                        // olvida la conexión anterior
-// desde acá, todo lo que use la conexión "tenant" va a club_river
+// En un request de club no hace falta nada: el middleware tenant.token ya conectó.
+// En un job, un comando o un test:
+app(TenantDatabase::class)->run($tenant, function () {
+    // acá, todo lo que use la conexión "tenant" va a la base de $tenant
+});
+// acá la conexión ya no apunta a ninguna base: una consulta falla con "No database selected"
 ```
 
-> ⚠️ **Nunca usar `USE <base>`.** El proxy de MySQL de Laravel Cloud rechaza `USE club_river` (SQL Error 1148). Laravel no lo necesita, porque abre la conexión directamente con la base indicada. Para cambiar de base se usa siempre `config()` + `DB::purge()`.
+> ⚠️ **Nunca usar `USE <base>`.** El proxy de MySQL de Laravel Cloud rechaza `USE club_river` (SQL Error 1148). La base ya va en el DSN al abrir la conexión (`dbname=club_river`), pero ojo: por defecto Laravel **además** ejecuta `use` después de conectar. Por eso la conexión `tenant` tiene `'use_db_after_connecting' => false`.
 
 ### Pieza 2: `migrate` puede apuntar a cualquier conexión y carpeta
 
@@ -182,11 +186,13 @@ database/migrations/                          ← base CENTRAL (sportiva_platfor
 ├── 0001_01_01_000000_create_users_table.php       ✅ EXISTE HOY
 ├── 0001_01_01_000001_create_cache_table.php       ✅ EXISTE HOY
 ├── 0001_01_01_000002_create_jobs_table.php        ✅ EXISTE HOY
-├── 2026_10_20_000001_create_tenants_table.php     🟡 PLANIFICADO
-├── 2026_10_20_000002_create_tenant_memberships... 🟡 PLANIFICADO
-└── tenant/                                   ← CADA CLUB (club_*)    🟡 PLANIFICADO
-    ├── 2026_10_25_000001_create_players_table.php
-    └── 2026_10_25_000002_create_matches_table.php
+├── 2026_10_17_182514_create_tenants_table.php     ✅ EXISTE HOY
+├── 2026_10_17_182632_create_tenant_memberships... ✅ EXISTE HOY
+├── ...
+└── tenant/                                   ← CADA CLUB (club_*)    ✅ EXISTE HOY
+    ├── 2026_10_17_231953_create_players_table.php
+    ├── 2026_10_17_232500_create_sports_table.php
+    └── ...
 ```
 
 Para crear una migración:
@@ -423,7 +429,7 @@ Se resuelve en el change que implementa el alta:
 
 ## 8. Qué pasa en un request del día a día
 
-🟡 **PLANIFICADO.** Es el diseño del ADR 0001 del front y de `docs/integracion-api-laravel.md` (§3 y §5).
+✅ **EXISTE HOY**, salvo el paso **e** (permisos del rol), que llega con `club-access-control`. Es el diseño del ADR 0001 del front y de `docs/integracion-api-laravel.md` (§3 y §5).
 
 ```
 1. POST /api/auth/login            (email + contraseña, contra la base CENTRAL)
@@ -436,14 +442,15 @@ Se resuelve en el change que implementa el alta:
          a. token válido y no vencido                  (si no → 401)
          b. el token tiene tenant_id                   (si no → 403 tenant_required)
          c. usuario, club y membresía siguen activos   (si no → 403)
-         d. busca tenants.database_name y apunta la conexión "tenant"
+         d. TenantDatabase::connect: valida tenants.database_name y apunta
+            la conexión "tenant" (al terminar el request, la desconecta)
          e. permisos del rol en ese club               (si no → 403 forbidden)
        controller: Player::all()   → consulta club_river.players
 ```
 
 > ⚠️ **El club nunca lo manda el cliente**: sale del token. Nunca se acepta `tenant_id` ni el slug del club en el body o en la URL como fuente de autorización. Así, nadie puede pedir datos de otro club cambiando un parámetro.
 
-**Jobs que trabajan sobre un club.** La cola es una sola, en la base central. Un job que trabaja sobre un club tiene que llevar el `tenant_id` y apuntar la conexión `tenant` al ejecutarse, igual que el middleware. Se resuelve con un trait común para esos jobs.
+**Jobs que trabajan sobre un club.** La cola es una sola, en la base central. Un job que trabaja sobre un club recibe el `tenantId` y hace su trabajo dentro de `TenantDatabase::run`, que apunta la conexión y la desconecta al terminar. Ver [guia-jobs.md](guia-jobs.md#7-jobs-que-trabajan-sobre-un-club).
 
 ## 9. Panel de administración de plataforma
 
@@ -511,15 +518,15 @@ Todos se corren desde la raíz del repo, **dentro de WSL** (`~/repos/api-sportiv
 | Regenerar el contrato OpenAPI | `docker compose exec backend php artisan scramble:export` |
 | Ver la documentación (Swagger) | `http://127.0.0.1:8000/api/docs` |
 | Limpiar las cachés si una ruta no aparece | `docker compose exec backend php artisan optimize:clear` |
+| Crear una migración de club | `docker compose exec backend php artisan make:migration create_x_table --path=database/migrations/tenant` |
+| Crear el primer admin de plataforma | `docker compose exec backend php artisan platform:create-admin` |
 
 ### 🟡 Planificados (todavía no existen)
 
 | Para qué | Comando |
 | --- | --- |
-| Crear una migración de club | `php artisan make:migration create_x_table --path=database/migrations/tenant` |
 | Migrar todas las bases de clubes | `php artisan tenants:migrate` |
 | Dar de alta un club por consola | `php artisan tenants:create river "Club River"` |
-| Crear el primer admin de plataforma | `php artisan platform:create-admin` |
 | Ver o reiniciar el worker de la cola | `docker compose logs -f queue` · `docker compose restart queue` |
 | Ver o reintentar los jobs fallidos | `php artisan queue:failed` · `php artisan queue:retry all` |
 
@@ -584,9 +591,9 @@ Sí, cuando esté implementado: los clubes van a ser bases dentro del mismo cont
 
 | # | Trabajo | Qué incluye |
 | --- | --- | --- |
-| 1 | ADR de multi-tenancy | Implementación propia (la recomendada) o el paquete `stancl/tenancy`; el nombre de las bases (`club_<slug>` o `club_<id>`); los usuarios de MySQL de operación y de provisión |
-| 2 | Change `platform-auth` | Las tablas `tenants` y `tenant_memberships`, el campo `is_platform_admin`, el `tenant_id` en los tokens, Sanctum (login, selección de club, `me` y logout) y el comando `platform:create-admin` |
-| 3a | Change [`tenant-connection`](../openspec/changes/tenant-connection/proposal.md) | La conexión `tenant` y el cambio de base en el middleware y en los jobs; el servicio `TenantDatabase` (crear, migrar y conectar bases de club); los permisos de MySQL en local para `club_%`; el soporte de tests con dos clubes; el ADR 0002 |
+| 1 | ✅ ADR de multi-tenancy | [ADR 0002](adr/0002-multi-tenancy-implementacion-propia.md): implementación propia. Los usuarios de MySQL de operación y de provisión los decide 3b |
+| 2 | ✅ Change `platform-auth` | Las tablas `tenants` y `tenant_memberships`, el campo `is_platform_admin`, el `tenant_id` en los tokens, Sanctum (login, selección de club, `me` y logout) y el comando `platform:create-admin` |
+| 3a | ✅ Change [`tenant-connection`](../openspec/changes/tenant-connection/proposal.md) | La conexión `tenant` y el cambio de base en el middleware y en los jobs; el servicio `TenantDatabase` (crear, migrar y conectar bases de club); los permisos de MySQL en local para `club_%`; el soporte de tests con dos clubes; el ADR 0002 |
 | 3b | Change `platform-admin-and-provisioning` | Los endpoints `/api/admin/*` y la auditoría; el job `ProvisionTenant`; el servicio `queue` (worker) en Compose; la conexión `provisioning`; los comandos `tenants:create` y `tenants:migrate`, que usan `TenantDatabase` de 3a. Además, se **confirma la [guía de ABM](guia-abm.md)** (hoy es una propuesta), con el ABM de usuarios y clubes como ejemplo de referencia |
 | 4 | Front-Sportiva | El login, el selector de club y las páginas `/admin`, contra estos endpoints |
 | 5 | Módulos del club | Jugadores, partidos, pedidos..., con sus migraciones en `tenant/` |

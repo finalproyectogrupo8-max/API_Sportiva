@@ -5,12 +5,15 @@ namespace App\Http\Middleware;
 use App\Models\PersonalAccessToken;
 use App\Models\Tenant;
 use App\Support\ApiError;
+use App\Tenancy\TenantDatabase;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureTenantContext
 {
+    public function __construct(private TenantDatabase $tenantDatabase) {}
+
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
@@ -38,6 +41,14 @@ class EnsureTenantContext
 
         $request->attributes->set('tenant', $tenant);
 
-        return $next($request);
+        // La base sale del tenant del token, nunca del request. La respuesta (incluidos los
+        // Resources) se arma dentro de $next, así que al desconectar ya no se consulta la base.
+        $this->tenantDatabase->connect($tenant);
+
+        try {
+            return $next($request);
+        } finally {
+            $this->tenantDatabase->disconnect();
+        }
     }
 }

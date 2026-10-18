@@ -46,7 +46,7 @@ Es la única clase que toca la conexión `tenant`. Su interfaz, que es el contra
 | `connect(Tenant $tenant)` | Valida el nombre, setea `database.connections.tenant.database` y hace `DB::purge('tenant')` |
 | `disconnect()` | Vuelve la base a `null` y hace `DB::purge('tenant')` |
 | `run(Tenant $tenant, callable $callback)` | `connect`, ejecuta el callback y `disconnect` en un `finally`. Es lo que usan los jobs, los comandos y los tests |
-| `create(Tenant $tenant)` | `CREATE DATABASE IF NOT EXISTS` con `utf8mb4`, sobre la conexión central, con el nombre validado y entre backticks |
+| `create(Tenant $tenant)` | `CREATE DATABASE IF NOT EXISTS` con `utf8mb4`, con el nombre validado y entre backticks. Corre sobre la conexión `tenant` (sin base) y no sobre la central: `CREATE DATABASE` hace un commit implícito que cerraría una transacción abierta en la central |
 | `migrate(Tenant $tenant, bool $fresh = false)` | Dentro de `run`: `migrate` (o `migrate:fresh`) con `--database=tenant --path=database/migrations/tenant --force` |
 | `drop(Tenant $tenant)` | `DROP DATABASE IF EXISTS`. En este change **solo acepta bases `club_test_*`**: el borrado de un club real sigue siendo una decisión abierta (ver la arquitectura) |
 

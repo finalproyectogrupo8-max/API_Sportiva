@@ -4,7 +4,7 @@ Esta guía es la receta para escribir un ABM (alta, baja, modificación y consul
 
 > **🟡 PROPUESTO.** Estas convenciones se adelantaron para que el equipo arranque con las mismas reglas. Se confirman y ajustan con el **primer ABM real**: el de usuarios y clubes del panel de admin, en el change `platform-admin-and-provisioning`. Si algo de esta guía choca con ese código, gana el código, y esta guía se corrige.
 >
-> **Dependencia.** Los ABM **de club** necesitan la autenticación (`platform-auth`) y la conexión `tenant` (ver [guia-bases-de-datos.md](guia-bases-de-datos.md)), que todavía no existen. Hasta entonces, el ejemplo de la sección 3 es **ilustrativo** y no corre tal cual.
+> **Dependencias.** Los ABM **de club** usan la autenticación (`platform-auth`) y la conexión `tenant` (`tenant-connection`, ver [guia-bases-de-datos.md](guia-bases-de-datos.md)), que ya existen. Los permisos por rol (`hasClubPermission()`, caso 8 de los tests) llegan con `club-access-control`.
 >
 > Versión: 17 de octubre de 2026 · Laravel 13.37.
 
@@ -78,7 +78,7 @@ tests/Feature/Club/PlayerApiTest.php
 
 ## 3. Ejemplo completo: el ABM de jugadores (players)
 
-> 🟡 **Ilustrativo.** Depende de la auth y de la conexión `tenant`, que todavía no existen. Los nombres de los campos son de ejemplo, no el modelo definitivo de jugadores.
+> 🟡 **Ilustrativo.** Los nombres de los campos son de ejemplo, no el modelo definitivo de jugadores. La auth y la conexión `tenant` ya existen; los permisos por rol todavía no (`club-access-control`).
 
 **Migración de club** (`database/migrations/tenant/...create_players_table.php`):
 
@@ -116,7 +116,7 @@ class Player extends Model
 **Rutas** (`routes/api.php`):
 
 ```php
-Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
+Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::apiResource('players', PlayerController::class);
 });
 ```
@@ -253,10 +253,8 @@ class PlayerResource extends JsonResource
 - Una **acción que no es CRUD** (por ejemplo, transferir) va como subrecurso o como verbo sobre el recurso: `POST /api/players/{player}/transfer`. Nunca `POST /api/transferPlayer`.
 - **Recursos anidados**, solo cuando el hijo no tiene sentido sin el padre: `/api/matches/{match}/lineups`. Con `->shallow()`, las acciones sobre un elemento quedan cortas: `/api/lineups/{lineup}`.
 - **Grupos de middleware:**
-  - de club: `['auth:sanctum', 'tenant']`;
-  - de panel de admin: `['auth:sanctum', 'platform-admin']`, con prefijo `admin`.
-
-  Los nombres de los middlewares son 🟡 provisorios y se definen en `platform-auth`.
+  - de club: `['auth:sanctum', 'tenant.token']`. `tenant.token` valida el club del token y apunta la conexión `tenant` a su base;
+  - de panel de admin: `['auth:sanctum', 'platform.admin']`, con prefijo `admin`.
 
 ## 5. Controller
 
@@ -358,6 +356,37 @@ Un archivo por recurso, `tests/Feature/Club/<Model>ApiTest.php`. Estos 10 casos 
 
 El caso 10 es el más importante: garantiza que un club nunca accede a los datos de otro. Usá **factories** para armar los datos de prueba (`--factory` al crear el modelo) y nada de datos personales reales.
 
+Los tests de club usan el trait `Tests\Concerns\InteractsWithTenants`, junto con `RefreshDatabase`. Da dos clubes de prueba (`club_test_a` y `club_test_b`) con sus bases migradas y las tablas de club vacías al empezar cada test:
+
+| Helper | Para qué |
+| --- | --- |
+| `tenantA()`, `tenantB()` | Los dos clubes (`Tenant`) |
+| `clubToken($tenant, $user = null)` | Un token de club como el de `select-tenant`, con un usuario miembro (lo crea si no le pasás uno) |
+| `withClubToken($token)` | Prepara el próximo request con ese token. Usalo en cada request: Sanctum cachea el usuario entre requests del mismo test |
+| `inTenant($tenant, fn () => ...)` | Cargar datos o hacer asserts dentro de la base de un club |
+
+```php
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\InteractsWithTenants;
+
+class PlayerApiTest extends TestCase
+{
+    use InteractsWithTenants;
+    use RefreshDatabase;
+
+    public function test_a_player_of_another_club_is_not_visible(): void   // caso 10
+    {
+        $playerB = $this->inTenant($this->tenantB(), fn () => Player::factory()->create());
+
+        $this->withClubToken($this->clubToken($this->tenantA()))
+            ->getJson("/api/players/{$playerB->id}")
+            ->assertNotFound();
+    }
+}
+```
+
+Los datos de club se crean **dentro de `inTenant`**: fuera, la conexión `tenant` no apunta a ninguna base y la consulta falla. El ejemplo real está en `tests/Feature/Tenancy/TenantContextTest.php`. Si los tests fallan con `Access denied` sobre `club_test_a`, ver [desarrollo-local.md](desarrollo-local.md#los-tests-de-club-fallan-por-permisos-de-mysql).
+
 ## 12. Paso a paso con comandos (checklist)
 
 Todos los comandos van con `docker compose exec backend` adelante (acá se omite para que se lean mejor).
@@ -404,7 +433,7 @@ Siguen las mismas reglas, con estas diferencias:
 | --- | --- | --- |
 | Base | La del club (`$connection = 'tenant'`) | La central (conexión por defecto) |
 | Carpetas | `Club/` | `Admin/` (controllers, Requests y Resources). Los modelos centrales van en `app/Models/` |
-| Rutas | Grupo `['auth:sanctum', 'tenant']` | Grupo `['auth:sanctum', 'platform-admin']`, con prefijo `/api/admin` |
+| Rutas | Grupo `['auth:sanctum', 'tenant.token']` | Grupo `['auth:sanctum', 'platform.admin']`, con prefijo `/api/admin` |
 | Autorización | Permisos del rol en el club | Ser admin de plataforma (`is_platform_admin`) |
 | Migraciones | `database/migrations/tenant/` | `database/migrations/` |
 | Auditoría | Según el caso | **Siempre**: cada alta, baja o cambio queda registrado |
@@ -415,7 +444,7 @@ Siguen las mismas reglas, con estas diferencias:
 | Error | Qué pasa | Cómo evitarlo |
 | --- | --- | --- |
 | El modelo de club no declara `$connection = 'tenant'` | Consulta la base central: tabla inexistente o, peor, datos equivocados | Revisá el modelo en cada PR. El test de aislamiento lo detecta |
-| El middleware de tenant corre **después** del *route model binding* | `Player $player` se busca en una base sin apuntar y da error o 404 | Al implementar el middleware, registrarlo antes de `SubstituteBindings` con `$middleware->prependToPriorityList(...)` en `bootstrap/app.php`. El caso 2 del test lo cubre |
+| El middleware de tenant corre **después** del *route model binding* | `Player $player` se busca en una base sin apuntar y da error (`No database selected`) | Ya está resuelto: `tenant.token` está registrado antes de `SubstituteBindings` (`prependToPriorityList` en `bootstrap/app.php`). No lo saques. Los casos 2 y 10 del test lo cubren |
 | Se acepta `tenant_id` o el slug del club en el request | Un usuario podría pedir datos de otro club | El club sale **siempre** del token, nunca del body ni de la URL |
 | `unique` sin conexión en una tabla de club | Valida contra la base central | `Rule::unique('tenant.players', ...)` |
 | Se devuelve el modelo (`return $player`) | Salen todos los campos (también los internos) y el contrato queda mal tipado | Siempre un Resource |

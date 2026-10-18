@@ -15,6 +15,7 @@ Decisiones cortas que no necesitan un ADR completo. Cuando una decisión se vuel
 | 2026-10-17 | Nombres de código en **inglés**: tablas, modelos, rutas, campos y enums (`players`, `Player`, `/api/players`, `birth_date`). La UI sigue en español: la traduce el front | Coherente con los enums (ya en inglés), con la pluralización de Laravel y con el contrato que consume el front | Español (`jugadores`, `Jugador`) | Dueño del repo |
 | 2026-10-17 | El panel de administración de plataforma va en el front (páginas `/admin` de Front-Sportiva). La API expone `/api/admin/*` y no tiene UI | Respeta el BFF y la decisión de que la API no tenga frontend | Filament dentro de la API; solo comandos | Dueño del repo |
 | 2026-10-17 | La guía de ABM ([guia-abm.md](guia-abm.md)) se adelanta como **propuesta**, para que el equipo arranque con las mismas reglas. Se confirma y se ajusta con el primer ABM real (usuarios y clubes del panel admin): si choca con ese código, gana el código | El equipo necesita las reglas antes de que exista el primer ABM | Esperar al primer ABM real | Dueño del repo |
+| 2026-10-18 | Multi-tenancy con implementación propia (conexión `tenant` + `DB::purge`), sin `stancl/tenancy`. Ver [ADR 0002](adr/0002-multi-tenancy-implementacion-propia.md) | Hace falta poco, y el paquete trae convenciones que no se usan y hace `USE`, que el proxy de Laravel Cloud rechaza | `stancl/tenancy` | Equipo |
 
 ## Imágenes fijadas
 
@@ -50,7 +51,6 @@ Verificado el 2026-10-16: los archivos de jsDelivr son idénticos a los del tarb
 
 | Question | Options | Needed by | Owner |
 |---|---|---|---|
-| ¿Multi-tenancy con un paquete o con una implementación propia? | `stancl/tenancy`; implementación propia (conexión `tenant` + `DB::purge`) | Antes del change de la conexión tenant | Equipo |
 | ¿Cómo se separan los usuarios de BD (operación y provisión)? | Dos usuarios en el cluster de Laravel Cloud; uno solo con permisos amplios | Antes del change de alta de clubes | Equipo |
 | ¿Se publica una imagen de desarrollo en GHCR? | Publicar en `main` y en tags; no publicar | Cuando el equipo lo pida | Dueño del repo |
 | Región de Laravel Cloud y Vercel | São Paulo (si está disponible en las dos); US East | Antes del primer deploy | Equipo |

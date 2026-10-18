@@ -10,7 +10,8 @@ return new class extends Migration
     {
         Schema::create('coaches', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('club_user_id')->nullable()->unique()->constrained('club_users');
+            // Sin FK hasta que exista club_users: la agrega una migración de club-access-control.
+            $table->foreignId('club_user_id')->nullable()->unique();
             $table->string('first_name', 100);
             $table->string('last_name', 100);
             $table->string('phone', 40)->nullable();
