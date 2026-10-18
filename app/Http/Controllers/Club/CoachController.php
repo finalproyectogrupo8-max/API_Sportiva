@@ -8,8 +8,8 @@ use App\Http\Requests\Club\StoreCoachRequest;
 use App\Http\Requests\Club\UpdateCoachRequest;
 use App\Http\Resources\Club\CoachResource;
 use App\Models\Club\Coach;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 

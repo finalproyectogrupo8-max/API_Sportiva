@@ -8,8 +8,8 @@ use App\Http\Requests\Club\StoreCategoryRequest;
 use App\Http\Requests\Club\UpdateCategoryRequest;
 use App\Http\Resources\Club\CategoryResource;
 use App\Models\Club\Category;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 

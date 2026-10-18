@@ -8,8 +8,8 @@ use App\Http\Requests\Club\StoreSportRequest;
 use App\Http\Requests\Club\UpdateSportRequest;
 use App\Http\Resources\Club\SportResource;
 use App\Models\Club\Sport;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
