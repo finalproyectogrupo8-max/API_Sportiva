@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class TenantAdminTest extends TestCase
@@ -21,11 +22,54 @@ class TenantAdminTest extends TestCase
         $this->getJson('/api/admin/tenants')->assertUnauthorized();
     }
 
-    public function test_forbids_non_platform_admin(): void
+    public function test_forbids_non_platform_admin_on_every_endpoint(): void
     {
-        $this->actingAs(User::factory()->create(), 'sanctum')
+        $user = User::factory()->create();
+        $tenant = Tenant::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
             ->getJson('/api/admin/tenants')
-            ->assertForbidden();
+            ->assertForbidden()
+            ->assertJsonPath('code', 'forbidden');
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/admin/tenants', ['name' => 'Club', 'slug' => 'club'])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'forbidden');
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/admin/tenants/{$tenant->id}")
+            ->assertForbidden()
+            ->assertJsonPath('code', 'forbidden');
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/admin/tenants/{$tenant->id}", ['name' => 'Updated'])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'forbidden');
+
+        $this->actingAs($user, 'sanctum')
+            ->patchJson("/api/admin/tenants/{$tenant->id}", ['name' => 'Updated'])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'forbidden');
+
+        $this->actingAs($user, 'sanctum')
+            ->deleteJson("/api/admin/tenants/{$tenant->id}")
+            ->assertForbidden()
+            ->assertJsonPath('code', 'forbidden');
+    }
+
+    public function test_sanctum_ability_denial_uses_forbidden_api_error(): void
+    {
+        Route::get('/api/_test/ability', fn () => response()->noContent())
+            ->middleware(['api', 'auth:sanctum', 'abilities:required']);
+
+        $token = User::factory()->create()->createToken('test', ['other'])->plainTextToken;
+
+        $this->withToken($token)
+            ->getJson('/api/_test/ability')
+            ->assertForbidden()
+            ->assertJsonPath('code', 'forbidden')
+            ->assertJsonPath('message', 'No tenés permiso para esta acción.');
     }
 
     public function test_platform_admin_can_list_tenants(): void
@@ -109,6 +153,20 @@ class TenantAdminTest extends TestCase
             ->patchJson("/api/admin/tenants/{$tenant->id}", ['name' => 'Nuevo nombre'])
             ->assertOk()
             ->assertJsonPath('name', 'Nuevo nombre');
+    }
+
+    public function test_partial_update_only_changes_sent_fields(): void
+    {
+        $tenant = Tenant::factory()->create(['name' => 'Original', 'status' => 'active']);
+        $this->actingAs($this->admin(), 'sanctum')
+            ->patchJson("/api/admin/tenants/{$tenant->id}", ['name' => 'Nuevo'])
+            ->assertOk();
+
+        $this->assertDatabaseHas('tenants', [
+            'id' => $tenant->id,
+            'name' => 'Nuevo',
+            'status' => 'active',
+        ]);
     }
 
     public function test_is_platform_admin_is_not_mass_assignable(): void

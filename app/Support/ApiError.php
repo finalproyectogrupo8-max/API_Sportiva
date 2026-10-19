@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 class ApiError
 {
     private const MESSAGES = [
+        'forbidden' => 'No tenés permiso para esta acción.',
         'tenant_required' => 'Tenés que elegir un club.',
         'membership_inactive' => 'No tenés acceso a este club.',
         'tenant_inactive' => 'El club no está activo.',

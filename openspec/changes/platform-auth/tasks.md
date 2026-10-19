@@ -33,6 +33,10 @@
 
 ## 6. Cierre
 
-- [ ] 6.1 `scramble:export` y commit de `docs/api/openapi.json`
-- [ ] 6.2 Actualizar README (ya hay autenticación)
-- [ ] 6.3 `pint --test`, `php artisan test` y `openspec validate platform-auth --strict`
+- [x] 6.1 `scramble:export` y commit de `docs/api/openapi.json`
+- [x] 6.2 Actualizar README (ya hay autenticación)
+- [ ] 6.3 `pint --test`, `php artisan test` y `openspec validate platform-auth --strict` (Pint pasó; tests bloqueados por permisos MySQL y CLI OpenSpec no disponible)
+
+Pendiente para el change siguiente:
+- Auditoría de acciones del ABM de admin
+- `sort` con lista blanca, `restore`, mover el ABM a `Admin/`, nombre del middleware (`platform-admin`)

@@ -36,9 +36,20 @@ Detalles, comandos del día a día y troubleshooting: **[docs/desarrollo-local.m
 | [openspec/](openspec/) | Specs y changes (OpenSpec) |
 | [AGENTS.md](AGENTS.md) | Convenciones y comandos (para personas y agentes) |
 
+## Autenticación
+
+La API usa tokens de Laravel Sanctum, pensados para el patrón BFF: solo el servidor Next.js la consume.
+
+1. `POST /api/auth/login` devuelve un token pre-tenant (solo sirve para elegir club) y la lista de clubes.
+2. `POST /api/auth/select-tenant` lo cambia por un token atado al club.
+3. Los endpoints operativos usan ese token; el club sale siempre del token, nunca del request.
+
+Crear el primer administrador de plataforma: `docker compose exec backend php artisan platform:create-admin <email>`.
+El contrato completo está en [docs/integracion-api-laravel.md](https://github.com/finalproyectogrupo8-max/Front-Sportiva/blob/main/docs/integracion-api-laravel.md) (repo Front-Sportiva) y `/api/docs`.
+
 ## Estado
 
-Fase 1: entorno Docker, endpoint de health, errores JSON en `/api/*` y CI. Documentación con Swagger UI en `/api/docs`. Todavía **no** hay autenticación, multi-tenancy implementado ni módulos de negocio.
+La API incluye autenticación Sanctum, administración central de clubes y contexto de club derivado del token. La provisión de bases de datos y los módulos operativos de los clubes siguen en desarrollo.
 
 ## Deploy
 
