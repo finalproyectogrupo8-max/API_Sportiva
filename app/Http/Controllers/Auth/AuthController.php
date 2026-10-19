@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\SelectTenantRequest;
-use App\Http\Resources\AuthSessionResource;
-use App\Http\Resources\TenantSummaryResource;
-use App\Http\Resources\UserResource;
+use App\Http\Resources\Auth\LoginResource;
+use App\Http\Resources\Auth\MeResource;
+use App\Http\Resources\Auth\MeTenantsResource;
+use App\Http\Resources\Auth\SelectTenantResource;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\ApiError;
@@ -24,7 +25,7 @@ class AuthController extends Controller
     /**
      * Valida credenciales contra la base central y emite un token pre-tenant.
      */
-    public function login(LoginRequest $request): AuthSessionResource|JsonResponse
+    public function login(LoginRequest $request): LoginResource|JsonResponse
     {
         $user = User::where('email', $request->validated('email'))->first();
 
@@ -40,18 +41,13 @@ class AuthController extends Controller
             now()->addMinutes(config('sanctum.pre_tenant_ttl')),
         );
 
-        return new AuthSessionResource([
-            'token' => $token->plainTextToken,
-            'expires_at' => $token->accessToken->expires_at->toIso8601String(),
-            'user' => new UserResource($user),
-            'tenants' => TenantSummaryResource::collection($this->activeTenantsFor($user)),
-        ]);
+        return new LoginResource($token, $user, $this->activeTenantsFor($user));
     }
 
     /**
      * Revalida la membresía y cambia el token actual por uno atado al club.
      */
-    public function selectTenant(SelectTenantRequest $request): AuthSessionResource|JsonResponse
+    public function selectTenant(SelectTenantRequest $request): SelectTenantResource|JsonResponse
     {
         $user = $request->user();
         $tenant = Tenant::where('slug', $request->validated('tenant'))->first();
@@ -82,33 +78,20 @@ class AuthController extends Controller
             return $new;
         });
 
-        return new AuthSessionResource([
-            'token' => $new->plainTextToken,
-            'expires_at' => $new->accessToken->expires_at->toIso8601String(),
-            'tenant' => new TenantSummaryResource($tenant),
-            'profile' => null,
-            'permissions' => [],
-        ]);
+        return new SelectTenantResource($new, $tenant);
     }
 
-    public function me(Request $request): AuthSessionResource
+    public function me(Request $request): MeResource
     {
-        return new AuthSessionResource([
-            'user' => new UserResource($request->user()),
-            'tenant' => new TenantSummaryResource($request->attributes->get('tenant')),
-            'profile' => null,
-            'permissions' => [],
-        ]);
+        return new MeResource($request->user(), $request->attributes->get('tenant'));
     }
 
     /**
      * Clubes disponibles para el selector. Sirve con cualquier token del usuario.
      */
-    public function meTenants(Request $request): AuthSessionResource
+    public function meTenants(Request $request): MeTenantsResource
     {
-        return new AuthSessionResource([
-            'tenants' => TenantSummaryResource::collection($this->activeTenantsFor($request->user())),
-        ]);
+        return new MeTenantsResource($request->user(), $this->activeTenantsFor($request->user()));
     }
 
     public function logout(Request $request): Response
