@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Admin;
 
+use App\Enums\TenantStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateTenantRequest extends FormRequest
 {
@@ -15,7 +17,10 @@ class UpdateTenantRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'status' => ['sometimes', 'required', 'string', 'in:provisioning,active,suspended,failed'],
+            'status' => ['sometimes', 'required', Rule::in([
+                TenantStatus::Active->value,
+                TenantStatus::Suspended->value,
+            ])],
             // Inmutables: rechazar explícitamente en vez de ignorar
             'slug' => ['prohibited'],
             'database_name' => ['prohibited'],

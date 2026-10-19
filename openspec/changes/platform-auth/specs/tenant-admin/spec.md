@@ -22,15 +22,23 @@ El servidor SHALL derivar `database_name` como `club_<slug>` y MUST NOT aceptarl
 - **THEN** responde 422
 
 ### Requirement: Listado paginado
-El listado SHALL paginar con 20 elementos por defecto y 100 como máximo, validar sus filtros con un Form Request y responder con `TenantResource`.
+El listado SHALL paginar con 20 elementos por defecto y limitar `per_page` al rango 1..100. SHALL validar sus filtros con un Form Request, responder con `TenantResource` y aceptar `sort` mediante la lista blanca `name`, `slug`, `status`, `created_at` (con prefijo `-` para orden descendente).
 
 #### Scenario: Filtro por estado
 - **WHEN** se llama con `?status=active`
 - **THEN** devuelve solo clubes activos
 
+#### Scenario: per_page fuera de rango
+- **WHEN** se llama con `per_page` mayor a 100 o menor a 1
+- **THEN** se acota a 100 o a 1 y responde 200
+
+#### Scenario: sort fuera de la lista blanca
+- **WHEN** se llama con `sort` que no es `name`, `slug`, `status` ni `created_at` (con o sin `-`)
+- **THEN** responde 422
+
 ### Requirement: Baja
-La baja de un club SHALL ser lógica y MUST NOT eliminar la base `club_*`. El mecanismo exacto queda sujeto a la decisión sobre `suspended` (ver `design.md`).
+La baja de un club SHALL ser un soft delete y MUST NOT eliminar la base `club_*`. Un club dado de baja MUST NOT aparecer en listados ni permitir login ni selección de club, y su `slug` SHALL seguir reservado.
 
 #### Scenario: Baja de un club
 - **WHEN** un admin elimina un club
-- **THEN** el club deja de figurar como activo y su base no se borra
+- **THEN** responde 204, la fila queda con `deleted_at` y la base no se borra

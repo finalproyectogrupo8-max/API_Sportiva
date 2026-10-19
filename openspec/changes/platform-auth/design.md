@@ -31,6 +31,6 @@ Una sola API con dos tipos de base: central (`sportiva_platform`) y una por club
 
 ## Open Questions
 
-- **¿`suspended` es un estado válido?** La guía define `provisioning | active | failed`. Si lo es, hay que actualizar la guía y la migración. Si no, `destroy` necesita otro mecanismo (la guía pide soft delete en entidades de negocio).
+- **`suspended` es provisoriamente válido:** el cliente solo alterna `active`/`suspended`; `provisioning` y `failed` los fija el servidor. La baja es soft delete.
 - Las duraciones son 15 minutos para el token pre-tenant y 480 minutos para el token de club.
 - **Qué abilities usa el token de un platform admin** para `/api/admin/*`.

@@ -6,56 +6,52 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class TenantAdminTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function admin(): User
+    private function asAdmin(): User
     {
-        return User::factory()->platformAdmin()->create();
+        $admin = User::factory()->platformAdmin()->create();
+        Sanctum::actingAs($admin, ['*']);
+
+        return $admin;
     }
 
     public function test_requires_authentication(): void
     {
+        $tenant = Tenant::factory()->create();
+
         $this->getJson('/api/admin/tenants')->assertUnauthorized();
+        $this->postJson('/api/admin/tenants', [])->assertUnauthorized();
+        $this->getJson("/api/admin/tenants/{$tenant->id}")->assertUnauthorized();
+        $this->putJson("/api/admin/tenants/{$tenant->id}", [])->assertUnauthorized();
+        $this->patchJson("/api/admin/tenants/{$tenant->id}", [])->assertUnauthorized();
+        $this->deleteJson("/api/admin/tenants/{$tenant->id}")->assertUnauthorized();
     }
 
     public function test_forbids_non_platform_admin_on_every_endpoint(): void
     {
-        $user = User::factory()->create();
         $tenant = Tenant::factory()->create();
+        Sanctum::actingAs(User::factory()->create(), ['*']);
 
-        $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/tenants')
-            ->assertForbidden()
-            ->assertJsonPath('code', 'forbidden');
+        $this->getJson('/api/admin/tenants')
+            ->assertForbidden()->assertJsonPath('code', 'forbidden');
+        $this->postJson('/api/admin/tenants', ['name' => 'Club', 'slug' => 'river'])
+            ->assertForbidden()->assertJsonPath('code', 'forbidden');
+        $this->getJson("/api/admin/tenants/{$tenant->id}")
+            ->assertForbidden()->assertJsonPath('code', 'forbidden');
+        $this->putJson("/api/admin/tenants/{$tenant->id}", ['name' => 'X'])
+            ->assertForbidden()->assertJsonPath('code', 'forbidden');
+        $this->patchJson("/api/admin/tenants/{$tenant->id}", ['name' => 'X'])
+            ->assertForbidden()->assertJsonPath('code', 'forbidden');
+        $this->deleteJson("/api/admin/tenants/{$tenant->id}")
+            ->assertForbidden()->assertJsonPath('code', 'forbidden');
 
-        $this->actingAs($user, 'sanctum')
-            ->postJson('/api/admin/tenants', ['name' => 'Club', 'slug' => 'club'])
-            ->assertForbidden()
-            ->assertJsonPath('code', 'forbidden');
-
-        $this->actingAs($user, 'sanctum')
-            ->getJson("/api/admin/tenants/{$tenant->id}")
-            ->assertForbidden()
-            ->assertJsonPath('code', 'forbidden');
-
-        $this->actingAs($user, 'sanctum')
-            ->putJson("/api/admin/tenants/{$tenant->id}", ['name' => 'Updated'])
-            ->assertForbidden()
-            ->assertJsonPath('code', 'forbidden');
-
-        $this->actingAs($user, 'sanctum')
-            ->patchJson("/api/admin/tenants/{$tenant->id}", ['name' => 'Updated'])
-            ->assertForbidden()
-            ->assertJsonPath('code', 'forbidden');
-
-        $this->actingAs($user, 'sanctum')
-            ->deleteJson("/api/admin/tenants/{$tenant->id}")
-            ->assertForbidden()
-            ->assertJsonPath('code', 'forbidden');
+        $this->assertDatabaseHas('tenants', ['id' => $tenant->id, 'deleted_at' => null]);
     }
 
     public function test_sanctum_ability_denial_uses_forbidden_api_error(): void
@@ -72,101 +68,179 @@ class TenantAdminTest extends TestCase
             ->assertJsonPath('message', 'No tenés permiso para esta acción.');
     }
 
-    public function test_platform_admin_can_list_tenants(): void
+    public function test_index_is_paginated_with_20_by_default(): void
     {
-        Tenant::factory()->count(2)->create();
+        Tenant::factory()->count(25)->create();
+        $this->asAdmin();
 
-        $this->actingAs($this->admin(), 'sanctum')
-            ->getJson('/api/admin/tenants')
-            ->assertOk();
+        $this->getJson('/api/admin/tenants')
+            ->assertOk()
+            ->assertJsonCount(20, 'data')
+            ->assertJsonPath('meta.per_page', 20)
+            ->assertJsonPath('meta.total', 25)
+            ->assertJsonStructure([
+                'data' => [['id', 'slug', 'name', 'database_name', 'status']],
+                'links',
+                'meta',
+            ]);
     }
 
-    public function test_store_derives_database_name_and_starts_provisioning(): void
+    public function test_index_clamps_per_page_between_1_and_100(): void
     {
-        $this->actingAs($this->admin(), 'sanctum')
-            ->postJson('/api/admin/tenants', ['name' => 'Club River', 'slug' => 'river'])
+        Tenant::factory()->count(3)->create();
+        $this->asAdmin();
+
+        $this->getJson('/api/admin/tenants?per_page=500')
+            ->assertOk()->assertJsonPath('meta.per_page', 100);
+        $this->getJson('/api/admin/tenants?per_page=0')
+            ->assertOk()->assertJsonPath('meta.per_page', 1);
+        $this->getJson('/api/admin/tenants?per_page=abc')
+            ->assertUnprocessable()->assertJsonValidationErrors('per_page');
+    }
+
+    public function test_index_filters_searches_and_sorts_with_a_whitelist(): void
+    {
+        Tenant::factory()->create(['slug' => 'river', 'name' => 'Club River', 'status' => 'active']);
+        Tenant::factory()->create(['slug' => 'boca', 'name' => 'Club Boca', 'status' => 'suspended']);
+        $this->asAdmin();
+
+        $this->getJson('/api/admin/tenants?status=suspended')
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.slug', 'boca');
+
+        $this->getJson('/api/admin/tenants?search=Riv')
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.slug', 'river');
+
+        $this->getJson('/api/admin/tenants?sort=-name')
+            ->assertOk()->assertJsonPath('data.0.slug', 'river');
+
+        $this->getJson('/api/admin/tenants?status=cualquiera')
+            ->assertUnprocessable()->assertJsonValidationErrors('status');
+        $this->getJson('/api/admin/tenants?sort=password')
+            ->assertUnprocessable()->assertJsonValidationErrors('sort');
+    }
+
+    public function test_store_creates_club_with_derived_database_name(): void
+    {
+        $this->asAdmin();
+
+        $this->postJson('/api/admin/tenants', ['name' => 'Club River', 'slug' => 'river'])
             ->assertCreated()
-            ->assertJsonPath('database_name', 'club_river')
-            ->assertJsonPath('status', 'provisioning');
+            ->assertJsonPath('data.slug', 'river')
+            ->assertJsonPath('data.database_name', 'club_river')
+            ->assertJsonPath('data.status', 'provisioning');
 
         $this->assertDatabaseHas('tenants', ['slug' => 'river', 'database_name' => 'club_river']);
     }
 
-    public function test_store_rejects_client_chosen_database_name(): void
+    public function test_store_validates_name_and_slug(): void
     {
-        foreach (['sportiva_platform', 'sportiva_testing', 'mysql', 'sys'] as $reserved) {
-            $this->actingAs($this->admin(), 'sanctum')
-                ->postJson('/api/admin/tenants', [
-                    'name' => 'Club',
-                    'slug' => 'river',
-                    'database_name' => $reserved,
-                ])
-                ->assertUnprocessable()
-                ->assertJsonValidationErrors('database_name');
+        Tenant::factory()->create(['slug' => 'river', 'database_name' => 'club_river']);
+        $this->asAdmin();
+
+        $this->postJson('/api/admin/tenants', ['slug' => 'nuevo'])
+            ->assertUnprocessable()->assertJsonValidationErrors('name');
+
+        foreach (['Mi-Club', 'con espacios', str_repeat('a', 51), 'river', ''] as $slug) {
+            $this->postJson('/api/admin/tenants', ['name' => 'Club', 'slug' => $slug])
+                ->assertUnprocessable()->assertJsonValidationErrors('slug');
         }
+    }
+
+    public function test_store_rejects_client_chosen_database_name_and_status(): void
+    {
+        $this->asAdmin();
+
+        foreach (['sportiva_platform', 'sportiva_testing', 'mysql', 'sys'] as $reserved) {
+            $this->postJson('/api/admin/tenants', [
+                'name' => 'Club',
+                'slug' => 'river',
+                'database_name' => $reserved,
+            ])->assertUnprocessable()->assertJsonValidationErrors('database_name');
+        }
+
+        $this->postJson('/api/admin/tenants', ['name' => 'Club', 'slug' => 'river', 'status' => 'active'])
+            ->assertUnprocessable()->assertJsonValidationErrors('status');
 
         $this->assertDatabaseCount('tenants', 0);
     }
 
-    public function test_store_rejects_client_chosen_status(): void
+    public function test_show_returns_club_or_404(): void
     {
-        $this->actingAs($this->admin(), 'sanctum')
-            ->postJson('/api/admin/tenants', ['name' => 'Club', 'slug' => 'river', 'status' => 'active'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('status');
+        $tenant = Tenant::factory()->create(['slug' => 'river']);
+        $this->asAdmin();
+
+        $this->getJson("/api/admin/tenants/{$tenant->id}")
+            ->assertOk()->assertJsonPath('data.slug', 'river');
+
+        $this->getJson('/api/admin/tenants/999999')->assertNotFound();
     }
 
-    public function test_store_validates_slug_format_length_and_uniqueness(): void
+    public function test_update_changes_name_and_toggles_status(): void
     {
-        Tenant::factory()->create(['slug' => 'river', 'database_name' => 'club_river']);
+        $tenant = Tenant::factory()->create(['status' => 'active']);
+        $this->asAdmin();
 
-        foreach (['Mi-Club', 'con espacios', str_repeat('a', 51), 'river'] as $slug) {
-            $this->actingAs($this->admin(), 'sanctum')
-                ->postJson('/api/admin/tenants', ['name' => 'Club', 'slug' => $slug])
-                ->assertUnprocessable()
-                ->assertJsonValidationErrors('slug');
-        }
-    }
-
-    public function test_update_rejects_slug_and_database_name_changes(): void
-    {
-        $tenant = Tenant::factory()->create(['slug' => 'river', 'database_name' => 'club_river']);
-
-        $this->actingAs($this->admin(), 'sanctum')
-            ->patchJson("/api/admin/tenants/{$tenant->id}", ['slug' => 'boca'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('slug');
-
-        $this->actingAs($this->admin(), 'sanctum')
-            ->patchJson("/api/admin/tenants/{$tenant->id}", ['database_name' => 'sportiva_platform'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('database_name');
-
-        $this->assertDatabaseHas('tenants', ['id' => $tenant->id, 'database_name' => 'club_river']);
-    }
-
-    public function test_update_changes_name(): void
-    {
-        $tenant = Tenant::factory()->create();
-
-        $this->actingAs($this->admin(), 'sanctum')
-            ->patchJson("/api/admin/tenants/{$tenant->id}", ['name' => 'Nuevo nombre'])
+        $this->patchJson("/api/admin/tenants/{$tenant->id}", [
+            'name' => 'Nuevo nombre',
+            'status' => 'suspended',
+        ])
             ->assertOk()
-            ->assertJsonPath('name', 'Nuevo nombre');
+            ->assertJsonPath('data.name', 'Nuevo nombre')
+            ->assertJsonPath('data.status', 'suspended');
     }
 
     public function test_partial_update_only_changes_sent_fields(): void
     {
         $tenant = Tenant::factory()->create(['name' => 'Original', 'status' => 'active']);
-        $this->actingAs($this->admin(), 'sanctum')
-            ->patchJson("/api/admin/tenants/{$tenant->id}", ['name' => 'Nuevo'])
-            ->assertOk();
+        $this->asAdmin();
+
+        $this->patchJson("/api/admin/tenants/{$tenant->id}", ['name' => 'Nuevo'])->assertOk();
+
+        $this->assertDatabaseHas('tenants', ['id' => $tenant->id, 'name' => 'Nuevo', 'status' => 'active']);
+    }
+
+    public function test_update_rejects_immutable_fields_and_server_owned_statuses(): void
+    {
+        $tenant = Tenant::factory()->create(['slug' => 'river', 'database_name' => 'club_river']);
+        $this->asAdmin();
+
+        $this->patchJson("/api/admin/tenants/{$tenant->id}", ['slug' => 'boca'])
+            ->assertUnprocessable()->assertJsonValidationErrors('slug');
+        $this->patchJson("/api/admin/tenants/{$tenant->id}", ['database_name' => 'sportiva_platform'])
+            ->assertUnprocessable()->assertJsonValidationErrors('database_name');
+
+        foreach (['provisioning', 'failed', 'cualquiera'] as $status) {
+            $this->patchJson("/api/admin/tenants/{$tenant->id}", ['status' => $status])
+                ->assertUnprocessable()->assertJsonValidationErrors('status');
+        }
 
         $this->assertDatabaseHas('tenants', [
             'id' => $tenant->id,
-            'name' => 'Nuevo',
-            'status' => 'active',
+            'slug' => 'river',
+            'database_name' => 'club_river',
         ]);
+    }
+
+    public function test_destroy_soft_deletes_without_touching_the_database_name(): void
+    {
+        $tenant = Tenant::factory()->create(['slug' => 'river', 'database_name' => 'club_river']);
+        $this->asAdmin();
+
+        $this->deleteJson("/api/admin/tenants/{$tenant->id}")->assertNoContent();
+
+        $this->assertSoftDeleted('tenants', ['id' => $tenant->id, 'database_name' => 'club_river']);
+        $this->getJson("/api/admin/tenants/{$tenant->id}")->assertNotFound();
+        $this->getJson('/api/admin/tenants')->assertOk()->assertJsonCount(0, 'data');
+    }
+
+    public function test_deleted_club_keeps_its_slug_reserved(): void
+    {
+        $tenant = Tenant::factory()->create(['slug' => 'river', 'database_name' => 'club_river']);
+        $tenant->delete();
+        $this->asAdmin();
+
+        $this->postJson('/api/admin/tenants', ['name' => 'Otro', 'slug' => 'river'])
+            ->assertUnprocessable()->assertJsonValidationErrors('slug');
     }
 
     public function test_is_platform_admin_is_not_mass_assignable(): void

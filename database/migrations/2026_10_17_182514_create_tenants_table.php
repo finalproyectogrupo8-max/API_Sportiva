@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('name');
             $table->string('database_name')->unique();
-            $table->string('status'); // provisioning | active | failed
+            $table->string('status'); // provisioning | active | suspended | failed
             $table->timestamps();
         });
     }
