@@ -1,12 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\TenantController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Club\CategoryController;
 use App\Http\Controllers\Club\CoachController;
 use App\Http\Controllers\Club\SeasonController;
 use App\Http\Controllers\Club\SportController;
 use App\Http\Controllers\HealthController;
-use App\Http\Controllers\TenantController;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
 

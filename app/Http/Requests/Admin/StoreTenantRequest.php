@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -17,7 +17,7 @@ class StoreTenantRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             // club_ (5) + slug (máx. 50) = 55 caracteres, bajo el límite de 64 de MySQL
             'slug' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9_]+$/', 'unique:tenants,slug'],
-            // El nombre de la base lo deriva el servidor (club_<slug>)
+            // Los fija el servidor
             'database_name' => ['prohibited'],
             'status' => ['prohibited'],
         ];

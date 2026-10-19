@@ -215,7 +215,7 @@ Schema::create('tenants', function (Blueprint $table) {
     $table->string('slug')->unique();           // river
     $table->string('name');                     // Club River
     $table->string('database_name')->unique();  // club_river
-    $table->string('status');                   // provisioning | active | failed
+    $table->string('status');                   // provisioning | active | suspended | failed
     $table->timestamps();
 });
 ```
@@ -400,7 +400,7 @@ class ProvisionTenant implements ShouldQueue
 }
 ```
 
-**4. El panel consulta el estado** (`GET /api/admin/tenants/{id}`) y muestra `provisioning`, `active` o `failed`. Si quedó en `failed`, el botón "reintentar" vuelve a encolar el mismo job.
+**4. El panel consulta el estado** (`GET /api/admin/tenants/{id}`) y muestra `provisioning`, `active`, `suspended` o `failed`. Si quedó en `failed`, el botón "reintentar" vuelve a encolar el mismo job.
 
 > **Por qué se puede reintentar sin romper nada (idempotencia).** `CREATE DATABASE IF NOT EXISTS` no falla si la base ya existe, y `migrate` solo corre las migraciones que faltan (pieza 3 de la sección 4). Así, un alta que se cortó a mitad de camino se completa al reintentar, sin duplicar nada.
 
@@ -468,8 +468,10 @@ Se resuelve en el change que implementa el alta:
 | Endpoint | Para qué |
 | --- | --- |
 | `POST/GET/PATCH /api/admin/users` | Crear, listar y editar usuarios de la plataforma |
-| `POST /api/admin/tenants` | Crear un club: dispara el alta de su base (el job) y responde `provisioning` |
-| `GET /api/admin/tenants[/{id}]` | Listar los clubes y ver su estado: `provisioning`, `active` o `failed` |
+| `POST /api/admin/tenants` | Crear un club (`provisioning`; la provisión de su base sigue pendiente) |
+| `GET /api/admin/tenants[/{id}]` | Listar/ver clubes; admite filtros, búsqueda, orden con lista permitida y paginación |
+| `PATCH /api/admin/tenants/{id}` | Cambiar nombre o alternar estado entre `active` y `suspended` |
+| `DELETE /api/admin/tenants/{id}` | Baja lógica (`deleted_at`); conserva la base y reserva el slug |
 | `POST /api/admin/tenants/{id}/retry` | Reintentar un alta que falló |
 | `POST /api/admin/tenants/{id}/memberships` | Asociar un usuario a un club, con un rol |
 | `PATCH /api/admin/tenants/{id}/memberships/{m}` | Cambiar el rol o desactivar la membresía |
@@ -594,7 +596,7 @@ Sí, cuando esté implementado: los clubes van a ser bases dentro del mismo cont
 | 1 | ✅ ADR de multi-tenancy | [ADR 0002](adr/0002-multi-tenancy-implementacion-propia.md): implementación propia. Los usuarios de MySQL de operación y de provisión los decide 3b |
 | 2 | ✅ Change `platform-auth` | Las tablas `tenants` y `tenant_memberships`, el campo `is_platform_admin`, el `tenant_id` en los tokens, Sanctum (login, selección de club, `me` y logout) y el comando `platform:create-admin` |
 | 3a | ✅ Change [`tenant-connection`](../openspec/changes/tenant-connection/proposal.md) | La conexión `tenant` y el cambio de base en el middleware y en los jobs; el servicio `TenantDatabase` (crear, migrar y conectar bases de club); los permisos de MySQL en local para `club_%`; el soporte de tests con dos clubes; el ADR 0002 |
-| 3b | Change `platform-admin-and-provisioning` | Los endpoints `/api/admin/*` y la auditoría; el job `ProvisionTenant`; el servicio `queue` (worker) en Compose; la conexión `provisioning`; los comandos `tenants:create` y `tenants:migrate`, que usan `TenantDatabase` de 3a. Además, se **confirma la [guía de ABM](guia-abm.md)** (hoy es una propuesta), con el ABM de usuarios y clubes como ejemplo de referencia |
+| 3b | Change `platform-admin-and-provisioning` | La auditoría de acciones del admin; el job `ProvisionTenant`; el servicio `queue` (worker) en Compose; la conexión `provisioning`; los comandos `tenants:create` y `tenants:migrate`, que usan `TenantDatabase` de 3a. El ABM de clubes ya existe; queda pendiente completar el ABM de usuarios |
 | 4 | Front-Sportiva | El login, el selector de club y las páginas `/admin`, contra estos endpoints |
 | 5 | Módulos del club | Jugadores, partidos, pedidos..., con sus migraciones en `tenant/` |
 

@@ -21,15 +21,15 @@
 
 - [x] 4.1 `database_name` derivado (`club_<slug>`); quitarlo de Store/Update
 - [x] 4.2 `slug` inmutable en `UpdateTenantRequest`
-- [ ] 4.3 `TenantResource`, `IndexTenantRequest`, paginación 20/100
-- [ ] 4.4 `TenantPolicy` y `Gate::authorize`
-- [ ] 4.5 Estados unificados
+- [x] 4.3 `TenantResource`, `IndexTenantRequest`, paginación 20/100
+- [x] 4.4 `TenantPolicy` y `Gate::authorize`
+- [x] 4.5 Estados unificados
 
 ## 5. Tests
 
 - [x] 5.1 Auth: login OK y fallido, `select-tenant` con y sin membresía, token `pre-tenant` rechazado donde corresponda, vencimiento
-- [ ] 5.2 ABM: 401, 403, CRUD, 422, `database_name` derivado, `slug` inmutable
-- [ ] 5.3 Los 10 tests mínimos de `docs/guia-abm.md`
+- [x] 5.2 ABM: 401, 403, CRUD, 422, `database_name` derivado, `slug` inmutable
+- [x] 5.3 Los 10 tests mínimos de `docs/guia-abm.md`
 
 ## 6. Cierre
 
