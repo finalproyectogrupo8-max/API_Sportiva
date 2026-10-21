@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\TenantController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Club\CategoryController;
 use App\Http\Controllers\Club\CoachController;
@@ -33,6 +34,7 @@ Route::middleware(['auth:sanctum', 'platform.admin'])
     ->prefix('admin')
     ->group(function () {
         Route::apiResource('tenants', TenantController::class);
+        Route::apiResource('users', UserController::class)->except(['destroy']);
     });
 
 Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
