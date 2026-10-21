@@ -8,9 +8,9 @@
 
 ## 2. ABM de usuarios
 
-- [ ] 2.1 Implementar rutas y `Admin/UserController` para listar, crear, ver y editar usuarios con Policy, Form Requests y `UserResource`; verificar status codes, autorización y respuestas sin credenciales en `tests/Feature/Admin/UserAdminTest.php`.
-- [ ] 2.2 Validar email único, contraseña mínima de 12 caracteres, filtros `search`/`is_active`, paginación 20..100 y rechazo de `is_platform_admin`; cubrir alta, filtros, validación, paginación y protección de campos en `UserAdminTest.php`.
-- [ ] 2.3 Implementar desactivación/reactivación con rechazo de auto-desactivación; verificar ambos casos y sus respuestas en `UserAdminTest.php`.
+- [x] 2.1 Implementar rutas y `Admin/UserController` para listar, crear, ver y editar usuarios con Policy, Form Requests y `UserResource`; verificar status codes, autorización y respuestas sin credenciales en `tests/Feature/Admin/UserAdminTest.php`.
+- [x] 2.2 Validar email único, contraseña mínima de 12 caracteres, filtros `search`/`is_active`, paginación 20..100 y rechazo de `is_platform_admin`; cubrir alta, filtros, validación, paginación y protección de campos en `UserAdminTest.php`.
+- [x] 2.3 Implementar desactivación/reactivación con rechazo de auto-desactivación; verificar ambos casos y sus respuestas en `UserAdminTest.php`.
 
 ## 3. Membresías de club
 

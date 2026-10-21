@@ -47,4 +47,9 @@ class UserFactory extends Factory
     {
         return $this->state(fn () => ['is_platform_admin' => true]);
     }
+
+    public function inactive(): static
+    {
+        return $this->state(fn () => ['is_active' => false]);
+    }
 }
