@@ -14,13 +14,13 @@
 
 ## 3. Membresías de club
 
-- [ ] 3.1 Implementar alta y actualización de membresías bajo `/api/admin/tenants/{tenant}/memberships`, con binding acotado al club, Policy, Requests y Resource; verificar creación, duplicados, rol `admin`, club eliminado y aislamiento de URL en `tests/Feature/Admin/TenantMembershipAdminTest.php`.
-- [ ] 3.2 Permitir cambiar rol y `is_active` sin aceptar cambios de `user_id` o `tenant_id`; verificar respuestas y persistencia con tests de actualización parcial en `TenantMembershipAdminTest.php`.
+- [x] 3.1 Implementar alta y actualización de membresías bajo `/api/admin/tenants/{tenant}/memberships`, con binding acotado al club, Policy, Requests y Resource; verificar creación, duplicados, rol `admin`, club eliminado y aislamiento de URL en `tests/Feature/Admin/TenantMembershipAdminTest.php`.
+- [x] 3.2 Permitir cambiar rol y `is_active` sin aceptar cambios de `user_id` o `tenant_id`; verificar respuestas y persistencia con tests de actualización parcial en `TenantMembershipAdminTest.php`.
 
 ## 4. Autenticación y revocación de tokens
 
 - [x] 4.1 Rechazar login y requests con token de usuarios inactivos; verificar 401 y mensaje genérico en `tests/Feature/Auth/AuthFlowTest.php` y los tests de contexto de tenant.
-- [ ] 4.2 Revocar todos los tokens al desactivar un usuario o cambiar su contraseña, y solo los tokens del club al desactivar una membresía; verificar revocación selectiva y tokens de otros clubes en tests de auth y membresías.
+- [x] 4.2 Revocar todos los tokens al desactivar un usuario o cambiar su contraseña, y solo los tokens del club al desactivar una membresía; verificar revocación selectiva y tokens de otros clubes en tests de auth y membresías.
 
 ## 5. Auditoría administrativa
 

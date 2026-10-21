@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\TenantController;
+use App\Http\Controllers\Admin\TenantMembershipController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Club\CategoryController;
@@ -35,6 +36,11 @@ Route::middleware(['auth:sanctum', 'platform.admin'])
     ->group(function () {
         Route::apiResource('tenants', TenantController::class);
         Route::apiResource('users', UserController::class)->except(['destroy']);
+        Route::post('tenants/{tenant}/memberships', [TenantMembershipController::class, 'store']);
+        Route::patch('tenants/{tenant}/memberships/{membership}', [
+            TenantMembershipController::class,
+            'update',
+        ])->scopeBindings();
     });
 
 Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
