@@ -2177,6 +2177,136 @@
                 }
             }
         },
+        "/admin/tenants/{tenant}/memberships": {
+            "post": {
+                "operationId": "tenantMembership.store",
+                "tags": [
+                    "TenantMembership"
+                ],
+                "parameters": [
+                    {
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true,
+                        "description": "The tenant ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreTenantMembershipRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`TenantMembershipResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantMembershipResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/admin/tenants/{tenant}/memberships/{membership}": {
+            "patch": {
+                "operationId": "tenantMembership.update",
+                "tags": [
+                    "TenantMembership"
+                ],
+                "parameters": [
+                    {
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true,
+                        "description": "The tenant ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "membership",
+                        "in": "path",
+                        "required": true,
+                        "description": "The membership ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateTenantMembershipRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`TenantMembershipResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantMembershipResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "operationId": "users.index",
@@ -2761,6 +2891,13 @@
                 ],
                 "title": "MeTenantsResource"
             },
+            "MembershipRole": {
+                "type": "string",
+                "enum": [
+                    "admin"
+                ],
+                "title": "MembershipRole"
+            },
             "SeasonResource": {
                 "type": "object",
                 "properties": {
@@ -3014,6 +3151,25 @@
                 ],
                 "title": "StoreSportRequest"
             },
+            "StoreTenantMembershipRequest": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/MembershipRole"
+                    },
+                    "is_active": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "user_id",
+                    "role"
+                ],
+                "title": "StoreTenantMembershipRequest"
+            },
             "StoreTenantRequest": {
                 "type": "object",
                 "properties": {
@@ -3071,6 +3227,48 @@
                     "password"
                 ],
                 "title": "StoreUserRequest"
+            },
+            "TenantMembershipResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "user_id": {
+                        "type": "integer"
+                    },
+                    "tenant_id": {
+                        "type": "integer"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "user_id",
+                    "tenant_id",
+                    "role",
+                    "is_active",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "TenantMembershipResource"
             },
             "TenantResource": {
                 "type": "object",
@@ -3255,6 +3453,24 @@
                     }
                 },
                 "title": "UpdateSportRequest"
+            },
+            "UpdateTenantMembershipRequest": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "$ref": "#/components/schemas/MembershipRole"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "tenant_id": {
+                        "type": "string"
+                    }
+                },
+                "title": "UpdateTenantMembershipRequest"
             },
             "UpdateTenantRequest": {
                 "type": "object",
