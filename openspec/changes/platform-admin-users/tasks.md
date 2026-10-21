@@ -4,7 +4,7 @@
 
 - [ ] 1.1 Agregar `users.is_active` con default `true` y la migración de `audit_logs`; verificar migración y rollback en la base de testing.
 - [ ] 1.2 Crear el enum cerrado de roles de membresía con el valor inicial `admin` y cubrir su uso con tests de validación.
-- [ ] 1.3 Crear el modelo `AuditLog` de solo inserción y verificar que persista actor, acción, recurso, cambios, IP y fecha sin permitir mutaciones.
+- [x] 1.3 Crear el modelo `AuditLog` de solo inserción y verificar que persista actor, acción, recurso, cambios, IP y fecha sin permitir mutaciones.
 
 ## 2. ABM de usuarios
 
@@ -19,7 +19,7 @@
 
 ## 4. Autenticación y revocación de tokens
 
-- [ ] 4.1 Rechazar login y requests con token de usuarios inactivos; verificar 401 y mensaje genérico en `tests/Feature/Auth/AuthFlowTest.php` y los tests de contexto de tenant.
+- [x] 4.1 Rechazar login y requests con token de usuarios inactivos; verificar 401 y mensaje genérico en `tests/Feature/Auth/AuthFlowTest.php` y los tests de contexto de tenant.
 - [ ] 4.2 Revocar todos los tokens al desactivar un usuario o cambiar su contraseña, y solo los tokens del club al desactivar una membresía; verificar revocación selectiva y tokens de otros clubes en tests de auth y membresías.
 
 ## 5. Auditoría administrativa

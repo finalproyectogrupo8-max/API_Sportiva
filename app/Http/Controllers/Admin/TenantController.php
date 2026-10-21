@@ -9,9 +9,11 @@ use App\Http\Requests\Admin\StoreTenantRequest;
 use App\Http\Requests\Admin\UpdateTenantRequest;
 use App\Http\Resources\Admin\TenantResource;
 use App\Models\Tenant;
+use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class TenantController extends Controller
@@ -35,18 +37,24 @@ class TenantController extends Controller
         return TenantResource::collection($tenants);
     }
 
-    public function store(StoreTenantRequest $request): JsonResponse
+    public function store(StoreTenantRequest $request, AuditLogger $auditLogger): JsonResponse
     {
         Gate::authorize('create', Tenant::class);
 
         $slug = $request->validated('slug');
 
-        $tenant = Tenant::create([
-            'name' => $request->validated('name'),
-            'slug' => $slug,
-            'database_name' => 'club_'.$slug,
-            'status' => TenantStatus::Provisioning->value,
-        ]);
+        $tenant = DB::transaction(function () use ($request, $slug, $auditLogger) {
+            $tenant = Tenant::create([
+                'name' => $request->validated('name'),
+                'slug' => $slug,
+                'database_name' => 'club_'.$slug,
+                'status' => TenantStatus::Provisioning->value,
+            ]);
+
+            $auditLogger->recordCreated($tenant);
+
+            return $tenant;
+        });
 
         return TenantResource::make($tenant)->response()->setStatusCode(201);
     }
@@ -58,18 +66,27 @@ class TenantController extends Controller
         return TenantResource::make($tenant);
     }
 
-    public function update(UpdateTenantRequest $request, Tenant $tenant): TenantResource
+    public function update(UpdateTenantRequest $request, Tenant $tenant, AuditLogger $auditLogger): TenantResource
     {
         Gate::authorize('update', $tenant);
-        $tenant->update($request->validated());
+
+        DB::transaction(function () use ($request, $tenant, $auditLogger) {
+            $tenant->fill($request->validated());
+            $auditLogger->recordUpdated($tenant);
+            $tenant->save();
+        });
 
         return TenantResource::make($tenant);
     }
 
-    public function destroy(Tenant $tenant): Response
+    public function destroy(Tenant $tenant, AuditLogger $auditLogger): Response
     {
         Gate::authorize('delete', $tenant);
-        $tenant->delete();
+
+        DB::transaction(function () use ($tenant, $auditLogger) {
+            $auditLogger->recordDeleted($tenant);
+            $tenant->delete();
+        });
 
         return response()->noContent();
     }

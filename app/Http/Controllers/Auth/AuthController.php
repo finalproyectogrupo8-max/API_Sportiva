@@ -31,7 +31,7 @@ class AuthController extends Controller
 
         $hash = $user?->password ?? Hash::make(Str::random(32));
 
-        if (! Hash::check($request->validated('password'), $hash) || ! $user) {
+        if (! Hash::check($request->validated('password'), $hash) || ! $user || ! $user->is_active) {
             return response()->json(['message' => 'Credenciales inválidas.'], 401);
         }
 
