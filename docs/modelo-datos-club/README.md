@@ -1,6 +1,6 @@
 # Modelo de datos de la base de cada club
 
-> **Estado: diseño propuesto, sin implementar.** Todavía no existe `database/migrations/tenant/` ni la conexión `tenant`. Este documento describe el esquema que va a tener **cada** base `club_<slug>` cuando se implemente. Antes de escribir migraciones, cada módulo pasa por su change de OpenSpec (`/opsx:propose`), que puede ajustar lo que está acá.
+> **Estado: esquema migrado, ABM en curso.** Las 32 tablas existen como migraciones en `database/migrations/tenant/` y se aplican a **cada** base `club_<slug>`. Los modelos, endpoints y permisos de cada módulo siguen pasando por su change de OpenSpec (`/opsx:propose`). Si un change necesita cambiar una tabla, lo hace con una migración nueva (nunca editando una mergeada) y actualiza el documento del módulo.
 
 Fuente: el borrador técnico *OLIM · Modelo relacional de bases de datos y autenticación multi-tenant* (PDF del equipo), adaptado a las convenciones de este repo. Las diferencias con el borrador están en [Diferencias con el borrador](#diferencias-con-el-borrador-y-con-el-repo).
 
