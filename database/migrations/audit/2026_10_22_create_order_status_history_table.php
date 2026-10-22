@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('old_status', 30)->nullable();
             $table->string('new_status', 30);
             $table->string('comment ', 255)->nullable();
-            $table->timestamps('created_at');
+            $table->timestamp('created_at');
         });
     }
 

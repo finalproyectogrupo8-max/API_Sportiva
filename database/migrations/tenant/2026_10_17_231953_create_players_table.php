@@ -19,8 +19,7 @@ return new class extends Migration
             $table->string('dominant_side', 20)->nullable();
             $table->string('status', 20)->default('active'); // active | inactive | transferred
             $table->text('notes')->nullable();
-            $table->timestamps('created_at');
-            $table->timestamps('updated_at');
+            $table->timestamps(); // created_at, updated_at
             $table->softDeletes();
 
             $table->index(['last_name', 'first_name']);

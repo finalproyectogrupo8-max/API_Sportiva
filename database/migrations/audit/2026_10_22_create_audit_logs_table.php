@@ -16,8 +16,7 @@ return new class extends Migration
             $table->id('entity_id')->nullable();
             $table->json('metadata')->nullable();
             $table->string('ip_address', 45)->nullable();
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at');
+            $table->timestamps(); // created_at, updated_at
         });
     }
 

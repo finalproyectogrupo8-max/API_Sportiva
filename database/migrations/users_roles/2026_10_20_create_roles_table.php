@@ -12,8 +12,8 @@ return new class extends Migration
             $table->id();
             $table->string('name', 80)->unique(); // admin | coordinator | coach | physical_trainer | inventory_manager | maintenance_manager
             $table->string('description', 255)->nullable();
-            $table->timestamps('created_at');
-            $table->timestamps('updated_at');
+            $table->timestamps(); // created_at, updated_at
+
         });
     }
 

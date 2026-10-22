@@ -15,8 +15,8 @@ return new class extends Migration
             $table->string('location', 255)->nullable();
             $table->string('status', 20); // active | inactive | under_maintenance
             $table->text('notes')->nullable();
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at');
+            $table->timestamps(); // created_at, updated_at
+
         });
     }
 

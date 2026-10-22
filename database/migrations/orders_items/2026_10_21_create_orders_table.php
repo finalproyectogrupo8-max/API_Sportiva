@@ -20,8 +20,7 @@ return new class extends Migration
             $table->foreignId('approved_by')->nullable()->constrained('club_users')->onDelete('set null');
             $table->timestamps('approved_at')->nullable();
             $table->timestamps('delivered_at')->nullable();
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at');
+            $table->timestamps(); // created_at, updated_at
         });
     }
 

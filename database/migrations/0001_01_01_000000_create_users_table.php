@@ -19,8 +19,7 @@ return new class extends Migration
             $table->string('status', 20); //active | blocked
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamp('last_login_at')->nullable();
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at');
+            $table->timestamps(); // created_at, updated_at
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

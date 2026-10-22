@@ -16,8 +16,7 @@ return new class extends Migration
             $table->decimal('number_value', 10, 3)->nullable();
             $table->string('unit', 30)->nullable(); // cm | kg | sec | reps...
             $table->string('text_value', 255)->nullable();
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at');
+            $table->timestamps(); // created_at, updated_at
         });
     }
 

@@ -16,8 +16,8 @@ return new class extends Migration
             $table->date('end_date')->nullable();
             $table->smallInteger('shirt_number')->nullable();
             $table->string('status', 20)->default('active');
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at')->nullable();
+            $table->timestamps(); // created_at, updated_at
+
 
             $table->unique(['player_id', 'category_id', 'start_date'], 'unique_player_category_membership');
         });

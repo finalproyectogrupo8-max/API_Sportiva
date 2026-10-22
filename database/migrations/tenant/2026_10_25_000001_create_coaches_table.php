@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('phone', 40)->nullable();
             $table->string('email', 255)->nullable();
             $table->string('status', 20);
-            $table->timestamps('created_at');
-            $table->timestamps('updated_at');
+            $table->timestamps(); // created_at, updated_at
+
             $table->softDeletes();
         });
     }

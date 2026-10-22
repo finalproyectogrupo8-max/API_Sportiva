@@ -15,8 +15,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date');
             $table->string('status', 20); // planned | active | closed
-            $table->timestamps('created_at');
-            $table->timestamps('updated_at');
+            $table->timestamps(); // created_at, updated_at
         });
 
         // El Blueprint no tiene un método para CHECK: va en SQL.

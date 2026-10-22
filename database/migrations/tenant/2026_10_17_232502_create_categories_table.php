@@ -16,8 +16,7 @@ return new class extends Migration
             $table->smallInteger('min_age')->nullable();
             $table->smallInteger('max_age')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->timestamps('created_at');
-            $table->timestamps('updated_at');
+            $table->timestamps(); // created_at, updated_at
 
             $table->unique(['sport_id', 'season_id', 'name']);
         });

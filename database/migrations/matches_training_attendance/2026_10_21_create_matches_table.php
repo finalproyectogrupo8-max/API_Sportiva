@@ -20,8 +20,8 @@ return new class extends Migration
             $table->unsignedSmallInteger('opponent_score')->nullable();
             $table->string('status', 20);
             $table->text('notes')->nullable();
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at')->nullable();
+            $table->timestamps(); // created_at, updated_at
+
         });
     }
 

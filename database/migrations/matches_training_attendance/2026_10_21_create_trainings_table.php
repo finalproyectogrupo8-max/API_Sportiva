@@ -17,8 +17,7 @@ return new class extends Migration
             $table->string('location', 150)->nullable();
             $table->text('objectives')->nullable();
             $table->text('notes')->nullable();
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at')->nullable();
+            $table->timestamps(); // created_at, updated_at
         });
     }
 

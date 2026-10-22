@@ -18,8 +18,7 @@ return new class extends Migration
             $table->string('database_username_ref', 255)->nullable();
             $table->string('database_secret_ref', 255);
             $table->string('status', 20); // provisioning | active | suspended
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at');
+            $table->timestamps(); // created_at, updated_at
         });
     }
 

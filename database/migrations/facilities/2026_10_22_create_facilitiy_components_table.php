@@ -15,8 +15,8 @@ return new class extends Migration
             $table->string('condition', 30); // good | fair | poor | broken
             $table->datetimes('last_inspect_at')->nullable();
             $table->text('notes')->nullable();
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at');
+            $table->timestamps(); // created_at, updated_at
+
         });
     }
 

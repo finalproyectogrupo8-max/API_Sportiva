@@ -13,8 +13,8 @@ return new class extends Migration
             $table->unsignedBigInteger('global_user_id')->unique();
             $table->string('display_name', 120);
             $table->string('status', 20); // active | disabled
-            $table->timestamps('created_at');
-            $table->timestamps('updated_at');
+            $table->timestamps(); // created_at, updated_at
+
         });
     }
 

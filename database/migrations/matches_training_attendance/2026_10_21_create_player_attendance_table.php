@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('status', 20);
             $table->string('notes', 255)->nullable();
             $table->foreignId('recorded_by')->constrained('users')->onDelete('cascade');
-            $table->timestamps('created_at');
+            $table->timestamps(); // created_at, updated_at
         });
     }
 

@@ -14,8 +14,7 @@ return new class extends Migration
             $table->string('location_code', 40)->unique()->nullable();
             $table->string('description', 255)->nullable();
             $table->boolean('is_active')->default(true);
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at')->nullable();
+            $table->timestamps(); // created_at, updated_at
         });
     }
 

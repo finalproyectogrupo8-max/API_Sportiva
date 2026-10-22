@@ -16,8 +16,8 @@ return new class extends Migration
             $table->datetimes('performed_at');
             $table->text('description')->nullable();
             $table->decimal('cost', 12, 2)->nullable();
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at');
+            $table->timestamps(); // created_at, updated_at
+
         });
     }
 

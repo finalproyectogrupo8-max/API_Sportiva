@@ -16,8 +16,7 @@ return new class extends Migration
             $table->datetimes('evaluated_at');
             $table->string('summary', 255)->nullable();
             $table->string('recommendations', 255)->nullable();
-            $table->timestamps('created_at');
-            $table->timestamp('updated_at');
+            $table->timestamps(); // created_at, updated_at
         });
     }
 
