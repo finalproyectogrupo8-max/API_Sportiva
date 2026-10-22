@@ -12,7 +12,7 @@ FROM composer:2.10.3@sha256:af98f42dfff7c68ba8d53c2164fd9fde1087b7d449514baa38c4
 # base: runtime PHP con las extensiones que necesitan Laravel y MySQL.
 # Un futuro target "prod" partiría de acá.
 # ---------------------------------------------------------------------------
-FROM php:8.5.11-cli-trixie@sha256:01a109229f4465bc9ef042d9198f09a4d9da7775a825dbd8572dcdbd8756c4d3 AS base
+FROM php:8.5.12-cli-trixie@sha256:595a7cbb1e0547336319f228c4dc991c2a199350ab12b1c8fda05f73abd06e6b AS base
 
 # OPcache ya viene compilado en PHP 8.5. pdo_mysql, intl, zip y bcmath se compilan acá.
 RUN apt-get update \

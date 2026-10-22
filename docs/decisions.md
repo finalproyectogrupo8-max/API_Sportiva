@@ -19,11 +19,11 @@ Decisiones cortas que no necesitan un ADR completo. Cuando una decisión se vuel
 
 ## Imágenes fijadas
 
-Resueltas el 2026-10-16 con `docker buildx imagetools inspect <tag>`. El digest es el del índice multi-arquitectura.
+Resueltas el 2026-10-16 con `docker buildx imagetools inspect <tag>`. El digest es el del índice multi-arquitectura. PHP se actualizó a 8.5.12 el 2026-10-22 por CVE-2026-109618 y CVE-2026-109619 ("php2shell").
 
 | Uso | Imagen |
 |---|---|
-| PHP (Dockerfile, `base`) | `php:8.5.11-cli-trixie@sha256:01a109229f4465bc9ef042d9198f09a4d9da7775a825dbd8572dcdbd8756c4d3` |
+| PHP (Dockerfile, `base`) | `php:8.5.12-cli-trixie@sha256:595a7cbb1e0547336319f228c4dc991c2a199350ab12b1c8fda05f73abd06e6b` |
 | Composer (Dockerfile, `dev`) | `composer:2.10.3@sha256:af98f42dfff7c68ba8d53c2164fd9fde1087b7d449514baa38c418b1f6bc4bac` |
 | MySQL (`compose.yaml`) | `mysql:8.4.11@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70` |
 
