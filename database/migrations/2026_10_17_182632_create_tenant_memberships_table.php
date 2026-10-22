@@ -10,11 +10,11 @@ return new class extends Migration
     {
         Schema::create('tenant_memberships', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
-            $table->string('role');
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->string('status', 20); // pending | active | revoked
+            $table->timestamps('created_at');
+            $table->timestamp('updated_at');
 
             $table->unique(['user_id', 'tenant_id']);
         });

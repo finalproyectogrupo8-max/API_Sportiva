@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('category_coaches', function (Blueprint $table) {
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->foreignId('coach_id')->constrained('coaches')->onDelete('cascade');
-            $table->string('assignment_type', 20);
-            $table->date('start_date');
+            $table->string('assignment_type', 40);
+            $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
         });
     }

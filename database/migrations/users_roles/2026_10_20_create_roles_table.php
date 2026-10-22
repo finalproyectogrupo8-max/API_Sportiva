@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 80)->unique();
+            $table->string('name', 80)->unique(); // admin | coordinator | coach | physical_trainer | inventory_manager | maintenance_manager
             $table->string('description', 255)->nullable();
             $table->timestamps('created_at');
             $table->timestamps('updated_at');

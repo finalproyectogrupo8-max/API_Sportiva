@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('movement_type', 20);
             $table->unsignedInteger('quantity');
             $table->foreignId('order_id')->nullable()->constrained('orders')->onDelete('set null');
-            $table->foreignId('performed_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('performed_by')->constrained('club_users')->onDelete('cascade');
             $table->string('reason', 255)->nullable();
             $table->string('reference', 100)->nullable();
             $table->timestamp('created_at');

@@ -12,12 +12,12 @@ return new class extends Migration
             $table->id();
             $table->string('order_number', 40)->unique();
             $table->string('type', 20);
-            $table->foreignId('requested_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('requested_by')->constrained('club_users')->onDelete('cascade');
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->string('status', 30);
             $table->string('priority', 20);
             $table->text('description')->nullable();
-            $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('approved_by')->nullable()->constrained('club_users')->onDelete('set null');
             $table->timestamps('approved_at')->nullable();
             $table->timestamps('delivered_at')->nullable();
             $table->timestamps('created_at');

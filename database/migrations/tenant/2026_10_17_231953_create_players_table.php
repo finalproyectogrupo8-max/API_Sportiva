@@ -17,9 +17,10 @@ return new class extends Migration
             $table->string('registration_number', 50)->nullable();
             $table->string('preferred_position', 50)->nullable();
             $table->string('dominant_side', 20)->nullable();
-            $table->string('status', 20)->default('active');
+            $table->string('status', 20)->default('active'); // active | inactive | transferred
             $table->text('notes')->nullable();
-            $table->timestamps();
+            $table->timestamps('created_at');
+            $table->timestamps('updated_at');
             $table->softDeletes();
 
             $table->index(['last_name', 'first_name']);
