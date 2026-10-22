@@ -17,6 +17,11 @@ class EnsureTenantContext
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
+
+        if ($user && ! $user->is_active) {
+            return response()->json(['message' => 'Usuario desactivado.'], 401);
+        }
+
         $token = $user?->currentAccessToken();
         $tenantId = $token instanceof PersonalAccessToken ? $token->tenant_id : null;
 

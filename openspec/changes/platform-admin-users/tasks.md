@@ -4,23 +4,23 @@
 
 - [ ] 1.1 Agregar `users.is_active` con default `true` y la migración de `audit_logs`; verificar migración y rollback en la base de testing.
 - [ ] 1.2 Crear el enum cerrado de roles de membresía con el valor inicial `admin` y cubrir su uso con tests de validación.
-- [ ] 1.3 Crear el modelo `AuditLog` de solo inserción y verificar que persista actor, acción, recurso, cambios, IP y fecha sin permitir mutaciones.
+- [x] 1.3 Crear el modelo `AuditLog` de solo inserción y verificar que persista actor, acción, recurso, cambios, IP y fecha sin permitir mutaciones.
 
 ## 2. ABM de usuarios
 
-- [ ] 2.1 Implementar rutas y `Admin/UserController` para listar, crear, ver y editar usuarios con Policy, Form Requests y `UserResource`; verificar status codes, autorización y respuestas sin credenciales en `tests/Feature/Admin/UserAdminTest.php`.
-- [ ] 2.2 Validar email único, contraseña mínima de 12 caracteres, filtros `search`/`is_active`, paginación 20..100 y rechazo de `is_platform_admin`; cubrir alta, filtros, validación, paginación y protección de campos en `UserAdminTest.php`.
-- [ ] 2.3 Implementar desactivación/reactivación con rechazo de auto-desactivación; verificar ambos casos y sus respuestas en `UserAdminTest.php`.
+- [x] 2.1 Implementar rutas y `Admin/UserController` para listar, crear, ver y editar usuarios con Policy, Form Requests y `UserResource`; verificar status codes, autorización y respuestas sin credenciales en `tests/Feature/Admin/UserAdminTest.php`.
+- [x] 2.2 Validar email único, contraseña mínima de 12 caracteres, filtros `search`/`is_active`, paginación 20..100 y rechazo de `is_platform_admin`; cubrir alta, filtros, validación, paginación y protección de campos en `UserAdminTest.php`.
+- [x] 2.3 Implementar desactivación/reactivación con rechazo de auto-desactivación; verificar ambos casos y sus respuestas en `UserAdminTest.php`.
 
 ## 3. Membresías de club
 
-- [ ] 3.1 Implementar alta y actualización de membresías bajo `/api/admin/tenants/{tenant}/memberships`, con binding acotado al club, Policy, Requests y Resource; verificar creación, duplicados, rol `admin`, club eliminado y aislamiento de URL en `tests/Feature/Admin/TenantMembershipAdminTest.php`.
-- [ ] 3.2 Permitir cambiar rol y `is_active` sin aceptar cambios de `user_id` o `tenant_id`; verificar respuestas y persistencia con tests de actualización parcial en `TenantMembershipAdminTest.php`.
+- [x] 3.1 Implementar alta y actualización de membresías bajo `/api/admin/tenants/{tenant}/memberships`, con binding acotado al club, Policy, Requests y Resource; verificar creación, duplicados, rol `admin`, club eliminado y aislamiento de URL en `tests/Feature/Admin/TenantMembershipAdminTest.php`.
+- [x] 3.2 Permitir cambiar rol y `is_active` sin aceptar cambios de `user_id` o `tenant_id`; verificar respuestas y persistencia con tests de actualización parcial en `TenantMembershipAdminTest.php`.
 
 ## 4. Autenticación y revocación de tokens
 
-- [ ] 4.1 Rechazar login y requests con token de usuarios inactivos; verificar 401 y mensaje genérico en `tests/Feature/Auth/AuthFlowTest.php` y los tests de contexto de tenant.
-- [ ] 4.2 Revocar todos los tokens al desactivar un usuario o cambiar su contraseña, y solo los tokens del club al desactivar una membresía; verificar revocación selectiva y tokens de otros clubes en tests de auth y membresías.
+- [x] 4.1 Rechazar login y requests con token de usuarios inactivos; verificar 401 y mensaje genérico en `tests/Feature/Auth/AuthFlowTest.php` y los tests de contexto de tenant.
+- [x] 4.2 Revocar todos los tokens al desactivar un usuario o cambiar su contraseña, y solo los tokens del club al desactivar una membresía; verificar revocación selectiva y tokens de otros clubes en tests de auth y membresías.
 
 ## 5. Auditoría administrativa
 
