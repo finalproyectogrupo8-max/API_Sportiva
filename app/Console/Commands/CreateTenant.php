@@ -63,4 +63,3 @@ class CreateTenant extends Command
         return self::SUCCESS;
     }
 }
-

@@ -78,4 +78,3 @@ class ProvisionTenantTest extends TestCase
             ->assertJsonPath('code', 'tenant_required');
     }
 }
-

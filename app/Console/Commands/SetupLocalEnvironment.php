@@ -122,4 +122,3 @@ class SetupLocalEnvironment extends Command
         return self::SUCCESS;
     }
 }
-
