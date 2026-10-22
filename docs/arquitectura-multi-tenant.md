@@ -31,7 +31,7 @@ Por qué una base por club: aislamiento fuerte entre clubes (un bug en una consu
 | Migraciones de la base central (`database/migrations/`) | ✅ Las de Laravel más `tenants`, `tenant_memberships` y `personal_access_tokens` con `tenant_id` |
 | Auth (Sanctum, token atado al tenant) | ✅ Change `platform-auth` |
 | Conexión `tenant`, `App\Tenancy\TenantDatabase` y el cambio de base en `tenant.token` y en los jobs | ✅ Change `tenant-connection` ([ADR 0002](adr/0002-multi-tenancy-implementacion-propia.md)) |
-| `database/migrations/tenant/` | ✅ Las primeras tablas (`players`, `sports`, `seasons`, `categories`, `coaches`). El esquema completo está en el [modelo de datos de la base de cada club](modelo-datos-club/README.md) |
+| `database/migrations/tenant/` | ✅ Las 32 tablas del [modelo de datos de la base de cada club](modelo-datos-club/README.md). Los ABM se implementan por módulo |
 | Permiso del usuario MySQL local sobre `club\_%` | ✅ `docker/mysql/init/02-club-dbs.sh` |
 | Tests multi-club (`club_test_a`, `club_test_b`) | ✅ `tests/Concerns/InteractsWithTenants.php` |
 | Alta de clubes (`ProvisionTenant`, `tenants:create`), `tenants:migrate` | ❌ Change `platform-admin-and-provisioning`, que usa `TenantDatabase` |

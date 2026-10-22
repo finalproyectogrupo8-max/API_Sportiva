@@ -11,12 +11,12 @@ return new class extends Migration
         Schema::create('facilities', function (Blueprint $table) {
             $table->id();
             $table->string('name', 120);
-            $table->string('type', 50); // gym | field | court | pool | track | other
-            $table->string('location', 255)->nullable();
-            $table->string('status', 20); // active | inactive | under_maintenance
+            $table->string('type', 50);
+            $table->string('location', 200)->nullable();
+            $table->string('status', 20);
             $table->text('notes')->nullable();
-            $table->timestamps(); // created_at, updated_at
-
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

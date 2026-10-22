@@ -10,16 +10,15 @@ return new class extends Migration
     {
         Schema::create('player_category_memberships', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('player_id')->constrained('players')->onDelete('cascade');
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
+            $table->foreignId('player_id')->constrained('players');
+            $table->foreignId('category_id')->constrained('categories');
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->smallInteger('shirt_number')->nullable();
-            $table->string('status', 20)->default('active');
-            $table->timestamps(); // created_at, updated_at
+            $table->string('status', 20);
+            $table->timestamps();
 
-
-            $table->unique(['player_id', 'category_id', 'start_date'], 'unique_player_category_membership');
+            $table->index(['player_id', 'category_id', 'status']);
         });
     }
 

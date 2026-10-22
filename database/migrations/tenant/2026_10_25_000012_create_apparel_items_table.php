@@ -8,17 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('roles', function (Blueprint $table) {
+        Schema::create('apparel_items', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 80)->unique(); // admin | coordinator | coach | physical_trainer | inventory_manager | maintenance_manager
+            $table->string('name', 100);
             $table->string('description', 255)->nullable();
-            $table->timestamps(); // created_at, updated_at
-
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('roles');
+        Schema::dropIfExists('apparel_items');
     }
 };

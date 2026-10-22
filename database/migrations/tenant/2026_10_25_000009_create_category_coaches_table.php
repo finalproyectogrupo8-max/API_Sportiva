@@ -9,11 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('category_coaches', function (Blueprint $table) {
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
-            $table->foreignId('coach_id')->constrained('coaches')->onDelete('cascade');
+            $table->id();
+            $table->foreignId('category_id')->constrained('categories');
+            $table->foreignId('coach_id')->constrained('coaches');
             $table->string('assignment_type', 40);
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
+
+            $table->index(['category_id', 'coach_id', 'assignment_type']);
         });
     }
 

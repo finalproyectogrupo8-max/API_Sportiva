@@ -10,11 +10,11 @@ return new class extends Migration
     {
         Schema::create('club_users', function (Blueprint $table) {
             $table->id();
+            // Referencia lógica a sportiva_platform.users.id: no hay FK entre bases.
             $table->unsignedBigInteger('global_user_id')->unique();
             $table->string('display_name', 120);
-            $table->string('status', 20); // active | disabled
-            $table->timestamps(); // created_at, updated_at
-
+            $table->string('status', 20);
+            $table->timestamps();
         });
     }
 

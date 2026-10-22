@@ -8,18 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('materials', function (Blueprint $table) {
+        Schema::create('storage_locations', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 120)->unique();
+            $table->string('name', 120);
+            $table->string('location_code', 40)->nullable()->unique();
             $table->string('description', 255)->nullable();
-            $table->string('unit', 20);
             $table->boolean('is_active')->default(true);
-            $table->timestamps(); // created_at, updated_at
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('materials');
+        Schema::dropIfExists('storage_locations');
     }
 };

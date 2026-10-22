@@ -8,14 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('role_permissions', function (Blueprint $table) {
+        Schema::create('club_user_roles', function (Blueprint $table) {
+            $table->foreignId('club_user_id')->constrained('club_users');
             $table->foreignId('role_id')->constrained('roles')->cascadeOnDelete();
-            $table->foreignId('permission_id')->constrained('permissions')->cascadeOnDelete();
+            $table->timestamp('created_at')->nullable();
+
+            $table->primary(['club_user_id', 'role_id']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('role_permissions');
+        Schema::dropIfExists('club_user_roles');
     }
 };

@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('matches', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
+            $table->foreignId('category_id')->constrained('categories');
             $table->string('opponent', 120);
-            $table->timestamps('match_date');
+            $table->dateTime('match_date');
             $table->string('venue', 200)->nullable();
             $table->boolean('is_home');
             $table->string('uniform_color', 50)->nullable();
@@ -20,8 +20,10 @@ return new class extends Migration
             $table->unsignedSmallInteger('opponent_score')->nullable();
             $table->string('status', 20);
             $table->text('notes')->nullable();
-            $table->timestamps(); // created_at, updated_at
+            $table->timestamps();
+            $table->softDeletes();
 
+            $table->index(['category_id', 'match_date']);
         });
     }
 

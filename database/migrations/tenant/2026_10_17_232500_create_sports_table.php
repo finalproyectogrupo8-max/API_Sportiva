@@ -12,8 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 80)->unique();
             $table->boolean('is_active')->default(true);
-            $table->timestamps(); // created_at, updated_at
-
+            $table->timestamps();
         });
     }
 

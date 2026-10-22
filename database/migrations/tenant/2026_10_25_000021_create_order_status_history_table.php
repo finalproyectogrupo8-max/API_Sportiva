@@ -10,12 +10,14 @@ return new class extends Migration
     {
         Schema::create('order_status_history', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-            $table->foreignId('changed_by')->constrained('club_users')->cascadeOnDelete();
+            $table->foreignId('order_id')->constrained('orders');
+            $table->foreignId('changed_by')->constrained('club_users');
             $table->string('old_status', 30)->nullable();
             $table->string('new_status', 30);
-            $table->string('comment ', 255)->nullable();
-            $table->timestamp('created_at');
+            $table->string('comment', 255)->nullable();
+            $table->timestamp('created_at')->useCurrent();
+
+            $table->index(['order_id', 'created_at']);
         });
     }
 
