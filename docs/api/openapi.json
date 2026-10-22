@@ -2854,18 +2854,85 @@
                         "$ref": "#/components/schemas/UserResource"
                     },
                     "tenant": {
-                        "$ref": "#/components/schemas/TenantSummaryResource"
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TenantSummaryResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     },
                     "profile": {
-                        "type": "null"
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "role": {
+                                "type": "string",
+                                "enum": [
+                                    "platform_admin",
+                                    "admin"
+                                ]
+                            },
+                            "first_name": {
+                                "type": "string"
+                            },
+                            "last_name": {
+                                "type": "string",
+                                "const": ""
+                            },
+                            "avatar_url": {
+                                "type": "null"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "role",
+                            "first_name",
+                            "last_name",
+                            "avatar_url"
+                        ]
                     },
                     "permissions": {
                         "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "minItems": 0,
-                        "maxItems": 0
+                        "prefixItems": [
+                            {
+                                "type": "string",
+                                "const": "manage-club"
+                            },
+                            {
+                                "type": "string",
+                                "const": "view-dashboard"
+                            },
+                            {
+                                "type": "string",
+                                "const": "manage-sports"
+                            },
+                            {
+                                "type": "string",
+                                "const": "manage-seasons"
+                            },
+                            {
+                                "type": "string",
+                                "const": "manage-categories"
+                            },
+                            {
+                                "type": "string",
+                                "const": "manage-coaches"
+                            },
+                            {
+                                "type": "string",
+                                "const": "manage-players"
+                            },
+                            {
+                                "type": "string",
+                                "const": "view-reports"
+                            }
+                        ],
+                        "minItems": 8,
+                        "maxItems": 8
                     }
                 },
                 "required": [
@@ -2968,15 +3035,75 @@
                         ]
                     },
                     "profile": {
-                        "type": "null"
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "role": {
+                                "type": "string",
+                                "enum": [
+                                    "platform_admin",
+                                    "admin"
+                                ]
+                            },
+                            "first_name": {
+                                "type": "string"
+                            },
+                            "last_name": {
+                                "type": "string",
+                                "const": ""
+                            },
+                            "avatar_url": {
+                                "type": "null"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "role",
+                            "first_name",
+                            "last_name",
+                            "avatar_url"
+                        ]
                     },
                     "permissions": {
                         "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "minItems": 0,
-                        "maxItems": 0
+                        "prefixItems": [
+                            {
+                                "type": "string",
+                                "const": "manage-club"
+                            },
+                            {
+                                "type": "string",
+                                "const": "view-dashboard"
+                            },
+                            {
+                                "type": "string",
+                                "const": "manage-sports"
+                            },
+                            {
+                                "type": "string",
+                                "const": "manage-seasons"
+                            },
+                            {
+                                "type": "string",
+                                "const": "manage-categories"
+                            },
+                            {
+                                "type": "string",
+                                "const": "manage-coaches"
+                            },
+                            {
+                                "type": "string",
+                                "const": "manage-players"
+                            },
+                            {
+                                "type": "string",
+                                "const": "view-reports"
+                            }
+                        ],
+                        "minItems": 8,
+                        "maxItems": 8
                     }
                 },
                 "required": [

@@ -62,6 +62,7 @@ return [
     'token_prefix' => env('SANCTUM_TOKEN_PREFIX', 'sportiva_'),
 
     'pre_tenant_ttl' => (int) env('SANCTUM_PRE_TENANT_TTL', 15),
+    'platform_admin_ttl' => (int) env('SANCTUM_PLATFORM_ADMIN_TTL', 480),
     'tenant_ttl' => (int) env('SANCTUM_TENANT_TTL', 480),
 
     /*

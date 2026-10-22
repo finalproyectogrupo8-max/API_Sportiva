@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\IndexTenantRequest;
 use App\Http\Requests\Admin\StoreTenantRequest;
 use App\Http\Requests\Admin\UpdateTenantRequest;
 use App\Http\Resources\Admin\TenantResource;
+use App\Jobs\Platform\ProvisionTenant;
 use App\Models\Tenant;
 use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
@@ -55,6 +56,8 @@ class TenantController extends Controller
 
             return $tenant;
         });
+
+        ProvisionTenant::dispatch($tenant->id)->afterCommit();
 
         return TenantResource::make($tenant)->response()->setStatusCode(201);
     }

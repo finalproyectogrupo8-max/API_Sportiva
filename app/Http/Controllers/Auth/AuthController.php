@@ -35,10 +35,21 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciales inválidas.'], 401);
         }
 
+        $isPlatformAdmin = (bool) $user->is_platform_admin;
+        $tokenName = $isPlatformAdmin ? 'platform-admin' : 'pre-tenant';
+        $abilities = ['tenant:select'];
+        if ($isPlatformAdmin) {
+            $abilities[] = 'platform:admin';
+        }
+
+        $ttl = $isPlatformAdmin
+            ? config('sanctum.platform_admin_ttl', config('sanctum.tenant_ttl'))
+            : config('sanctum.pre_tenant_ttl');
+
         $token = $user->createToken(
-            'pre-tenant',
-            ['tenant:select'],
-            now()->addMinutes(config('sanctum.pre_tenant_ttl')),
+            $tokenName,
+            $abilities,
+            now()->addMinutes($ttl),
         );
 
         return new LoginResource($token, $user, $this->activeTenantsFor($user));

@@ -20,12 +20,30 @@ class SelectTenantResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $user = $request->user();
+        $role = $user?->is_platform_admin ? 'platform_admin' : 'admin';
+
         return [
             'token' => $this->plainTextToken,
             'expires_at' => $this->accessToken->expires_at->toIso8601String(),
             'tenant' => new TenantSummaryResource($this->tenant),
-            'profile' => null,
-            'permissions' => [],
+            'profile' => [
+                'id' => $user?->id ?? $this->accessToken->tokenable_id,
+                'role' => $role,
+                'first_name' => $user?->name ?? 'Usuario',
+                'last_name' => '',
+                'avatar_url' => null,
+            ],
+            'permissions' => [
+                'manage-club',
+                'view-dashboard',
+                'manage-sports',
+                'manage-seasons',
+                'manage-categories',
+                'manage-coaches',
+                'manage-players',
+                'view-reports',
+            ],
         ];
     }
 }

@@ -8,16 +8,16 @@ use Illuminate\Support\Facades\Validator;
 
 class CreatePlatformAdmin extends Command
 {
-    protected $signature = 'platform:create-admin {email} {--name=}';
+    protected $signature = 'platform:create-admin {email} {--name=} {--password=}';
 
     protected $description = 'Crea un usuario administrador de plataforma';
 
     public function handle(): int
     {
         $name = $this->option('name') ?: $this->ask('Nombre');
-        $password = $this->secret('Contraseña (mínimo 12 caracteres)');
+        $password = $this->option('password') ?: $this->secret('Contraseña (mínimo 12 caracteres)');
 
-        if ($password !== $this->secret('Repetir contraseña')) {
+        if (! $this->option('password') && $password !== $this->secret('Repetir contraseña')) {
             $this->error('Las contraseñas no coinciden.');
 
             return self::FAILURE;

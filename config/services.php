@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'frontend' => [
+        'url' => env('FRONTEND_URL', 'http://localhost:3000'),
+        'restriction_enabled' => (bool) env('FRONTEND_RESTRICTION_ENABLED', false),
+        'bff_secret' => env('FRONTEND_BFF_SECRET'),
+        'server_ips' => array_filter(explode(',', (string) env('FRONTEND_SERVER_IPS', ''))),
+    ],
+
 ];

@@ -26,6 +26,14 @@ class EnsureTenantContext
         $tenantId = $token instanceof PersonalAccessToken ? $token->tenant_id : null;
 
         if (! $tenantId) {
+            // Los administradores de plataforma pueden consultar endpoints informativos
+            // como /api/me sin tener un club activo seleccionado.
+            if ($user?->is_platform_admin && $request->is('api/me')) {
+                $request->attributes->set('tenant', null);
+
+                return $next($request);
+            }
+
             return ApiError::forbidden('tenant_required');
         }
 

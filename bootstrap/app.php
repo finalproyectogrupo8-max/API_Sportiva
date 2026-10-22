@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsureTenantContext;
+use App\Http\Middleware\RestrictToFrontendServer;
 use App\Support\ApiError;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
@@ -27,6 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.token' => EnsureTenantContext::class,
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
+            'frontend.restrict' => RestrictToFrontendServer::class,
+        ]);
+
+        $middleware->api(prepend: [
+            RestrictToFrontendServer::class,
         ]);
 
         // El route model binding de los modelos de club consulta la base del club: tenant.token
