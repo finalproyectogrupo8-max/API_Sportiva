@@ -5,10 +5,13 @@ namespace App\Console\Commands;
 use App\Models\Tenant;
 use App\Tenancy\TenantDatabase;
 use Illuminate\Console\Command;
+use Illuminate\Console\ConfirmableTrait;
 use Throwable;
 
 class MigrateTenants extends Command
 {
+    use ConfirmableTrait;
+
     protected $signature = 'tenants:migrate 
                             {--tenant= : Slug del club específico a migrar (opcional, por defecto migra todos los activos)} 
                             {--fresh : Ejecuta migrate:fresh en cada base} 
@@ -18,6 +21,11 @@ class MigrateTenants extends Command
 
     public function handle(TenantDatabase $tenantDatabase): int
     {
+        // Como `migrate`: en producción pide confirmación salvo con --force.
+        if (! $this->confirmToProceed()) {
+            return self::FAILURE;
+        }
+
         $slug = $this->option('tenant');
         $fresh = (bool) $this->option('fresh');
 

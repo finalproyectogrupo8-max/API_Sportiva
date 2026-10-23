@@ -306,4 +306,30 @@ class PlatformAdminTokenTest extends TestCase
                 'code' => 'forbidden',
             ]);
     }
+
+    public function test_login_exposes_is_platform_admin_true_for_admins(): void
+    {
+        User::factory()->platformAdmin()->create([
+            'email' => 'admin@sportiva.test',
+            'password' => 'secret-password-12',
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'admin@sportiva.test',
+            'password' => 'secret-password-12',
+        ])->assertOk()->assertJsonPath('user.is_platform_admin', true);
+    }
+
+    public function test_login_exposes_is_platform_admin_false_for_regular_users(): void
+    {
+        User::factory()->create([
+            'email' => 'socio@sportiva.test',
+            'password' => 'secret-password-12',
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'socio@sportiva.test',
+            'password' => 'secret-password-12',
+        ])->assertOk()->assertJsonPath('user.is_platform_admin', false);
+    }
 }

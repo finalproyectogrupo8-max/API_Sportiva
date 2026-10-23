@@ -217,6 +217,43 @@ class TenantAdminTest extends TestCase
         $this->assertDatabaseMissing('audit_logs', ['subject_id' => $tenant->id]);
     }
 
+    public function test_patch_status_suspended_on_provisioning_or_failed_tenant_is_rejected_with_422(): void
+    {
+        $this->asAdmin();
+
+        foreach (['provisioning', 'failed'] as $status) {
+            $tenant = Tenant::factory()->create(['status' => $status]);
+
+            $this->patchJson("/api/admin/tenants/{$tenant->id}", ['status' => 'suspended'])
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('status');
+
+            $this->assertSame($status, $tenant->fresh()->status);
+        }
+    }
+
+    public function test_a_tenant_without_database_cannot_be_activated_through_suspended(): void
+    {
+        $tenant = Tenant::factory()->create(['status' => 'provisioning']);
+        $this->asAdmin();
+
+        $this->patchJson("/api/admin/tenants/{$tenant->id}", ['status' => 'suspended'])->assertUnprocessable();
+        $this->patchJson("/api/admin/tenants/{$tenant->id}", ['status' => 'active'])->assertUnprocessable();
+
+        $this->assertSame('provisioning', $tenant->fresh()->status);
+    }
+
+    public function test_patch_name_on_provisioning_tenant_is_still_allowed(): void
+    {
+        $tenant = Tenant::factory()->create(['status' => 'provisioning']);
+        $this->asAdmin();
+
+        $this->patchJson("/api/admin/tenants/{$tenant->id}", ['name' => 'Nuevo nombre'])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Nuevo nombre')
+            ->assertJsonPath('data.status', 'provisioning');
+    }
+
     public function test_patch_status_active_on_suspended_tenant_is_allowed_and_audited(): void
     {
         $admin = $this->asAdmin();

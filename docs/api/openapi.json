@@ -3614,12 +3614,17 @@
                     },
                     "email": {
                         "type": "string"
+                    },
+                    "is_platform_admin": {
+                        "type": "boolean",
+                        "description": "Solo para que el front decida si muestra /admin: la API verifica el permiso en cada request."
                     }
                 },
                 "required": [
                     "id",
                     "name",
-                    "email"
+                    "email",
+                    "is_platform_admin"
                 ],
                 "title": "UserResource"
             }
