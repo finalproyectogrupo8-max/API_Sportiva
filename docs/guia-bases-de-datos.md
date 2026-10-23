@@ -306,7 +306,7 @@ php artisan tenants:migrate --force    # 2. todas las bases de clubes, una por u
 
 ## 7. Alta de un club: el job ProvisionTenant
 
-🟡 **PLANIFICADO.** Se dispara desde el panel de admin (`POST /api/admin/tenants`) o por consola (`php artisan tenants:create river "Club River"`).
+✅ **EXISTE HOY.** Se dispara desde el panel de admin (`POST /api/admin/tenants`) o por consola (`php artisan tenants:create river "Club River"`).
 
 ### Los pasos del alta
 
@@ -335,7 +335,7 @@ En Laravel, un **job** es una tarea que se guarda para ejecutarla **después**, 
 
 | Pieza | Qué es | Estado |
 | --- | --- | --- |
-| La clase del job | Lo que hay que hacer (`App\Jobs\ProvisionTenant`) | 🟡 PLANIFICADO |
+| La clase del job | Lo que hay que hacer (`App\Jobs\ProvisionTenant`) | ✅ EXISTE HOY |
 | La cola | Donde quedan los jobs pendientes: la tabla `jobs` de la base central (`QUEUE_CONNECTION=database`) | ✅ EXISTE HOY |
 | El worker | El proceso que corre `php artisan queue:work` todo el tiempo, toma los jobs y los ejecuta | ❌ **NO EXISTE** (ver abajo) |
 
@@ -468,11 +468,11 @@ Se resuelve en el change que implementa el alta:
 | Endpoint | Para qué |
 | --- | --- |
 | `POST/GET/PATCH /api/admin/users` | Crear, listar y editar usuarios de la plataforma |
-| `POST /api/admin/tenants` | Crear un club (`provisioning`; la provisión de su base sigue pendiente) |
+| `POST /api/admin/tenants` | Crear un club y disparar la provisión de su base |
 | `GET /api/admin/tenants[/{id}]` | Listar/ver clubes; admite filtros, búsqueda, orden con lista permitida y paginación |
 | `PATCH /api/admin/tenants/{id}` | Cambiar nombre o alternar estado entre `active` y `suspended` |
 | `DELETE /api/admin/tenants/{id}` | Baja lógica (`deleted_at`); conserva la base y reserva el slug |
-| `POST /api/admin/tenants/{id}/retry` | Reintentar un alta que falló |
+| `POST /api/admin/tenants/{tenant}/retry` | Reintentar un alta que falló |
 | `POST /api/admin/tenants/{id}/memberships` | Asociar un usuario a un club, con un rol |
 | `PATCH /api/admin/tenants/{id}/memberships/{m}` | Cambiar el rol o desactivar la membresía |
 

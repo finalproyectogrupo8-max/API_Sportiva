@@ -317,6 +317,16 @@ Para ver qué está escuchando en cada puerto (PowerShell): `netstat -ano | find
 
 3. **Test Connection**.
 
+## Cola de jobs en desarrollo local y demo
+
+Para desarrollo local y demos, no es necesario levantar un proceso worker en segundo plano: con `QUEUE_CONNECTION=sync` (el valor por defecto en los tests y recomendado para demos locales), los jobs encolados (como `ProvisionTenant` al crear un club) se ejecutan de manera síncrona dentro del ciclo del request, dejando el club en estado `active` con su base creada inmediatamente.
+
+Si se utiliza `QUEUE_CONNECTION=database`, los jobs quedan registrados en la tabla `jobs` de la base central y se pueden procesar manualmente en una terminal mediante:
+
+```bash
+docker compose exec backend php artisan queue:work --tries=3 --timeout=90
+```
+
 ## Resetear la base local (destruye datos)
 
 > ⚠️ **Esto borra TODOS los datos de tu MySQL local** (`sportiva_platform`, `sportiva_testing` y las bases `club_*`) y no se puede deshacer. No afecta a nadie más: el volumen solo existe en tu máquina.
