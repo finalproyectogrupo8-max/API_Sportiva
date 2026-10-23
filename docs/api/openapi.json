@@ -2960,6 +2960,9 @@
             "MeTenantsResource": {
                 "type": "object",
                 "properties": {
+                    "user": {
+                        "$ref": "#/components/schemas/UserResource"
+                    },
                     "tenants": {
                         "type": "array",
                         "items": {
@@ -2968,6 +2971,7 @@
                     }
                 },
                 "required": [
+                    "user",
                     "tenants"
                 ],
                 "title": "MeTenantsResource"

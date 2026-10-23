@@ -198,7 +198,26 @@ class AuthFlowTest extends TestCase
         $this->api($this->loginToken($user))
             ->getJson('/api/me/tenants')
             ->assertOk()
-            ->assertJsonPath('tenants.0.slug', 'river');
+            ->assertJsonPath('tenants.0.slug', 'river')
+            ->assertJsonPath('user.id', $user->id)
+            ->assertJsonPath('user.is_platform_admin', false);
+    }
+
+    public function test_me_tenants_works_with_platform_token_and_returns_the_admin(): void
+    {
+        $admin = User::factory()->platformAdmin()->create(['password' => 'secret-password-12']);
+
+        $platformToken = $this->postJson('/api/auth/login', [
+            'email' => $admin->email,
+            'password' => 'secret-password-12',
+        ])->json('platform_token');
+
+        $this->api($platformToken)
+            ->getJson('/api/me/tenants')
+            ->assertOk()
+            ->assertJsonPath('user.id', $admin->id)
+            ->assertJsonPath('user.is_platform_admin', true)
+            ->assertJsonPath('tenants', []);
     }
 
     public function test_logout_revokes_the_token(): void
