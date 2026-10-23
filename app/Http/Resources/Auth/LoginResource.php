@@ -17,8 +17,12 @@ class LoginResource extends JsonResource
     public static $wrap = null;
 
     /** @param Collection<int, Tenant> $tenants */
-    public function __construct(NewAccessToken $token, private User $user, private Collection $tenants)
-    {
+    public function __construct(
+        NewAccessToken $token,
+        private User $user,
+        private Collection $tenants,
+        private ?NewAccessToken $platformToken = null,
+    ) {
         parent::__construct($token);
     }
 
@@ -29,6 +33,14 @@ class LoginResource extends JsonResource
             'expires_at' => $this->accessToken->expires_at->toIso8601String(),
             'user' => new UserResource($this->user),
             'tenants' => TenantSummaryResource::collection($this->tenants),
+            'platform_token' => $this->when(
+                $this->platformToken !== null,
+                fn () => $this->platformToken->plainTextToken,
+            ),
+            'platform_expires_at' => $this->when(
+                $this->platformToken !== null,
+                fn () => $this->platformToken->accessToken->expires_at?->toIso8601String(),
+            ),
         ];
     }
 }

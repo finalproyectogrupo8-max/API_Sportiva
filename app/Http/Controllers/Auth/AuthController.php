@@ -41,7 +41,16 @@ class AuthController extends Controller
             now()->addMinutes(config('sanctum.pre_tenant_ttl')),
         );
 
-        return new LoginResource($token, $user, $this->activeTenantsFor($user));
+        $platformToken = null;
+        if ($user->is_platform_admin) {
+            $platformToken = $user->createToken(
+                'platform',
+                ['platform:admin'],
+                now()->addMinutes(config('sanctum.platform_ttl')),
+            );
+        }
+
+        return new LoginResource($token, $user, $this->activeTenantsFor($user), $platformToken);
     }
 
     /**
