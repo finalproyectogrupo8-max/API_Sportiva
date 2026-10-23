@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Auth;
 
 use App\Http\Resources\TenantSummaryResource;
+use App\Http\Resources\UserResource;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -22,6 +23,11 @@ class MeTenantsResource extends JsonResource
 
     public function toArray(Request $request): array
     {
-        return ['tenants' => TenantSummaryResource::collection($this->tenants)];
+        // `user` deja que el front sepa quién es el usuario con cualquier token (pre-tenant,
+        // de club o de plataforma): /me solo acepta tokens de club.
+        return [
+            'user' => new UserResource($this->resource),
+            'tenants' => TenantSummaryResource::collection($this->tenants),
+        ];
     }
 }

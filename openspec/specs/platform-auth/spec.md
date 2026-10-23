@@ -1,7 +1,7 @@
 # platform-auth Specification
 
 ## Purpose
-TBD - created by archiving change platform-auth. Update Purpose after archive.
+Login en dos pasos contra la base central: token pre-tenant (15 min, solo para elegir club), token de club (8 h) emitido por `select-tenant`, sesión y logout. Guía funcional: `docs/login-explicado.md`.
 
 ## Requirements
 
@@ -28,11 +28,19 @@ El sistema SHALL emitir un token atado a un club solo si el usuario tiene una me
 - **THEN** responde 403 con `code = membership_inactive`
 
 ### Requirement: Sesión
-El sistema SHALL exponer `GET /api/me`, `GET /api/me/tenants` y `POST /api/auth/logout`, y logout SHALL revocar el token usado.
+El sistema SHALL exponer `GET /api/me`, `GET /api/me/tenants` y `POST /api/auth/logout`, y logout SHALL revocar el token usado. `GET /api/me/tenants` SHALL aceptar cualquier token vigente del usuario (pre-tenant, de club o de plataforma) y SHALL devolver el usuario (`id`, `name`, `email`, `is_platform_admin`) junto con sus clubes activos.
 
 #### Scenario: Logout
 - **WHEN** un usuario autenticado llama a logout
 - **THEN** responde 204 y el token deja de ser válido
+
+#### Scenario: Usuario y clubes con token pre-tenant
+- **WHEN** un usuario con token `pre-tenant` llama a `GET /api/me/tenants`
+- **THEN** responde 200 con `user` y la lista de clubes activos donde tiene membresía activa
+
+#### Scenario: Usuario con token de plataforma
+- **WHEN** un admin de plataforma llama a `GET /api/me/tenants` con su token de plataforma
+- **THEN** responde 200 con `user.is_platform_admin = true`
 
 ### Requirement: Alta de administradores de plataforma
 El sistema SHALL crear administradores de plataforma solo mediante `php artisan platform:create-admin` y MUST NOT ofrecer un registro público.

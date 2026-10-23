@@ -29,6 +29,7 @@ Detalles, comandos del día a día y troubleshooting: **[docs/desarrollo-local.m
 | [docs/guia-jobs.md](docs/guia-jobs.md) | **Guía para devs:** jobs y colas (crear, despachar, reintentar, jobs de club, worker, tareas programadas y tests) |
 | [docs/guia-abm.md](docs/guia-abm.md) | **Guía para devs:** cómo armar un ABM (rutas, controller, Requests, Resources, listados, permisos, bajas, tests y checklist con comandos) |
 | [docs/guia-bases-de-datos.md](docs/guia-bases-de-datos.md) | **Guía para devs:** base central y de cada club, migraciones paso a paso, alta de clubes (job), panel de admin y comandos |
+| [docs/login-explicado.md](docs/login-explicado.md) | **Para funcionales:** cómo funciona el login de usuarios de club y de admins, sin código |
 | [docs/arquitectura-multi-tenant.md](docs/arquitectura-multi-tenant.md) | Base central + una base por club: qué existe y qué falta |
 | [docs/adr/](docs/adr/) | Decisiones de arquitectura |
 | [docs/api/openapi.json](docs/api/openapi.json) | Contrato OpenAPI (generado por Scramble; lo consume el frontend) |
