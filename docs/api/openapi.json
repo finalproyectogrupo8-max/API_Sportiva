@@ -2909,6 +2909,15 @@
                         "items": {
                             "$ref": "#/components/schemas/TenantSummaryResource"
                         }
+                    },
+                    "platform_token": {
+                        "type": "string"
+                    },
+                    "platform_expires_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 },
                 "required": [

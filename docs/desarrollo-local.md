@@ -456,6 +456,22 @@ Seguramente el repo está en `C:\` (o en `/mnt/c/...` desde WSL). `scripts/setup
 
 Cloná dentro de WSL con `scripts/setup-windows.ps1` ([por qué](#opción-1-setup-automático-en-windows-recomendado)). Antes de pasarte, commiteá y pusheá tus cambios, y bajá el entorno viejo con `docker compose down` (**sin** `-v`). El clon de WSL usa el mismo volumen de MySQL (`api-sportiva_mysql-data`), así que tus datos locales se mantienen. OPcache no ayuda en este caso: desde `C:\` lo probamos y fue más lento.
 
+## Autenticación y tipos de tokens
+
+La API utiliza Laravel Sanctum con tres tipos de tokens según el rol y contexto de ejecución:
+
+| Tipo de Token | Nombre / Propósito | Abilities | `tenant_id` | TTL por defecto | Variable de entorno | Endpoints autorizados |
+|---|---|---|---|---|---|---|
+| **Pre-Tenant** | `pre-tenant` | `tenant:select` | `null` | 15 min | `SANCTUM_PRE_TENANT_TTL` | `/api/auth/select-tenant`, `/api/me/tenants`, `/api/auth/logout` |
+| **Club (Tenant)** | `tenant:<slug>` | `tenant:select`, `tenant:operate` | ID del club | 480 min (8 h) | `SANCTUM_TENANT_TTL` | Endpoints de club (`/api/players`, `/api/sports`, etc.), `/api/me`, `/api/auth/logout` |
+| **Plataforma** | `platform` | `platform:admin` | `null` | 480 min (8 h) | `SANCTUM_PLATFORM_TTL` | Panel de plataforma (`/api/admin/*`), `/api/auth/logout` |
+
+### Reglas clave
+- El token de plataforma se emite únicamente en `POST /api/auth/login` cuando el usuario tiene `is_platform_admin = true`.
+- Las rutas `/api/admin/*` exigen la ability `platform:admin` y un usuario con `is_platform_admin = true`. Tokens pre-tenant o de club son rechazados con 403 `forbidden`.
+- El token de plataforma carece de `tenant_id` y de ability `tenant:select`: no puede operar sobre endpoints de club (403 `tenant_required`) ni llamar a `select-tenant` (403 `forbidden`).
+- La configuración `'expiration' => 480` en `config/sanctum.php` actúa como límite de caducidad global: debe ser `>= SANCTUM_PLATFORM_TTL` para no cortar el token de plataforma antes de su TTL configurado.
+
 ## Limitaciones y seguridad
 
 - **`php artisan serve` no es un servidor de producción.** Corre 4 workers (`PHP_CLI_SERVER_WORKERS`), sin TLS, y no sirve para medir rendimiento. Producción usa el runtime de Laravel Cloud.

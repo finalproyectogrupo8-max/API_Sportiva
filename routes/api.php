@@ -31,7 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('me', [AuthController::class, 'me'])->middleware('tenant.token');
 });
 
-Route::middleware(['auth:sanctum', 'platform.admin'])
+Route::middleware(['auth:sanctum', 'abilities:platform:admin', 'platform.admin'])
     ->prefix('admin')
     ->group(function () {
         Route::post('tenants/{tenant}/retry', [TenantController::class, 'retry']);

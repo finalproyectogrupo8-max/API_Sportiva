@@ -63,6 +63,7 @@ return [
 
     'pre_tenant_ttl' => (int) env('SANCTUM_PRE_TENANT_TTL', 15),
     'tenant_ttl' => (int) env('SANCTUM_TENANT_TTL', 480),
+    'platform_ttl' => (int) env('SANCTUM_PLATFORM_TTL', 480),
 
     /*
     |--------------------------------------------------------------------------
