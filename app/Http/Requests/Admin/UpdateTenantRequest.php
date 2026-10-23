@@ -3,8 +3,10 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\TenantStatus;
+use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateTenantRequest extends FormRequest
 {
@@ -25,5 +27,31 @@ class UpdateTenantRequest extends FormRequest
             'slug' => ['prohibited'],
             'database_name' => ['prohibited'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            if ($this->input('status') !== TenantStatus::Active->value) {
+                return;
+            }
+
+            /** @var Tenant|string|int|null $tenant */
+            $tenant = $this->route('tenant');
+            if (! ($tenant instanceof Tenant)) {
+                $tenant = $tenant ? Tenant::find($tenant) : null;
+            }
+
+            if (! $tenant) {
+                return;
+            }
+
+            if (in_array($tenant->status, [TenantStatus::Provisioning->value, TenantStatus::Failed->value], true)) {
+                $validator->errors()->add(
+                    'status',
+                    "No se puede activar un club en estado '{$tenant->status}' cuya base de datos no ha sido provisionada."
+                );
+            }
+        });
     }
 }
