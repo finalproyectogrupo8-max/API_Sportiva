@@ -1787,6 +1787,78 @@
                 }
             }
         },
+        "/admin/tenants/{tenant}/retry": {
+            "post": {
+                "operationId": "tenant.retry",
+                "tags": [
+                    "Tenant"
+                ],
+                "parameters": [
+                    {
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true,
+                        "description": "The tenant ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`TenantResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Solo se pueden reintentar clubes en estado fallido."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "tenant_not_failed"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/tenants": {
             "get": {
                 "operationId": "tenants.index",

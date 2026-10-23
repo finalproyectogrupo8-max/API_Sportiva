@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'platform.admin'])
     ->prefix('admin')
     ->group(function () {
+        Route::post('tenants/{tenant}/retry', [TenantController::class, 'retry']);
         Route::apiResource('tenants', TenantController::class);
         Route::apiResource('users', UserController::class)->except(['destroy']);
         Route::post('tenants/{tenant}/memberships', [TenantMembershipController::class, 'store']);

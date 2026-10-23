@@ -46,4 +46,12 @@ class TenantPolicy
     {
         return (bool) $user->is_platform_admin;
     }
+
+    /**
+     * Determine whether the user can retry provisioning the model.
+     */
+    public function retry(User $user, Tenant $tenant): bool
+    {
+        return (bool) $user->is_platform_admin;
+    }
 }
