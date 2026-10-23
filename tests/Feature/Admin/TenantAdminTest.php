@@ -189,6 +189,93 @@ class TenantAdminTest extends TestCase
             ->assertJsonPath('data.status', 'suspended');
     }
 
+    public function test_patch_status_active_on_provisioning_tenant_is_rejected_with_422(): void
+    {
+        $tenant = Tenant::factory()->create(['status' => 'provisioning']);
+        $this->asAdmin();
+
+        $response = $this->patchJson("/api/admin/tenants/{$tenant->id}", ['status' => 'active']);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertSame('provisioning', $tenant->fresh()->status);
+        $this->assertDatabaseMissing('audit_logs', ['subject_id' => $tenant->id]);
+    }
+
+    public function test_patch_status_active_on_failed_tenant_is_rejected_with_422(): void
+    {
+        $tenant = Tenant::factory()->create(['status' => 'failed']);
+        $this->asAdmin();
+
+        $response = $this->patchJson("/api/admin/tenants/{$tenant->id}", ['status' => 'active']);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertSame('failed', $tenant->fresh()->status);
+        $this->assertDatabaseMissing('audit_logs', ['subject_id' => $tenant->id]);
+    }
+
+    public function test_patch_status_active_on_suspended_tenant_is_allowed_and_audited(): void
+    {
+        $admin = $this->asAdmin();
+        $tenant = Tenant::factory()->create(['status' => 'suspended']);
+
+        $response = $this->patchJson("/api/admin/tenants/{$tenant->id}", ['status' => 'active']);
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'active');
+
+        $this->assertSame('active', $tenant->fresh()->status);
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $admin->id,
+            'action' => 'tenant.updated',
+            'subject_id' => $tenant->id,
+        ]);
+    }
+
+    public function test_patch_status_suspended_on_active_tenant_is_allowed(): void
+    {
+        $tenant = Tenant::factory()->create(['status' => 'active']);
+        $this->asAdmin();
+
+        $response = $this->patchJson("/api/admin/tenants/{$tenant->id}", ['status' => 'suspended']);
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'suspended');
+
+        $this->assertSame('suspended', $tenant->fresh()->status);
+    }
+
+    public function test_patch_status_active_on_active_tenant_returns_200_without_audit_log(): void
+    {
+        $tenant = Tenant::factory()->create(['status' => 'active']);
+        $this->asAdmin();
+
+        $response = $this->patchJson("/api/admin/tenants/{$tenant->id}", ['status' => 'active']);
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'active');
+
+        $this->assertDatabaseMissing('audit_logs', ['subject_id' => $tenant->id]);
+    }
+
+    public function test_patch_name_on_provisioning_tenant_without_status_is_allowed(): void
+    {
+        $tenant = Tenant::factory()->create(['status' => 'provisioning', 'name' => 'Original']);
+        $this->asAdmin();
+
+        $response = $this->patchJson("/api/admin/tenants/{$tenant->id}", ['name' => 'Modificado']);
+
+        $response->assertOk()
+            ->assertJsonPath('data.name', 'Modificado')
+            ->assertJsonPath('data.status', 'provisioning');
+
+        $this->assertSame('Modificado', $tenant->fresh()->name);
+        $this->assertSame('provisioning', $tenant->fresh()->status);
+    }
+
     public function test_partial_update_only_changes_sent_fields(): void
     {
         $tenant = Tenant::factory()->create(['name' => 'Original', 'status' => 'active']);
