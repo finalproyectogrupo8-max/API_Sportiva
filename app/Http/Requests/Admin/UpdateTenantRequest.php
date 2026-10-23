@@ -29,10 +29,15 @@ class UpdateTenantRequest extends FormRequest
         ];
     }
 
+    /**
+     * Un club en provisioning o failed no tiene la base lista: su estado solo lo cambia el job
+     * ProvisionTenant. Si se permitiera pasarlo a suspended, después se podría activar con
+     * suspended → active sin que exista la base.
+     */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            if ($this->input('status') !== TenantStatus::Active->value) {
+            if (! $this->has('status')) {
                 return;
             }
 
@@ -49,7 +54,7 @@ class UpdateTenantRequest extends FormRequest
             if (in_array($tenant->status, [TenantStatus::Provisioning->value, TenantStatus::Failed->value], true)) {
                 $validator->errors()->add(
                     'status',
-                    "No se puede activar un club en estado '{$tenant->status}' cuya base de datos no ha sido provisionada."
+                    "No se puede cambiar el estado de un club en '{$tenant->status}': su base de datos no está provisionada."
                 );
             }
         });

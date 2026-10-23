@@ -369,4 +369,43 @@ class TenantProvisioningTest extends TestCase
         $this->artisan('tenants:migrate', ['--tenant' => 'test_prov_mig'])
             ->assertSuccessful();
     }
+
+    public function test_tenants_migrate_command_is_cancelled_in_production_without_force(): void
+    {
+        $tenant = Tenant::factory()->create([
+            'slug' => 'test_prov_prod',
+            'database_name' => 'club_test_prov_prod',
+            'status' => 'active',
+        ]);
+        $this->trackTenant($tenant);
+
+        $this->partialMock(TenantDatabase::class, function ($mock) {
+            $mock->shouldNotReceive('migrate');
+        });
+
+        $this->app['env'] = 'production';
+
+        // Sin --force, la confirmación responde "no" por defecto y no se toca ninguna base.
+        $this->artisan('tenants:migrate', ['--fresh' => true, '--no-interaction' => true])
+            ->assertFailed();
+    }
+
+    public function test_tenants_migrate_command_runs_in_production_with_force(): void
+    {
+        $tenant = Tenant::factory()->create([
+            'slug' => 'test_prov_force',
+            'database_name' => 'club_test_prov_force',
+            'status' => 'active',
+        ]);
+        $this->trackTenant($tenant);
+
+        $this->partialMock(TenantDatabase::class, function ($mock) {
+            $mock->shouldReceive('migrate')->once()->andReturnNull();
+        });
+
+        $this->app['env'] = 'production';
+
+        $this->artisan('tenants:migrate', ['--tenant' => 'test_prov_force', '--force' => true])
+            ->assertSuccessful();
+    }
 }
