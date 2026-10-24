@@ -124,7 +124,39 @@ Para confirmar: el login de ese usuario tiene que traer `"tenants": [{ "slug": "
 | 422 en `password` | Menos de 12 caracteres |
 | 422 en `email` | Ya existe un usuario con ese email |
 
-## 4. Problemas y soluciones
+## 4. Ver la base con DBeaver (u otro visor)
+
+MySQL no publica puertos por defecto. Para entrar desde tu máquina hay que activar el override, que **no se commitea** (`compose.override.yaml` está en `.gitignore`): cada dev lo crea copiando el ejemplo.
+
+```bash
+cp compose.override.example.yaml compose.override.yaml    # PowerShell: Copy-Item compose.override.example.yaml compose.override.yaml
+docker compose up -d
+```
+
+MySQL queda en `127.0.0.1:3310`, solo para tu máquina. Para desactivarlo: `rm compose.override.yaml` y `docker compose up -d`.
+
+**Datos de conexión** (los de `.env.example`; si los cambiaste, valen los de tu `.env`: `grep "^DB_" .env`):
+
+| Campo | Valor |
+|---|---|
+| Host | `127.0.0.1` |
+| Puerto | **`3310`** (no 3306) |
+| Base | `sportiva_platform` (tests: `sportiva_testing`; clubes: `club_<slug>`) |
+| Usuario | `sportiva` |
+| Contraseña | `sportiva_dev_password` |
+
+No uses `root`: su contraseña es aleatoria y nadie la conoce. Tampoco hace falta.
+
+**En DBeaver**, en la pestaña **Driver properties** de la conexión:
+
+- `allowPublicKeyRetrieval` = `true`
+- `useSSL` = `false`
+
+Si alguna no aparece, se agrega con clic derecho → **Add new property**. Sin esto, DBeaver da "Public Key Retrieval is not allowed" ([ver abajo](#dbeaver-public-key-retrieval-is-not-allowed)).
+
+Detalle de cómo funciona el mapeo de puertos: [desarrollo-local.md](desarrollo-local.md#acceso-a-mysql-desde-el-host).
+
+## 5. Problemas y soluciones
 
 ### El backend no levanta: `Class "Laravel\Sanctum\Sanctum" not found`
 
@@ -276,6 +308,41 @@ docker compose exec backend php artisan tinker --execute='dump(App\Models\User::
 
 El front nuevo se reconoce porque el primer campo del login dice **"Email"**, no "Usuario".
 
+### DBeaver: "Connection refused" en el 3310
+
+**Causa:** el override no está activo.
+
+**Solución:** verificá que el archivo se llame exactamente `compose.override.yaml`, en la raíz del repo de la API, y corré `docker compose up -d` después de crearlo ([paso 4](#4-ver-la-base-con-dbeaver-u-otro-visor)).
+
+### DBeaver: el puerto 3310 está ocupado
+
+**Solución:** elegí otro puerto en tu `.env` (por ejemplo `DB_FORWARD_PORT=3320`), corré `docker compose up -d` y usá ese puerto en DBeaver.
+
+### DBeaver: "Public Key Retrieval is not allowed"
+
+**Causa:** MySQL 8 autentica con `caching_sha2_password`. Sin SSL, el driver de DBeaver necesita pedirle al servidor una clave pública para cifrar la contraseña, y por seguridad lo trae bloqueado.
+
+**Solución:**
+
+1. Clic derecho en la conexión → **Edit Connection** (F4).
+2. Pestaña **Driver properties**.
+3. `allowPublicKeyRetrieval` → **`true`** y `useSSL` → **`false`**. Si alguna no aparece: clic derecho → **Add new property**.
+4. **OK** y volvé a conectar.
+
+Habilitarlo está bien **solo contra tu base local** en `127.0.0.1`. Contra una base remota, usá SSL.
+
+### DBeaver: "Access denied for user 'sportiva'"
+
+**Causa:** usuario o contraseña distintos a los de tu `.env`.
+
+**Solución:** `grep "^DB_" .env` y usá `DB_USERNAME` y `DB_PASSWORD`.
+
+### DBeaver: no veo las bases `club_*`
+
+**Causa:** tu usuario no tiene el permiso sobre `club\_%`, o todavía no creaste ningún club.
+
+**Solución:** revisá el permiso con `SHOW GRANTS` ([caso 1044](#crear-un-club-o-los-tests-de-club-fallan-con-1044-access-denied)). Si lo tenés, creá un club ([paso 3](#asociar-un-usuario-a-un-club)) y refrescá la conexión.
+
 ### Front: "Demasiados intentos"
 
 **Causa:** 5 intentos de login fallidos en un minuto con el mismo email.
@@ -295,3 +362,6 @@ El front nuevo se reconoce porque el primer campo del login dice **"Email"**, no
 | El usuario no entra / "Credenciales inválidas" | Probar el login con curl y revisar el usuario en tu base ([diagnóstico](#front-el-usuario-que-creé-no-entra)) |
 | Necesito un usuario de club | Crearlo con tinker ([paso 3](#usuario-de-club-para-entrar-a-la-parte-de-clubes)) |
 | Asociar un usuario a un club | Swagger o curl con el `platform_token` ([paso 3](#asociar-un-usuario-a-un-club)) |
+| Ver la base con DBeaver | `cp compose.override.example.yaml compose.override.yaml` + `docker compose up -d`; `127.0.0.1:3310`, `sportiva` / `sportiva_dev_password` ([paso 4](#4-ver-la-base-con-dbeaver-u-otro-visor)) |
+| DBeaver: "Public Key Retrieval is not allowed" | Driver properties: `allowPublicKeyRetrieval=true`, `useSSL=false` |
+| DBeaver: "Connection refused" | Falta `compose.override.yaml` o el `docker compose up -d` |
