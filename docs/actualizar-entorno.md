@@ -52,15 +52,77 @@ pnpm dev
 
 `.env.local` tiene que tener `API_URL=http://127.0.0.1:8000/api`, con la API levantada.
 
-## 3. Usuario para entrar
+## 3. Usuarios para entrar
 
-El login es contra la API: `admin` / `admin` ya no existe. Los usuarios viven en **tu** base local, así que cada dev crea los suyos:
+El login es contra la API: `admin` / `admin` ya no existe. Los usuarios viven en **tu** base local (un usuario creado en la máquina de otro dev no existe en la tuya), así que cada dev crea los suyos. Hasta que esté el panel de admin (FRO-5 a FRO-7), se crean por consola o por la API.
+
+### Admin de plataforma
 
 ```bash
 docker compose exec backend php artisan platform:create-admin tu@email.com
 ```
 
 Te pide nombre y una contraseña de al menos 12 caracteres. Con ese usuario entrás en http://localhost:3000 y caés en `/admin`.
+
+### Usuario de club (para entrar a la parte de clubes)
+
+Un usuario común, sin permisos de plataforma:
+
+```bash
+docker compose exec backend php artisan tinker --execute='
+$u = App\Models\User::firstOrNew(["email" => "socio.demo@sportiva.test"]);
+$u->name = "Socio Demo";
+$u->password = "clave-socio-demo-12";
+$u->is_active = true;
+$u->save();
+echo "ok";'
+```
+
+Entrás con `socio.demo@sportiva.test` / `clave-socio-demo-12` y caés en `/clubes` ("Hola, Socio Demo"). Para otro usuario, cambiá email, nombre y clave (12 caracteres o más). Si el email ya existe, el comando le pisa el nombre y la clave.
+
+> **Estado (24/10/2026):** `/clubes` todavía muestra los clubes de ejemplo y deja entrar a cualquiera, así que el usuario no necesita estar asociado a un club. Cuando esté FRO-3, `/clubes` va a mostrar solo los clubes del usuario: ahí hay que [asociarlo a un club](#asociar-un-usuario-a-un-club).
+
+### Asociar un usuario a un club
+
+Se hace con la API, usando el **token de plataforma** del admin. La forma más fácil es Swagger, en http://127.0.0.1:8000/api/docs:
+
+1. En `POST /api/auth/login` → **Try it out**, mandá el email y la clave del admin. Copiá **`platform_token`** (no `token`).
+2. Tocá **Authorize** y pegá el `platform_token`.
+3. **Crear el club** (si no existe): `POST /api/admin/tenants` con `{ "name": "Club Demo", "slug": "demo" }`. Con `QUEUE_CONNECTION=sync` responde `"status": "active"`. Anotá el `id`.
+4. **Crear el usuario** (si no lo creaste con tinker): `POST /api/admin/users` con `{ "name": "Socio Demo", "email": "socio@demo.com", "password": "clave-socio-12" }`. Anotá el `id`.
+5. **Asociarlo:** `POST /api/admin/tenants/{id del club}/memberships` con `{ "user_id": <id del usuario>, "role": "admin" }`. Por ahora `admin` es el único rol.
+
+Lo mismo con curl:
+
+```bash
+# Token del admin: copiá "platform_token" de la respuesta
+curl -s -X POST http://127.0.0.1:8000/api/auth/login -H 'Accept: application/json' -H 'Content-Type: application/json' \
+  -d '{"email":"admin@email.com","password":"clave-del-admin"}'
+
+PLAT='<platform_token>'
+
+# Club
+curl -s -X POST http://127.0.0.1:8000/api/admin/tenants -H 'Accept: application/json' -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $PLAT" -d '{"name":"Club Demo","slug":"demo"}'
+
+# Usuario
+curl -s -X POST http://127.0.0.1:8000/api/admin/users -H 'Accept: application/json' -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $PLAT" -d '{"name":"Socio Demo","email":"socio@demo.com","password":"clave-socio-12"}'
+
+# Membresía (con los ids de las respuestas anteriores)
+curl -s -X POST http://127.0.0.1:8000/api/admin/tenants/<id_club>/memberships -H 'Accept: application/json' -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $PLAT" -d '{"user_id":<id_usuario>,"role":"admin"}'
+```
+
+Para confirmar: el login de ese usuario tiene que traer `"tenants": [{ "slug": "demo", ... }]`.
+
+| Error | Causa |
+|---|---|
+| 403 `forbidden` | Usaste `token` en vez de `platform_token` |
+| 401 | Token inválido o vencido (el de plataforma dura 8 h): volvé a loguearte |
+| 422 en `slug` | Solo minúsculas, números y `_` (sin guiones), máximo 50 |
+| 422 en `password` | Menos de 12 caracteres |
+| 422 en `email` | Ya existe un usuario con ese email |
 
 ## 4. Problemas y soluciones
 
@@ -171,11 +233,48 @@ docker compose exec backend php artisan tenants:migrate
 
 **Solución:** `cp .env.example .env.local` y reiniciá `pnpm dev`.
 
-### Front: "Credenciales inválidas" con un usuario que sí existe
+### Front: el usuario que creé no entra
 
-**Causa:** el usuario existe en la base de otro dev, no en la tuya. Cada base local es independiente.
+**1. Probá el login directo contra la API**, sin el front:
 
-**Solución:** crealo en tu base con `platform:create-admin` ([paso 3](#3-usuario-para-entrar)).
+```bash
+curl -s -X POST http://127.0.0.1:8000/api/auth/login \
+  -H 'Accept: application/json' -H 'Content-Type: application/json' \
+  -d '{"email":"tu@email.com","password":"tu-clave"}'
+```
+
+| Resultado | Qué significa | Siguiente paso |
+|---|---|---|
+| JSON con `"token"` y `"user"` | La API está bien: el problema es el front | Punto 3 |
+| `{"message":"Credenciales inválidas."}` | El usuario no existe o no coinciden email o clave | Punto 2 |
+| `Too Many Attempts` | Bloqueo por intentos fallidos | Esperá 1 minuto |
+| No responde / `Connection refused` | La API no está levantada | `docker compose ps` y `bash scripts/setup.sh` |
+
+**2. Si da "Credenciales inválidas", mirá el usuario en la base:**
+
+```bash
+docker compose exec backend php artisan tinker --execute='dump(App\Models\User::select("id","email","is_platform_admin","is_active")->get()->toArray());'
+```
+
+- **No aparece:** se creó en otra base (la de otro dev) o el comando falló. Crealo de nuevo ([paso 3](#3-usuarios-para-entrar)).
+- **Aparece con otro email** (mayúscula, espacio): escribilo exactamente igual en el login.
+- **`is_active` en `false`:** el usuario está desactivado y la API rechaza el login.
+- **Aparece bien y la clave igual falla:** ponele una clave nueva:
+
+  ```bash
+  docker compose exec backend php artisan tinker --execute='$u=App\Models\User::where("email","tu@email.com")->first(); $u->password="clave-nueva-123"; $u->save(); echo "ok";'
+  ```
+
+**3. Si con curl funciona pero en el front no:**
+
+| En el front | Causa | Solución |
+|---|---|---|
+| "No pudimos conectar con el servidor" | La API no responde desde el front | Revisá `API_URL` en `.env.local` y reiniciá `pnpm dev` |
+| "No pudimos iniciar sesión…" | `API_URL` sin `/api` (la API responde 404) | `API_URL=http://127.0.0.1:8000/api` y reiniciá `pnpm dev` |
+| Entra y después muestra una pantalla de error | La API no está en `main` actualizado (`/me/tenants` no devuelve `user`) | En la API: `git pull` y `bash scripts/setup.sh` |
+| Vuelve al login sin mensaje | Front viejo, con el login de `admin`/`admin` | En el front: `git pull`, `pnpm install` y reiniciá `pnpm dev` |
+
+El front nuevo se reconoce porque el primer campo del login dice **"Email"**, no "Usuario".
 
 ### Front: "Demasiados intentos"
 
@@ -193,4 +292,6 @@ docker compose exec backend php artisan tenants:migrate
 | Club en `provisioning` | `QUEUE_CONNECTION=sync` + `config:clear`, o `queue:work` |
 | "Table doesn't exist" en un club viejo | `php artisan tenants:migrate` |
 | "No pudimos conectar con el servidor" | API levantada y `API_URL` con `/api` |
-| "Credenciales inválidas" | Crear el usuario en tu base local |
+| El usuario no entra / "Credenciales inválidas" | Probar el login con curl y revisar el usuario en tu base ([diagnóstico](#front-el-usuario-que-creé-no-entra)) |
+| Necesito un usuario de club | Crearlo con tinker ([paso 3](#usuario-de-club-para-entrar-a-la-parte-de-clubes)) |
+| Asociar un usuario a un club | Swagger o curl con el `platform_token` ([paso 3](#asociar-un-usuario-a-un-club)) |
