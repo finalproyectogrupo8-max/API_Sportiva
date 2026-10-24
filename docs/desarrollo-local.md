@@ -208,6 +208,8 @@ Usá la **terminal de Ubuntu** (o la terminal integrada de VS Code en modo WSL).
 
 `docker compose down` **conserva** los datos: borra los contenedores y la red, no el volumen.
 
+Después de un `git pull`, seguí [actualizar-entorno.md](actualizar-entorno.md): pasos para la API y el front, y soluciones a los problemas típicos (backend que no levanta, permiso de bases de club, usuarios).
+
 ## Documentación de la API (Swagger)
 
 Con el entorno levantado, abrí **http://127.0.0.1:8000/api/docs**: Swagger UI con todos los endpoints. "Try it out" viene activo, así que podés ejecutar requests reales contra tu API local.
@@ -394,6 +396,8 @@ El volumen se creó antes de que existiera el script de init (o con otra configu
 ### Los tests de club fallan por permisos de MySQL
 
 Error típico: `Access denied for user 'sportiva'@'%' to database 'club_test_a'`.
+
+> Si no querés perder tus datos, probá primero recuperar la contraseña de root del log: ver [actualizar-entorno.md](actualizar-entorno.md#crear-un-club-o-los-tests-de-club-fallan-con-1044-access-denied) (opción A).
 
 Los tests de club crean sus propias bases (`club_test_a` y `club_test_b`), y para eso el usuario de la app necesita permiso sobre las bases `club_*`. Ese permiso lo da `docker/mysql/init/02-club-dbs.sh`, que se agregó con el change `tenant-connection` (2026-10-18). Como los scripts de init solo corren con el volumen vacío, **si tu volumen es anterior, hay que recrearlo una vez**. El usuario de la app no se puede dar el permiso a sí mismo, y la contraseña de root es aleatoria.
 
