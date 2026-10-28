@@ -33,6 +33,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)
             ->by(strtolower((string) $request->input('email')).'|'.$request->ip()));
 
+        RateLimiter::for('tickets', fn (Request $request) => Limit::perHour(5)
+            ->by($request->ip()));
+
         // Server relativo: el contrato no depende de APP_URL (el export es igual en cualquier
         // máquina) y "Try it out" siempre llama al mismo origen que la página de docs.
         Scramble::configure()->withDocumentTransformers(function (OpenApi $openApi): void {
