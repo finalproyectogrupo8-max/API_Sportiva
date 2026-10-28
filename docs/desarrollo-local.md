@@ -321,13 +321,11 @@ Para ver qué está escuchando en cada puerto (PowerShell): `netstat -ano | find
 
 ## Cola de jobs en desarrollo local y demo
 
-Para desarrollo local y demos, no es necesario levantar un proceso worker en segundo plano: con `QUEUE_CONNECTION=sync` (el valor por defecto en los tests y recomendado para demos locales), los jobs encolados (como `ProvisionTenant` al crear un club) se ejecutan de manera síncrona dentro del ciclo del request, dejando el club en estado `active` con su base creada inmediatamente.
+`docker compose up -d` levanta también el servicio `queue`, un worker que procesa los jobs (por ejemplo, `ProvisionTenant` al crear un club). Con `QUEUE_CONNECTION=database` (el valor de `.env.example`), el alta de un club responde enseguida con `status: provisioning` y el worker crea la base en segundo plano: el panel de admin muestra "Creando" y avisa cuando queda `active`. Es el mismo comportamiento que en producción.
 
-Si se utiliza `QUEUE_CONNECTION=database`, los jobs quedan registrados en la tabla `jobs` de la base central y se pueden procesar manualmente en una terminal mediante:
-
-```bash
-docker compose exec backend php artisan queue:work --tries=3 --timeout=90
-```
+- El worker mantiene el código en memoria: después de cambiar un job, reinicialo con `docker compose restart queue`.
+- Para ver qué está procesando: `docker compose logs -f queue`.
+- Con `QUEUE_CONNECTION=sync` los jobs corren dentro del request (el club queda `active` al responder, pero el alta tarda varios segundos y el worker queda sin trabajo). Es lo que usan los tests.
 
 ## Resetear la base local (destruye datos)
 

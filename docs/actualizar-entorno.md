@@ -18,7 +18,7 @@ bash scripts/setup.sh
 
 Después:
 
-1. **Revisá tu `.env`** contra `.env.example`: cada variable nueva de `.env.example` tiene que estar en tu `.env`. Para el alta de clubes en local conviene `QUEUE_CONNECTION=sync` (sin worker). Si cambiaste algo:
+1. **Revisá tu `.env`** contra `.env.example`: cada variable nueva de `.env.example` tiene que estar en tu `.env`. Para el alta de clubes, `QUEUE_CONNECTION=database`: el servicio `queue` (lo levanta `docker compose up -d`) crea la base en segundo plano. Si cambiaste algo:
 
    ```bash
    docker compose exec backend php artisan config:clear
@@ -88,7 +88,7 @@ Se hace con la API, usando el **token de plataforma** del admin. La forma más f
 
 1. En `POST /api/auth/login` → **Try it out**, mandá el email y la clave del admin. Copiá **`platform_token`** (no `token`).
 2. Tocá **Authorize** y pegá el `platform_token`.
-3. **Crear el club** (si no existe): `POST /api/admin/tenants` con `{ "name": "Club Demo", "slug": "demo" }`. Con `QUEUE_CONNECTION=sync` responde `"status": "active"`. Anotá el `id`.
+3. **Crear el club** (si no existe): `POST /api/admin/tenants` con `{ "name": "Club Demo", "slug": "demo" }`. Responde `"status": "provisioning"` y en unos segundos el worker lo pasa a `active` (`GET /api/admin/tenants/{id}`). Anotá el `id`.
 4. **Crear el usuario** (si no lo creaste con tinker): `POST /api/admin/users` con `{ "name": "Socio Demo", "email": "socio@demo.com", "password": "clave-socio-12" }`. Anotá el `id`.
 5. **Asociarlo:** `POST /api/admin/tenants/{id del club}/memberships` con `{ "user_id": <id del usuario>, "role": "admin" }`. Por ahora `admin` es el único rol.
 
@@ -234,12 +234,9 @@ Al recrear el volumen, los scripts de init vuelven a correr y el permiso queda p
 
 ### El club queda en `provisioning` para siempre
 
-**Causa:** con `QUEUE_CONNECTION=database`, el alta del club queda en la cola hasta que un worker la procesa.
+**Causa:** con `QUEUE_CONNECTION=database`, el alta del club queda en la cola hasta que el worker la procesa, y el worker no está corriendo.
 
-**Solución (una de dos):**
-
-- Poner `QUEUE_CONNECTION=sync` en el `.env` y correr `docker compose exec backend php artisan config:clear`. Los clubes nuevos se crean en el momento.
-- O procesar la cola en otra terminal: `docker compose exec backend php artisan queue:work`.
+**Solución:** levantarlo con `docker compose up -d` y revisar `docker compose logs -f queue`. Si cambiaste un job, `docker compose restart queue` (el worker guarda el código en memoria).
 
 Si el club quedó en `failed`, se reintenta con `POST /api/admin/tenants/{id}/retry`.
 
@@ -356,7 +353,7 @@ Habilitarlo está bien **solo contra tu base local** en `127.0.0.1`. Contra una 
 | Backend `Exited (1)`, `Class ... not found` | `bash scripts/setup.sh` |
 | `1044 Access denied` al crear un club o en los tests | Permiso `club\_%`: opción A (contraseña de root del log) u opción B (`down -v` + `setup.sh`) |
 | `Access denied for user 'root'` | Mismo caso: opción A u opción B |
-| Club en `provisioning` | `QUEUE_CONNECTION=sync` + `config:clear`, o `queue:work` |
+| Club en `provisioning` | Que esté corriendo el worker: `docker compose ps queue` (si no, `docker compose up -d`) |
 | "Table doesn't exist" en un club viejo | `php artisan tenants:migrate` |
 | "No pudimos conectar con el servidor" | API levantada y `API_URL` con `/api` |
 | El usuario no entra / "Credenciales inválidas" | Probar el login con curl y revisar el usuario en tu base ([diagnóstico](#front-el-usuario-que-creé-no-entra)) |

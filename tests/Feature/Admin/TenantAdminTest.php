@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -130,6 +131,57 @@ class TenantAdminTest extends TestCase
             ->assertJsonPath('data.status', 'provisioning');
 
         $this->assertDatabaseHas('tenants', ['slug' => 'river', 'database_name' => 'club_river']);
+    }
+
+    public function test_store_with_admin_creates_the_user_and_its_membership(): void
+    {
+        $this->asAdmin();
+
+        $response = $this->postJson('/api/admin/tenants', [
+            'name' => 'Club River',
+            'slug' => 'river',
+            'admin' => [
+                'name' => 'Admin River',
+                'email' => 'admin@river.test',
+                'password' => 'clave-admin-river-12',
+            ],
+        ])->assertCreated();
+
+        $user = User::query()->where('email', 'admin@river.test')->sole();
+        $this->assertSame('Admin River', $user->name);
+        $this->assertTrue($user->is_active);
+        $this->assertFalse($user->is_platform_admin);
+        $this->assertTrue(Hash::check('clave-admin-river-12', $user->password));
+
+        $this->assertDatabaseHas('tenant_memberships', [
+            'user_id' => $user->id,
+            'tenant_id' => $response->json('data.id'),
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_store_with_invalid_admin_creates_nothing(): void
+    {
+        User::factory()->create(['email' => 'taken@river.test']);
+        $this->asAdmin();
+        $users = User::query()->count();
+
+        $this->postJson('/api/admin/tenants', [
+            'name' => 'Club River',
+            'slug' => 'river',
+            'admin' => ['name' => 'Admin', 'email' => 'taken@river.test', 'password' => 'corta'],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['admin.email', 'admin.password']);
+
+        $this->postJson('/api/admin/tenants', [
+            'name' => 'Club River',
+            'slug' => 'river',
+            'admin' => ['email' => 'nuevo@river.test', 'is_platform_admin' => true],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['admin', 'admin.name', 'admin.password']);
+
+        $this->assertDatabaseMissing('tenants', ['slug' => 'river']);
+        $this->assertSame($users, User::query()->count());
+        $this->assertDatabaseCount('tenant_memberships', 0);
     }
 
     public function test_store_validates_name_and_slug(): void

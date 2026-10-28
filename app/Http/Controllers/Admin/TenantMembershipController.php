@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\IndexTenantMembershipRequest;
 use App\Http\Requests\Admin\StoreTenantMembershipRequest;
 use App\Http\Requests\Admin\UpdateTenantMembershipRequest;
 use App\Http\Resources\Admin\TenantMembershipResource;
@@ -10,11 +11,35 @@ use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class TenantMembershipController extends Controller
 {
+    /**
+     * Miembros de un club, con el nombre y el email de cada usuario.
+     */
+    public function index(IndexTenantMembershipRequest $request, Tenant $tenant): AnonymousResourceCollection
+    {
+        Gate::authorize('viewAny', TenantMembership::class);
+
+        $filters = $request->validated();
+
+        $memberships = TenantMembership::query()
+            ->where('tenant_id', $tenant->id)
+            ->with('user')
+            ->when(
+                array_key_exists('is_active', $filters),
+                fn ($query) => $query->where('is_active', $filters['is_active'])
+            )
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate(min(max((int) ($filters['per_page'] ?? 20), 1), 100));
+
+        return TenantMembershipResource::collection($memberships);
+    }
+
     public function store(
         StoreTenantMembershipRequest $request,
         Tenant $tenant,

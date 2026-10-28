@@ -20,6 +20,11 @@ class StoreTenantRequest extends FormRequest
             // Los fija el servidor
             'database_name' => ['prohibited'],
             'status' => ['prohibited'],
+            // Opcional: el administrador del club, que se crea y se asocia junto con el club.
+            'admin' => ['sometimes', 'array:name,email,password'],
+            'admin.name' => ['required_with:admin', 'string', 'max:255'],
+            'admin.email' => ['required_with:admin', 'email', 'max:255', 'unique:users,email'],
+            'admin.password' => ['required_with:admin', 'string', 'min:12', 'max:255'],
         ];
     }
 }

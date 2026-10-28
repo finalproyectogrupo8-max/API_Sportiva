@@ -355,4 +355,125 @@ class TenantMembershipAdminTest extends TestCase
         $this->assertDatabaseCount('tenant_memberships', 0);
         $this->assertDatabaseCount('audit_logs', 0);
     }
+
+    public function test_index_lists_tenant_memberships_with_user_data(): void
+    {
+        $this->asAdmin();
+        $tenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->create();
+        $user = User::factory()->create(['name' => 'Socio Uno', 'email' => 'socio.uno@example.com']);
+        $membership = TenantMembership::factory()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+        TenantMembership::factory()->create(['tenant_id' => $otherTenant->id]);
+
+        $this->getJson($this->storeUrl($tenant))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $membership->id)
+            ->assertJsonPath('data.0.role', 'admin')
+            ->assertJsonPath('data.0.is_active', true)
+            ->assertJsonPath('data.0.user.id', $user->id)
+            ->assertJsonPath('data.0.user.name', 'Socio Uno')
+            ->assertJsonPath('data.0.user.email', 'socio.uno@example.com')
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonStructure(['data', 'links', 'meta']);
+    }
+
+    public function test_index_filters_by_active_state_and_paginates(): void
+    {
+        $this->asAdmin();
+        $tenant = Tenant::factory()->create();
+        TenantMembership::factory()->count(3)->create(['tenant_id' => $tenant->id, 'is_active' => true]);
+        $inactive = TenantMembership::factory()->create(['tenant_id' => $tenant->id, 'is_active' => false]);
+
+        $this->getJson($this->storeUrl($tenant).'?is_active=false')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $inactive->id);
+
+        $this->getJson($this->storeUrl($tenant).'?per_page=2&page=2')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('meta.per_page', 2)
+            ->assertJsonPath('meta.total', 4);
+
+        $this->getJson($this->storeUrl($tenant).'?is_active=maybe')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('is_active');
+    }
+
+    public function test_index_returns_not_found_for_missing_or_soft_deleted_tenant(): void
+    {
+        $this->asAdmin();
+
+        $this->getJson('/api/admin/tenants/999999/memberships')->assertNotFound();
+
+        $tenant = Tenant::factory()->create();
+        $tenant->delete();
+
+        $this->getJson($this->storeUrl($tenant))->assertNotFound();
+    }
+
+    public function test_index_requires_platform_admin(): void
+    {
+        $tenant = Tenant::factory()->create();
+
+        $this->getJson($this->storeUrl($tenant))->assertUnauthorized();
+
+        Sanctum::actingAs(User::factory()->create(), ['*']);
+
+        $this->getJson($this->storeUrl($tenant))
+            ->assertForbidden()
+            ->assertJsonPath('code', 'forbidden');
+    }
+
+    public function test_user_memberships_lists_the_clubs_of_a_user(): void
+    {
+        $this->asAdmin();
+        $user = User::factory()->create();
+        $club = Tenant::factory()->create(['name' => 'Villa Real']);
+        $inactiveClub = Tenant::factory()->create();
+        $deletedClub = Tenant::factory()->create();
+        $membership = TenantMembership::factory()->create(['user_id' => $user->id, 'tenant_id' => $club->id]);
+        TenantMembership::factory()->create([
+            'user_id' => $user->id,
+            'tenant_id' => $inactiveClub->id,
+            'is_active' => false,
+        ]);
+        TenantMembership::factory()->create(['user_id' => $user->id, 'tenant_id' => $deletedClub->id]);
+        $deletedClub->delete();
+        TenantMembership::factory()->create(['tenant_id' => $club->id]);
+
+        $this->getJson("/api/admin/users/{$user->id}/memberships")
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('meta.total', 2);
+
+        $this->getJson("/api/admin/users/{$user->id}/memberships?is_active=true")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $membership->id)
+            ->assertJsonPath('data.0.tenant.id', $club->id)
+            ->assertJsonPath('data.0.tenant.name', 'Villa Real');
+    }
+
+    public function test_user_memberships_requires_platform_admin(): void
+    {
+        $user = User::factory()->create();
+
+        $this->getJson("/api/admin/users/{$user->id}/memberships")->assertUnauthorized();
+
+        Sanctum::actingAs(User::factory()->create(), ['*']);
+
+        $this->getJson("/api/admin/users/{$user->id}/memberships")
+            ->assertForbidden()
+            ->assertJsonPath('code', 'forbidden');
+
+        $this->asAdmin();
+        $this->getJson('/api/admin/users/999999/memberships')->assertNotFound();
+    }
 }

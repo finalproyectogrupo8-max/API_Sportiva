@@ -17,6 +17,8 @@ class TenantMembershipResource extends JsonResource
             'tenant_id' => $this->tenant_id,
             'role' => $this->role,
             'is_active' => $this->is_active,
+            'user' => UserResource::make($this->whenLoaded('user')),
+            'tenant' => TenantResource::make($this->whenLoaded('tenant')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

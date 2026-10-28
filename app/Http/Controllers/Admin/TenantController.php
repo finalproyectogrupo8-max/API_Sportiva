@@ -48,6 +48,7 @@ class TenantController extends Controller
             $request->validated('name'),
             $request->validated('slug'),
             $auditLogger,
+            $request->validated('admin'),
         );
 
         return TenantResource::make($tenant->refresh())->response()->setStatusCode(201);
