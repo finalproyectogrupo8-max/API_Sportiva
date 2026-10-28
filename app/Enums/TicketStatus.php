@@ -9,4 +9,3 @@ enum TicketStatus: string
     case Resolved = 'resolved';
     case Discarded = 'discarded';
 }
-

@@ -28,4 +28,3 @@ class StoreSupportTicketRequest extends FormRequest
         ];
     }
 }
-

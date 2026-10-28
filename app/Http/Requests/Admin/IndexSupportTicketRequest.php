@@ -22,4 +22,3 @@ class IndexSupportTicketRequest extends FormRequest
         ];
     }
 }
-

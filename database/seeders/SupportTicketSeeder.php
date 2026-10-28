@@ -18,4 +18,3 @@ class SupportTicketSeeder extends Seeder
         SupportTicket::factory()->discarded()->count(2)->create();
     }
 }
-

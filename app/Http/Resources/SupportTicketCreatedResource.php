@@ -16,4 +16,3 @@ class SupportTicketCreatedResource extends JsonResource
         ];
     }
 }
-

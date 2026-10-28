@@ -22,4 +22,3 @@ class SupportTicketPolicy
         return (bool) $user->is_platform_admin;
     }
 }
-

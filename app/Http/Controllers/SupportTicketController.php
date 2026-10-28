@@ -34,4 +34,3 @@ class SupportTicketController extends Controller
             ->setStatusCode(201);
     }
 }
-

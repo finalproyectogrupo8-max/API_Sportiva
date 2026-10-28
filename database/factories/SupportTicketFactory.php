@@ -54,4 +54,3 @@ class SupportTicketFactory extends Factory
         ]);
     }
 }
-

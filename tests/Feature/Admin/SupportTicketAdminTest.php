@@ -265,4 +265,3 @@ class SupportTicketAdminTest extends TestCase
         $this->assertSame('Original', $ticket->fresh()->name);
     }
 }
-

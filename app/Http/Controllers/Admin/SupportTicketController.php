@@ -76,4 +76,3 @@ class SupportTicketController extends Controller
         return SupportTicketResource::make($ticket->fresh());
     }
 }
-

@@ -38,4 +38,3 @@ class SupportTicket extends Model
         return $this->belongsTo(User::class, 'handled_by');
     }
 }
-
