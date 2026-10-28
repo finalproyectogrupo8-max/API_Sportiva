@@ -10,4 +10,3 @@ class Newsletter extends Model
         'email',
     ];
 }
-

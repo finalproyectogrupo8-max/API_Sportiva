@@ -19,4 +19,3 @@ class NewsletterController extends Controller
         return response()->json(['message' => 'Suscripción realizada con éxito'], 201);
     }
 }
-

@@ -56,4 +56,3 @@ class NewsletterSubscriptionTest extends TestCase
             ->assertJsonValidationErrors(['email']);
     }
 }
-
