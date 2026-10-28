@@ -40,6 +40,26 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # Worker de la cola: procesa los jobs (por ejemplo, ProvisionTenant al crear un club) con
+  # QUEUE_CONNECTION=database. Mantiene el código en memoria: después de cambiar un job,
+  # reiniciarlo con "docker compose restart queue".
+  queue:
+    image: api-sportiva-dev:local
+    init: true
+    command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=80", "--sleep=1"]
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
   mysql:
     image: mysql:8.4.11@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
     environment:
