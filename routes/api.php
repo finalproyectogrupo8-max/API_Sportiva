@@ -23,11 +23,9 @@ Route::get('/health', HealthController::class)->name('health');
 Route::post('tickets', [SupportTicketController::class, 'store'])->middleware('throttle:tickets');
 Route::post('/contacto', [ContactController::class, 'store']);
 Route::post('/newsletter', [NewsletterController::class, 'store']);
-Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 Route::prefix('auth')->group(function () {
-    Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
 
     Route::middleware('auth:sanctum')->group(function () {

@@ -59,39 +59,13 @@ class LoginEndpointTest extends TestCase
             ->assertJson(['message' => 'Credenciales inválidas.']);
     }
 
-    public function test_register_creates_general_user_and_returns_201(): void
+    public function test_public_registration_is_not_available(): void
     {
-        $response = $this->postJson('/api/register', [
-            'name' => 'Nuevo Socio',
-            'email' => 'socio@sportiva.com',
-            'password' => 'password123',
-        ]);
+        // Sin registro público: las cuentas las crea el admin o llegan por invitación.
+        $payload = ['name' => 'Nuevo', 'email' => 'nuevo@sportiva.com', 'password' => 'password123'];
 
-        $response->assertCreated()
-            ->assertJsonPath('user.email', 'socio@sportiva.com')
-            ->assertJsonPath('user.role', 'general')
-            ->assertJsonStructure([
-                'message',
-                'token',
-                'user' => [
-                    'id',
-                    'name',
-                    'email',
-                    'role',
-                ],
-            ]);
-
-        $this->assertDatabaseHas('users', [
-            'email' => 'socio@sportiva.com',
-            'role' => 'general',
-        ]);
-    }
-
-    public function test_register_validates_required_fields_and_unique_email(): void
-    {
-        $response = $this->postJson('/api/register', []);
-
-        $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'email', 'password']);
+        $this->postJson('/api/register', $payload)->assertNotFound();
+        $this->postJson('/api/auth/register', $payload)->assertNotFound();
+        $this->assertDatabaseMissing('users', ['email' => 'nuevo@sportiva.com']);
     }
 }
