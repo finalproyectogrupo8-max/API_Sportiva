@@ -10,62 +10,9 @@
         }
     ],
     "paths": {
-        "/login": {
-            "post": {
-                "operationId": "auth.auth.login_4",
-                "summary": "Valida credenciales contra la base central y emite un token pre-tenant",
-                "tags": [
-                    "Auth"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/LoginRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "`LoginResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/LoginResource"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Credenciales inv\u00e1lidas."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
         "/auth/login": {
             "post": {
-                "operationId": "auth.auth.login_5",
+                "operationId": "auth.login",
                 "summary": "Valida credenciales contra la base central y emite un token pre-tenant",
                 "tags": [
                     "Auth"
@@ -1027,69 +974,6 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "/contacto": {
-            "post": {
-                "operationId": "contact.store",
-                "tags": [
-                    "Contact"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "maxLength": 255
-                                    },
-                                    "message": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
-                                    }
-                                },
-                                "required": [
-                                    "name",
-                                    "email"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Consulta recibida con \u00e9xito"
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }

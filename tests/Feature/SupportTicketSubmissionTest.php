@@ -184,4 +184,29 @@ class SupportTicketSubmissionTest extends TestCase
         // La 6ta petición debe responder 429 Too Many Requests
         $this->postJson('/api/tickets', $payload)->assertStatus(429);
     }
+
+    public function test_rate_limit_is_per_email_so_one_visitor_does_not_block_others(): void
+    {
+        // Todos los envíos de la landing llegan con la IP del servidor de Next.
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/tickets', [
+                'name' => 'Visitante Uno',
+                'email' => 'uno@example.com',
+                'subject' => 'Solicitud de demo',
+                'message' => 'Quiero solicitar una demo de Sportiva.',
+            ])->assertCreated();
+        }
+
+        $this->postJson('/api/tickets', [
+            'name' => 'Visitante Dos',
+            'email' => 'dos@example.com',
+            'subject' => 'Solicitud de demo',
+            'message' => 'Quiero solicitar una demo de Sportiva.',
+        ])->assertCreated();
+    }
+
+    public function test_legacy_contact_route_was_removed(): void
+    {
+        $this->postJson('/api/contacto', ['name' => 'X', 'email' => 'x@example.com'])->assertNotFound();
+    }
 }

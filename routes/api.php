@@ -10,7 +10,6 @@ use App\Http\Controllers\Club\CategoryController;
 use App\Http\Controllers\Club\CoachController;
 use App\Http\Controllers\Club\SeasonController;
 use App\Http\Controllers\Club\SportController;
-use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\SupportTicketController;
@@ -21,9 +20,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class)->name('health');
 Route::post('tickets', [SupportTicketController::class, 'store'])->middleware('throttle:tickets');
-Route::post('/contacto', [ContactController::class, 'store']);
 Route::post('/newsletter', [NewsletterController::class, 'store']);
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');

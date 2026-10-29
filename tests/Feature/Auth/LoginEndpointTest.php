@@ -29,7 +29,7 @@ class LoginEndpointTest extends TestCase
     {
         $this->seed(UserSeeder::class);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => 'admin@sportiva.com',
             'password' => 'admin123',
         ]);
@@ -50,7 +50,7 @@ class LoginEndpointTest extends TestCase
 
     public function test_login_fails_with_invalid_credentials(): void
     {
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => 'nonexistent@sportiva.com',
             'password' => 'wrong',
         ]);
@@ -67,5 +67,11 @@ class LoginEndpointTest extends TestCase
         $this->postJson('/api/register', $payload)->assertNotFound();
         $this->postJson('/api/auth/register', $payload)->assertNotFound();
         $this->assertDatabaseMissing('users', ['email' => 'nuevo@sportiva.com']);
+    }
+
+    public function test_legacy_login_route_was_removed(): void
+    {
+        // Solo queda /api/auth/login (el front lo llama desde el servidor).
+        $this->postJson('/api/login', ['email' => 'a@b.com', 'password' => 'x'])->assertNotFound();
     }
 }
