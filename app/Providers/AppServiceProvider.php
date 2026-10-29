@@ -33,8 +33,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)
             ->by(strtolower((string) $request->input('email')).'|'.$request->ip()));
 
+        // Por email + IP: los formularios de la landing llegan desde el servidor de Next,
+        // así que la IP sola sería la misma para todos los visitantes.
         RateLimiter::for('tickets', fn (Request $request) => Limit::perHour(5)
-            ->by($request->ip()));
+            ->by(strtolower((string) $request->input('email')).'|'.$request->ip()));
 
         // Server relativo: el contrato no depende de APP_URL (el export es igual en cualquier
         // máquina) y "Try it out" siempre llama al mismo origen que la página de docs.
