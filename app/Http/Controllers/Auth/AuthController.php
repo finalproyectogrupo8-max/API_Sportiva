@@ -9,7 +9,6 @@ use App\Http\Resources\Auth\LoginResource;
 use App\Http\Resources\Auth\MeResource;
 use App\Http\Resources\Auth\MeTenantsResource;
 use App\Http\Resources\Auth\SelectTenantResource;
-use App\Http\Resources\UserResource;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\ApiError;
@@ -23,38 +22,6 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    /**
-     * Registra un nuevo usuario con rol 'general'.
-     */
-    public function register(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8',
-        ]);
-
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => 'general',
-            'is_active' => true,
-        ]);
-
-        $token = $user->createToken(
-            'pre-tenant',
-            ['tenant:select'],
-            now()->addMinutes(config('sanctum.pre_tenant_ttl', 15)),
-        );
-
-        return response()->json([
-            'message' => 'Usuario registrado con éxito',
-            'token' => $token->plainTextToken,
-            'user' => new UserResource($user),
-        ], 201);
-    }
-
     /**
      * Valida credenciales contra la base central y emite un token pre-tenant.
      */
