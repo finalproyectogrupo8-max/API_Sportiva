@@ -118,8 +118,8 @@ No todo es un `apiResource`. Los endpoints y permisos son una **propuesta**: se 
 | `matches` | ABM | `apiResource('matches')`; el resultado se carga con `PATCH` | `matches.*` | Soft delete |
 | `trainings` | ABM | `apiResource('trainings')` | `trainings.*` | Soft delete |
 | `player_attendance` | Proceso | `PUT /trainings/{t}/attendance` y `PUT /matches/{m}/attendance` (carga la lista completa, idempotente) | `attendance.view/record` | No se borra |
-| `orders` + líneas | Proceso | `apiResource('orders')` (solo editable en `draft`) + `POST /orders/{o}/submit`, `/approve`, `/reject`, `/deliveries` | `orders.view/create/update/delete/approve/deliver` | Soft delete; solo en `draft` |
-| `order_status_history` | Interna | `GET /orders/{o}/history` (solo lectura) | `orders.view` | — |
+| `orders` + líneas | Proceso | `apiResource('orders')` (solo editable en `draft`) + `POST /orders/{o}/submit`, `/approve`, `/reject`, `/deliveries` | `apparel_orders.*` / `material_orders.*` según `type`: `view/create/update/delete/approve/deliver` ([roles-y-permisos](../roles-y-permisos.md)) | Soft delete; solo en `draft` |
+| `order_status_history` | Interna | `GET /orders/{o}/history` (solo lectura) | `apparel_orders.view` / `material_orders.view` | — |
 | `inventory_balances` | Solo lectura | `GET /inventory/balances` | `inventory.view` | — |
 | `inventory_movements` | Libro (sin update ni delete) | `GET` y `POST /inventory/movements`, `POST /inventory/transfers` | `inventory.view/adjust/transfer` | Nunca |
 | `physical_evaluations` + mediciones | ABM con hijos en el mismo payload | `apiResource('physical-evaluations')` | `physical_evaluations.*` | Soft delete |

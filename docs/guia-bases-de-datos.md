@@ -65,7 +65,7 @@ producción = cluster de MySQL de Laravel Cloud.
 
 | Base | Contenido | La usan |
 | --- | --- | --- |
-| `sportiva_platform` (central, una sola) | Usuarios de la plataforma, clubes (`tenants`), membresías (`tenant_memberships`: qué usuario pertenece a qué club y con qué rol), tokens de Sanctum, la cola de jobs y la caché | El login, la selección de club, el panel de administración y el alta de clubes |
+| `sportiva_platform` (central, una sola) | Usuarios de la plataforma, clubes (`tenants`), membresías (`tenant_memberships`: qué usuario tiene acceso a qué club; el rol vive en la base del club, ver [roles y permisos](roles-y-permisos.md)), tokens de Sanctum, la cola de jobs y la caché | El login, la selección de club, el panel de administración y el alta de clubes |
 | `club_<slug>` (una por club) | Todo lo operativo del club: jugadores, partidos, pedidos, y los roles y permisos internos del club | Todos los endpoints del día a día de un club |
 
 **Un usuario, varias membresías.** Cada usuario existe **una sola vez**, en la base central. Si una persona trabaja en dos clubes, tiene **un** usuario y **dos** membresías.

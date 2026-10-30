@@ -133,12 +133,12 @@ Son puntos donde el PDF y el repo no coinciden, o donde el PDF tiene un problema
 | 1 | Nombres de las bases | `olim_platform`, `olim_club_001` | El código y la documentación usan `sportiva_platform` y `club_<slug>` (`club_<id>` sigue abierto, ver [arquitectura](../arquitectura-multi-tenant.md#decisiones-que-necesitan-aprobación-antes-de-implementar)) | Nombres del repo |
 | 2 | Soft delete | Sin `deleted_at` | `guia-abm.md` lo exige para entidades de negocio | `deleted_at` agregado y marcado *(convención ABM)* |
 | 3 | Credenciales por club en `tenants` | `database_host`, `database_port`, `database_secret_ref` | La arquitectura dice que `tenants` guarda solo el nombre de la base y que las credenciales propias por club necesitan su propio ADR | Fuera del alcance (es la base central) |
-| 4 | Dónde vive el rol | Roles en la base del club (`club_user_roles`) | [guia-bases-de-datos.md §2](../guia-bases-de-datos.md#2-qué-vive-en-cada-base-y-por-qué) dice que la membresía central indica "con qué rol" | Roles en el club; hay que corregir la guía o el modelo |
+| 4 | Dónde vive el rol | Roles en la base del club (`club_user_roles`) | [guia-bases-de-datos.md §2](../guia-bases-de-datos.md#2-qué-vive-en-cada-base-y-por-qué) dice que la membresía central indica "con qué rol" | **Resuelto (TIZ-10):** roles solo en el club; `tenant_memberships.role` se elimina ([roles-y-permisos §8](../roles-y-permisos.md#8-cambios-de-esquema)) |
 | 5 | `permissions.key` | Columna `key` | `KEY` es palabra reservada de MySQL: Eloquent la escapa, pero rompe SQL escrito a mano y algunas herramientas | Se propone `permissions.name` |
 | 6 | `facility_components.condition` | Columna `condition` | `CONDITION` también es palabra reservada | Se propone `condition_status` |
 | 7 | Unicidad de asistencia | "Unicidad por evento y jugador" | Un `UNIQUE(player_id, training_id, match_id)` no sirve: MySQL no compara `NULL` en índices únicos, así que permitiría duplicados | Dos índices: `UNIQUE(player_id, training_id)` y `UNIQUE(player_id, match_id)` |
 | 8 | `category_coaches` con PK compuesta | PK `(category_id, coach_id)` con fechas de inicio y fin | Con esa PK un entrenador no puede tener dos asignaciones en la misma categoría (otro rol, o volver después de irse), así que las fechas no sirven como historial | Se propone `id` propio + índice en `(category_id, coach_id, assignment_type)` |
-| 9 | Seeder de roles | Lista de roles en `roles.name` | Los roles y permisos iniciales los carga el alta del club (job `ProvisionTenant`) | Seeder de tenant, a definir en el change del alta |
+| 9 | Seeder de roles | Lista de roles en `roles.name` | Los roles y permisos iniciales los carga el alta del club (job `ProvisionTenant`) | **Resuelto (TIZ-10):** `config/club-permissions.php` + `club:sync-permissions` ([roles-y-permisos §9](../roles-y-permisos.md#9-sincronización-del-catálogo)) |
 
 ## Pendientes antes de migrar
 
