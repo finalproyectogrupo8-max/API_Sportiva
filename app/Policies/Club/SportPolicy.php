@@ -9,26 +9,26 @@ class SportPolicy
 {
     public function viewAny(User $user): bool
     {
-        return method_exists($user, 'hasClubPermission') && $user->hasClubPermission('sports.view');
+        return $user->hasClubPermission('sports.view');
     }
 
     public function view(User $user, Sport $sport): bool
     {
-        return method_exists($user, 'hasClubPermission') && $user->hasClubPermission('sports.view');
+        return $user->hasClubPermission('sports.view');
     }
 
     public function create(User $user): bool
     {
-        return method_exists($user, 'hasClubPermission') && $user->hasClubPermission('sports.create');
+        return $user->hasClubPermission('sports.create');
     }
 
     public function update(User $user, Sport $sport): bool
     {
-        return method_exists($user, 'hasClubPermission') && $user->hasClubPermission('sports.update');
+        return $user->hasClubPermission('sports.update');
     }
 
     public function delete(User $user, Sport $sport): bool
     {
-        return method_exists($user, 'hasClubPermission') && $user->hasClubPermission('sports.delete');
+        return $user->hasClubPermission('sports.delete');
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Enums\MembershipRole;
+use App\Enums\TenantStatus;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateTenantMembershipRequest extends FormRequest
 {
@@ -16,10 +16,30 @@ class UpdateTenantMembershipRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role' => ['sometimes', Rule::enum(MembershipRole::class)],
+            // Reemplaza la lista completa de roles del miembro en el club.
+            'roles' => ['sometimes', 'array', 'min:1'],
+            'roles.*' => ['required', 'string', 'max:80', 'distinct'],
             'is_active' => ['sometimes', 'boolean'],
             'user_id' => ['prohibited'],
             'tenant_id' => ['prohibited'],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function (Validator $validator) {
+                if ($this->has('roles') && $this->route('tenant')->status !== TenantStatus::Active->value) {
+                    $validator->errors()->add('roles', 'El club todavía no está activo: esperá a que termine el alta.');
+                }
+            },
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'roles.min' => 'Elegí al menos un rol.',
         ];
     }
 }

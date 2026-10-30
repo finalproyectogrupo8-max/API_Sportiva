@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\TenantController;
 use App\Http\Controllers\Admin\TenantMembershipController;
+use App\Http\Controllers\Admin\TenantRoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserMembershipController;
 use App\Http\Controllers\Auth\AuthController;
@@ -43,6 +44,7 @@ Route::middleware(['auth:sanctum', 'abilities:platform:admin', 'platform.admin']
         Route::post('tenants/{tenant}/retry', [TenantController::class, 'retry']);
         Route::apiResource('tenants', TenantController::class);
         Route::apiResource('users', UserController::class)->except(['destroy']);
+        Route::get('tenants/{tenant}/roles', [TenantRoleController::class, 'index']);
         Route::get('tenants/{tenant}/memberships', [TenantMembershipController::class, 'index']);
         Route::get('users/{user}/memberships', [UserMembershipController::class, 'index']);
         Route::post('tenants/{tenant}/memberships', [TenantMembershipController::class, 'store']);

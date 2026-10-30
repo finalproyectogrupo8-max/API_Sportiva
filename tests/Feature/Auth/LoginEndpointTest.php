@@ -16,16 +16,18 @@ class LoginEndpointTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'admin@sportiva.com',
-            'role' => 'admin',
+            'is_platform_admin' => true,
+            'is_active' => true,
         ]);
 
         $this->assertDatabaseHas('users', [
             'email' => 'general@sportiva.com',
-            'role' => 'general',
+            'is_platform_admin' => false,
+            'is_active' => true,
         ]);
     }
 
-    public function test_login_endpoint_authenticates_and_returns_user_with_role(): void
+    public function test_login_endpoint_authenticates_and_returns_platform_admin_flag(): void
     {
         $this->seed(UserSeeder::class);
 
@@ -36,14 +38,15 @@ class LoginEndpointTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('user.email', 'admin@sportiva.com')
-            ->assertJsonPath('user.role', 'admin')
+            ->assertJsonPath('user.is_platform_admin', true)
+            ->assertJsonMissingPath('user.role')
             ->assertJsonStructure([
                 'token',
                 'user' => [
                     'id',
                     'name',
                     'email',
-                    'role',
+                    'is_platform_admin',
                 ],
             ]);
     }

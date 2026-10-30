@@ -36,7 +36,7 @@ Documentos que hay que leer antes, en este orden:
 |---|---|---|
 | Login, selección de club, tokens atados al club | Hecho (mergeado) | `platform-auth` (le quedan tareas del ABM de clubes) |
 | Conexión `tenant`, cambio de base por request y en jobs, servicio `TenantDatabase` (crear, migrar y conectar bases de club), permisos de MySQL local para `club_%`, soporte de tests multi-club | Hecho | [`tenant-connection`](../../openspec/changes/tenant-connection/proposal.md) (implementado) |
-| Módulo 1 (`club_users`, roles y permisos) y la resolución de permisos (`hasClubPermission`, `permissions[]` en `/me`) | **Dev de ABM** (ver [D10](#3-decisiones-que-hay-que-cerrar-antes-de-migrar)) | `club-access-control` (a proponer) |
+| Módulo 1 (`club_users`, roles y permisos) y la resolución de permisos (`hasClubPermission`, `permissions[]` en `/me`) | **Dev de ABM** (ver [D10](#3-decisiones-que-hay-que-cerrar-antes-de-migrar)) | `club-access-control` ✅ |
 | ABM de los módulos 2 a 8 | **Dev de ABM** | Uno por ola (sección 4) |
 | Alta de clubes y usuarios, panel de admin, `ProvisionTenant`, `tenants:create`, `tenants:migrate`, conexión `provisioning`, worker de la cola, permisos de MySQL en Laravel Cloud | **Tiziano** | `platform-admin-and-provisioning`. Usa `TenantDatabase` de `tenant-connection` y el seeder de roles de `club-access-control` |
 
@@ -62,10 +62,10 @@ Los ABM de club **no se pueden probar** sin esto: el test 10 de la guía ABM (ai
 | C2 | ✅ Cambio de conexión por request (hecho) | Que `tenant.token` apunte la conexión a la base del club y la desconecte al terminar | `grep -n "TenantDatabase" app/Http/Middleware/EnsureTenantContext.php` |
 | C3 | ✅ Migraciones de club (hecho) | La carpeta `database/migrations/tenant/` y `TenantDatabase::migrate()`, que la usan los tests | `ls database/migrations/tenant` |
 | C4 | ✅ Soporte de tests multi-club (hecho) | `Tests\Concerns\InteractsWithTenants`: `tenantA()`, `tenantB()`, `clubToken()`, `inTenant()` | `ls tests/Concerns` |
-| C5 | Permisos | `hasClubPermission()` 🟡 y el seeder de roles y permisos del club 🟡 al que cada ABM agrega sus claves | `grep -rn "hasClubPermission" app/` |
-| C6 | `club_users` | La tabla y la forma de obtener el `club_user` del request actual 🟡 (lo necesitan `requested_by`, `performed_by`, `recorded_by`…) | `ls database/migrations/tenant \| grep club_users` |
+| C5 | ✅ Permisos (hecho) | `hasClubPermission()` y `config/club-permissions.php`, al que cada ABM agrega sus claves ([roles y permisos](../roles-y-permisos.md)) | `grep -rn "hasClubPermission" app/Models/User.php` |
+| C6 | ✅ `club_users` (hecho) | `$request->user()->currentClubUser()` (lo necesitan `requested_by`, `performed_by`, `recorded_by`…) | `grep -n "currentClubUser" app/Models/User.php` |
 
-**C1 a C4 ya están hechos** (`tenant-connection`). C5 y C6 bloquean desde la ola 1 los tests de permisos (caso 8) y, desde la ola 2, las tablas que referencian `club_users`. Los nombres con 🟡 se definen en `club-access-control`.
+**C1 a C6 ya están hechos** (`tenant-connection` y `club-access-control`).
 
 **Sin el alta de clubes de Tiziano** se puede desarrollar y testear todo (los tests crean sus propias bases `club_test_*`). Lo único que falta es probar a mano desde Swagger contra un club local, que necesita `tenants:create`.
 

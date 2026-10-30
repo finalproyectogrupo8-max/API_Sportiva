@@ -2,11 +2,10 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Enums\MembershipRole;
+use App\Club\Access\PermissionCatalog;
 use App\Enums\TenantStatus;
 use App\Jobs\ProvisionTenant;
 use App\Models\Tenant;
-use App\Models\TenantMembership;
 use App\Models\User;
 use App\Tenancy\TenantDatabase;
 use Illuminate\Database\QueryException;
@@ -103,11 +102,11 @@ class TenantProvisioningTest extends TestCase
                 ->all();
         });
 
-        // Contar cuántas migraciones crean tablas en database/migrations/tenant (excluyendo add_foreign_key)
+        // Contar cuántas migraciones crean tablas en database/migrations/tenant (las create_*)
         $migrationFiles = glob(base_path('database/migrations/tenant/*.php')) ?: [];
         $expectedTableMigrations = count(array_filter(
             $migrationFiles,
-            fn ($file) => ! str_contains(basename($file), 'add_club_user_foreign_key')
+            fn ($file) => str_contains(basename($file), '_create_')
         ));
 
         $this->assertSame($expectedTableMigrations, count($tables));
@@ -123,6 +122,8 @@ class TenantProvisioningTest extends TestCase
         $this->partialMock(TenantDatabase::class, function ($mock) {
             $mock->shouldReceive('create')->once()->andReturnNull();
             $mock->shouldReceive('migrate')->once()->andReturnNull();
+            // Sin base real: el paso de roles y permisos (TenantDatabase::run) también se simula.
+            $mock->shouldReceive('run')->andReturnNull();
         });
 
         $response = $this->postJson('/api/admin/tenants', [
@@ -183,17 +184,19 @@ class TenantProvisioningTest extends TestCase
         ]);
         $this->trackTenant($tenant);
 
-        $mockDb = $this->partialMock(TenantDatabase::class, function ($mock) {
+        $this->partialMock(TenantDatabase::class, function ($mock) {
             $mock->shouldReceive('create')->once()->andReturnNull();
             $mock->shouldReceive('migrate')->once()->andReturnNull();
+            // Sin base real: el paso de roles y permisos (TenantDatabase::run) también se simula.
+            $mock->shouldReceive('run')->andReturnNull();
         });
 
         // Primera ejecución
-        (new ProvisionTenant($tenant->id))->handle($mockDb);
+        app()->call([new ProvisionTenant($tenant->id), 'handle']);
         $this->assertSame('active', $tenant->fresh()->status);
 
         // Segunda ejecución sobre club ya activo: no debe volver a llamar a create ni migrate
-        (new ProvisionTenant($tenant->id))->handle($mockDb);
+        app()->call([new ProvisionTenant($tenant->id), 'handle']);
         $this->assertSame('active', $tenant->fresh()->status);
     }
 
@@ -204,6 +207,8 @@ class TenantProvisioningTest extends TestCase
         $this->partialMock(TenantDatabase::class, function ($mock) {
             $mock->shouldReceive('create')->once()->andReturnNull();
             $mock->shouldReceive('migrate')->once()->andReturnNull();
+            // Sin base real: el paso de roles y permisos (TenantDatabase::run) también se simula.
+            $mock->shouldReceive('run')->andReturnNull();
         });
 
         $tenant = Tenant::factory()->create([
@@ -264,65 +269,60 @@ class TenantProvisioningTest extends TestCase
             ->assertJsonPath('code', 'forbidden');
     }
 
-    public function test_member_can_select_tenant_on_newly_provisioned_club(): void
+    public function test_initial_admin_of_a_new_club_gets_every_permission(): void
     {
         $this->asAdmin();
 
-        $this->partialMock(TenantDatabase::class, function ($mock) {
-            $mock->shouldReceive('create')->once()->andReturnNull();
-            $mock->shouldReceive('migrate')->once()->andReturnNull();
-        });
+        $probe = Tenant::factory()->make(['slug' => 'test_probe', 'database_name' => 'club_test_probe']);
+        $this->trackTenant($probe);
+        $this->skipIfNoMySqlPermissions($probe);
 
-        // 1. Alta del club
+        // 1. Alta del club con su administrador inicial (provisión real: crea la base y siembra roles)
         $this->postJson('/api/admin/tenants', [
             'name' => 'Club Atletico Seleccion',
             'slug' => 'test_prov_select',
-        ])->assertCreated();
+            'admin' => ['name' => 'Admin Club', 'email' => 'admin@seleccion.test', 'password' => 'secret-password-12'],
+        ])->assertCreated()->assertJsonPath('data.status', 'active');
 
         $tenant = Tenant::where('slug', 'test_prov_select')->firstOrFail();
         $this->trackTenant($tenant);
 
-        // 2. Crear usuario y membresía en ese club
-        $user = User::factory()->create(['password' => bcrypt('secret-password-12')]);
-        TenantMembership::create([
-            'user_id' => $user->id,
-            'tenant_id' => $tenant->id,
-            'role' => MembershipRole::Admin->value,
-            'is_active' => true,
-        ]);
-
-        // 3. Login para obtener token pre-tenant (reset de guards para limpiar el usuario admin)
+        // 2. Login y selección del club
         $this->app['auth']->forgetGuards();
         $this->flushHeaders();
 
-        $loginRes = $this->postJson('/api/auth/login', [
-            'email' => $user->email,
+        $preToken = $this->postJson('/api/auth/login', [
+            'email' => 'admin@seleccion.test',
             'password' => 'secret-password-12',
-        ])->assertOk();
+        ])->assertOk()->json('token');
 
-        $preToken = $loginRes->json('token');
-
-        // 4. Select tenant
         $this->app['auth']->forgetGuards();
         $this->flushHeaders();
 
-        $selectRes = $this->withToken($preToken)
-            ->postJson('/api/auth/select-tenant', [
-                'tenant' => 'test_prov_select',
-            ])->assertOk()
-            ->assertJsonPath('tenant.slug', 'test_prov_select');
+        $permissions = array_keys(app(PermissionCatalog::class)->permissions());
+        sort($permissions);
 
-        $clubToken = $selectRes->json('token');
-
-        // 5. Consulta a /api/me con el token del club (reset de guards para tomar el nuevo token)
-        $this->app['auth']->forgetGuards();
-        $this->flushHeaders();
-
-        $this->withToken($clubToken)
-            ->getJson('/api/me')
+        $clubToken = $this->withToken($preToken)
+            ->postJson('/api/auth/select-tenant', ['tenant' => 'test_prov_select'])
             ->assertOk()
             ->assertJsonPath('tenant.slug', 'test_prov_select')
-            ->assertJsonPath('user.email', $user->email);
+            ->assertJsonPath('profile.display_name', 'Admin Club')
+            ->assertJsonPath('profile.roles', [['slug' => 'admin', 'name' => 'Administrador del club']])
+            ->assertJsonPath('permissions', $permissions)
+            ->json('token');
+
+        // 3. /api/me con el token del club
+        $this->app['auth']->forgetGuards();
+        $this->flushHeaders();
+
+        $me = $this->withToken($clubToken)
+            ->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('user.email', 'admin@seleccion.test')
+            ->assertJsonPath('profile.roles.0.slug', 'admin')
+            ->assertJsonPath('permissions', $permissions);
+
+        $this->assertSame(array_fill_keys($permissions, 'all'), $me->json('permission_scopes'));
     }
 
     public function test_tenants_create_command_provisions_active_club(): void
@@ -330,6 +330,8 @@ class TenantProvisioningTest extends TestCase
         $this->partialMock(TenantDatabase::class, function ($mock) {
             $mock->shouldReceive('create')->once()->andReturnNull();
             $mock->shouldReceive('migrate')->once()->andReturnNull();
+            // Sin base real: el paso de roles y permisos (TenantDatabase::run) también se simula.
+            $mock->shouldReceive('run')->andReturnNull();
         });
 
         $this->artisan('tenants:create', [
@@ -364,6 +366,8 @@ class TenantProvisioningTest extends TestCase
 
         $this->partialMock(TenantDatabase::class, function ($mock) {
             $mock->shouldReceive('migrate')->once()->andReturnNull();
+            // Sin base real: el paso de roles y permisos (TenantDatabase::run) también se simula.
+            $mock->shouldReceive('run')->andReturnNull();
         });
 
         $this->artisan('tenants:migrate', ['--tenant' => 'test_prov_mig'])
@@ -401,6 +405,8 @@ class TenantProvisioningTest extends TestCase
 
         $this->partialMock(TenantDatabase::class, function ($mock) {
             $mock->shouldReceive('migrate')->once()->andReturnNull();
+            // Sin base real: el paso de roles y permisos (TenantDatabase::run) también se simula.
+            $mock->shouldReceive('run')->andReturnNull();
         });
 
         $this->app['env'] = 'production';

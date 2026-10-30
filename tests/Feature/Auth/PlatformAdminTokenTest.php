@@ -7,10 +7,12 @@ use App\Models\TenantMembership;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\InteractsWithTenants;
 use Tests\TestCase;
 
 class PlatformAdminTokenTest extends TestCase
 {
+    use InteractsWithTenants;
     use RefreshDatabase;
 
     private function resetAuthContext(): static
@@ -112,12 +114,12 @@ class PlatformAdminTokenTest extends TestCase
     public function test_admin_tenants_with_club_token_returns_403_forbidden(): void
     {
         $admin = User::factory()->platformAdmin()->create(['password' => 'secret-password-12']);
-        $club = Tenant::factory()->create(['slug' => 'river', 'status' => 'active']);
+        // Club de prueba con base migrada: select-tenant lee la base del club.
+        $club = tap($this->tenantA())->update(['slug' => 'river']);
 
         TenantMembership::create([
             'user_id' => $admin->id,
             'tenant_id' => $club->id,
-            'role' => 'admin',
             'is_active' => true,
         ]);
 

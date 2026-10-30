@@ -90,7 +90,7 @@ Se hace con la API, usando el **token de plataforma** del admin. La forma más f
 2. Tocá **Authorize** y pegá el `platform_token`.
 3. **Crear el club** (si no existe): `POST /api/admin/tenants` con `{ "name": "Club Demo", "slug": "demo" }`. Responde `"status": "provisioning"` y en unos segundos el worker lo pasa a `active` (`GET /api/admin/tenants/{id}`). Anotá el `id`.
 4. **Crear el usuario** (si no lo creaste con tinker): `POST /api/admin/users` con `{ "name": "Socio Demo", "email": "socio@demo.com", "password": "clave-socio-12" }`. Anotá el `id`.
-5. **Asociarlo:** `POST /api/admin/tenants/{id del club}/memberships` con `{ "user_id": <id del usuario>, "role": "admin" }`. Por ahora `admin` es el único rol.
+5. **Asociarlo:** `POST /api/admin/tenants/{id del club}/memberships` con `{ "user_id": <id del usuario>, "roles": ["admin"] }`. Los roles son los del club: los lista `GET /api/admin/tenants/{id del club}/roles` (`admin`, `coordinator`, `coach`, `physical_trainer`, `inventory_manager`, `maintenance_manager` y los custom). Ver [roles y permisos](roles-y-permisos.md).
 
 Lo mismo con curl:
 
@@ -111,10 +111,12 @@ curl -s -X POST http://127.0.0.1:8000/api/admin/users -H 'Accept: application/js
 
 # Membresía (con los ids de las respuestas anteriores)
 curl -s -X POST http://127.0.0.1:8000/api/admin/tenants/<id_club>/memberships -H 'Accept: application/json' -H 'Content-Type: application/json' \
-  -H "Authorization: Bearer $PLAT" -d '{"user_id":<id_usuario>,"role":"admin"}'
+  -H "Authorization: Bearer $PLAT" -d '{"user_id":<id_usuario>,"roles":["admin"]}'
 ```
 
-Para confirmar: el login de ese usuario tiene que traer `"tenants": [{ "slug": "demo", ... }]`.
+Para confirmar: el login de ese usuario tiene que traer `"tenants": [{ "slug": "demo", ... }]`, y `select-tenant` su `profile` con los roles y sus `permissions`.
+
+**Después de este pull** (si venías de antes de los roles del club): corré `docker compose exec backend php artisan migrate` y `docker compose exec backend php artisan tenants:migrate`. El segundo siembra los roles y permisos en tus clubes locales y deja como **Administrador del club** a los usuarios que ya tenían membresía.
 
 | Error | Causa |
 |---|---|

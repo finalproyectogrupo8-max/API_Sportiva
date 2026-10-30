@@ -1,6 +1,6 @@
 # Roles y permisos del club
 
-> **Estado: decidido en TIZ-10.** Lo implementan TIZ-11 (API: `club-access-control`), TIZ-12 (API: equipo del club), FRO-13 (menú y rutas por permiso) y FRO-14 (pantalla "Equipo del club").
+> **Estado:** decidido en TIZ-10. **Implementado en la API (TIZ-11, `club-access-control`):** catálogo, roles estándar, sincronización, permisos con alcance, `/api/me` y roles al dar acceso desde `/admin`. **Pendiente:** ABM de roles custom y endpoints del club (TIZ-12), menú por permiso (FRO-13) y pantalla "Equipo del club" (FRO-14).
 
 Este documento define **quién puede hacer qué dentro de un club**: el catálogo de permisos, los roles estándar, los roles custom y cómo se asignan. El modelo de tablas está en [modelo-datos-club/01](modelo-datos-club/01-identidad-y-autorizacion.md).
 
@@ -181,7 +181,7 @@ Club actual (token con club, middleware `tenant.token`):
 | `POST /api/roles/{role}/duplicate` | `roles.create` |
 | `PUT /api/club-users/{clubUser}/roles`: reemplaza la lista completa, idempotente | `roles.assign` |
 
-Admin de plataforma, mismo contrato bajo `/api/admin/tenants/{tenant}/...`: `permissions`, `roles`, `roles/{role}/duplicate` y `memberships/{membership}/roles`.
+Admin de plataforma, mismo contrato bajo `/api/admin/tenants/{tenant}/...`: `permissions`, `roles` y `roles/{role}/duplicate`. Los roles de un miembro se asignan con `roles` en `POST` y `PATCH /api/admin/tenants/{tenant}/memberships` (ya implementado, igual que `GET /api/admin/tenants/{tenant}/roles`).
 
 Payload de un rol:
 

@@ -32,7 +32,6 @@ class InactiveUserTest extends TestCase
         TenantMembership::create([
             'user_id' => $user->id,
             'tenant_id' => $tenant->id,
-            'role' => 'admin',
         ]);
 
         $token = $user->createToken('tenant:'.$tenant->slug, ['tenant:operate']);

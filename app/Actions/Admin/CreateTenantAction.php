@@ -2,7 +2,6 @@
 
 namespace App\Actions\Admin;
 
-use App\Enums\MembershipRole;
 use App\Enums\TenantStatus;
 use App\Jobs\ProvisionTenant;
 use App\Models\Tenant;
@@ -15,7 +14,8 @@ class CreateTenantAction
 {
     /**
      * @param  array{name: string, email: string, password: string}|null  $admin  Si viene, se crea ese
-     *                                                                            usuario y se lo asocia al club como administrador, en la misma transacción.
+     *                                                                            usuario y se lo asocia al club en la misma transacción. ProvisionTenant le asigna el rol
+     *                                                                            "Administrador del club" cuando crea la base.
      */
     public function execute(
         string $name,
@@ -43,7 +43,6 @@ class CreateTenantAction
                 $membership = TenantMembership::create([
                     'user_id' => $user->id,
                     'tenant_id' => $tenant->id,
-                    'role' => MembershipRole::Admin->value,
                     'is_active' => true,
                 ]);
                 $auditLogger?->recordCreated($membership);

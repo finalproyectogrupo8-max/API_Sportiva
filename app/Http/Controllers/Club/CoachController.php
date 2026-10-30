@@ -25,6 +25,7 @@ class CoachController extends Controller
         $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
 
         $coaches = Coach::query()
+            ->visibleTo($request->user()->clubAccess())
             ->when($filters['search'] ?? null, fn ($query, $search) => $query->where(function ($query) use ($search) {
                 $query->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%");
@@ -49,6 +50,7 @@ class CoachController extends Controller
     public function show(Coach $coach): CoachResource
     {
         Gate::authorize('view', $coach);
+        $this->ensureVisible($coach);
 
         return CoachResource::make($coach);
     }
@@ -56,6 +58,7 @@ class CoachController extends Controller
     public function update(UpdateCoachRequest $request, Coach $coach): CoachResource
     {
         Gate::authorize('update', $coach);
+        $this->ensureVisible($coach);
 
         $coach->update($request->validated());
 
@@ -65,9 +68,21 @@ class CoachController extends Controller
     public function destroy(Coach $coach): Response
     {
         Gate::authorize('delete', $coach);
+        $this->ensureVisible($coach);
 
         $coach->delete();
 
         return response()->noContent();
+    }
+
+    /** Con alcance "sus categorías", un profe ajeno responde 404: no se revela que existe. */
+    private function ensureVisible(Coach $coach): void
+    {
+        $visible = Coach::query()
+            ->visibleTo(request()->user()->clubAccess())
+            ->whereKey($coach->getKey())
+            ->exists();
+
+        abort_unless($visible, 404);
     }
 }
