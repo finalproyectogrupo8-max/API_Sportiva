@@ -25,6 +25,8 @@ Route::post('tickets', [SupportTicketController::class, 'store'])->middleware('t
 Route::post('/newsletter', [NewsletterController::class, 'store']);
 
 Route::prefix('auth')->group(function () {
+    Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:forgot-password');
+    Route::post('reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:reset-password');
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
 
     Route::middleware('auth:sanctum')->group(function () {
