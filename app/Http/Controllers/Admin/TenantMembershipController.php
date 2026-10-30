@@ -93,6 +93,17 @@ class TenantMembershipController extends Controller
         DB::transaction(function () use ($request, $tenant, $membership, $auditLogger) {
             $wasActive = $membership->is_active;
             $validated = $request->validated();
+            $losesAccess = $wasActive && array_key_exists('is_active', $validated) && ! $validated['is_active'];
+
+            // Solo un miembro con acceso cuenta como administrador activo.
+            if ($wasActive && $tenant->status === TenantStatus::Active->value && ($losesAccess || array_key_exists('roles', $validated))) {
+                $this->tenantDatabase->run($tenant, fn () => $this->members->ensureAnotherAdminRemains(
+                    $tenant,
+                    $membership->user_id,
+                    $validated['roles'] ?? null,
+                    $losesAccess,
+                ));
+            }
 
             if (array_key_exists('roles', $validated)) {
                 [$from, $to] = $this->tenantDatabase->run($tenant, function () use ($membership, $validated) {

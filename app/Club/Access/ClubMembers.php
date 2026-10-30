@@ -7,6 +7,7 @@ use App\Models\Club\Role;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Support\ApiErrorException;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -60,6 +61,41 @@ class ClubMembers
         }
 
         return $memberships->count();
+    }
+
+    /**
+     * Un club nunca se queda sin Administrador del club activo (docs/roles-y-permisos.md §6).
+     * Falla con 409 last_admin si el usuario es admin activo, el cambio le saca el rol o el acceso,
+     * y no queda otro admin activo (club_user activo con membresía central activa).
+     *
+     * @param  list<string>|null  $newRoleSlugs  null si no cambian los roles
+     */
+    public function ensureAnotherAdminRemains(Tenant $tenant, int $userId, ?array $newRoleSlugs, bool $losesAccess): void
+    {
+        $keepsAdmin = ! $losesAccess && ($newRoleSlugs === null || in_array('admin', $newRoleSlugs, true));
+        if ($keepsAdmin) {
+            return;
+        }
+
+        $adminUserIds = ClubUser::query()
+            ->where('status', ClubUser::STATUS_ACTIVE)
+            ->whereHas('roles', fn ($query) => $query->where('slug', 'admin'))
+            ->pluck('global_user_id')
+            ->map(fn ($id) => (int) $id);
+
+        if (! $adminUserIds->contains($userId)) {
+            return;
+        }
+
+        $others = TenantMembership::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->whereIn('user_id', $adminUserIds->reject(fn (int $id) => $id === $userId)->all())
+            ->exists();
+
+        if (! $others) {
+            throw new ApiErrorException('last_admin', 409);
+        }
     }
 
     /** @param list<int> $roleIds */

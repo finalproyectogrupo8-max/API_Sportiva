@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\UserMembershipController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Club\CategoryController;
 use App\Http\Controllers\Club\CoachController;
+use App\Http\Controllers\Club\RoleController;
 use App\Http\Controllers\Club\SeasonController;
 use App\Http\Controllers\Club\SportController;
 use App\Http\Controllers\HealthController;
@@ -44,7 +45,13 @@ Route::middleware(['auth:sanctum', 'abilities:platform:admin', 'platform.admin']
         Route::post('tenants/{tenant}/retry', [TenantController::class, 'retry']);
         Route::apiResource('tenants', TenantController::class);
         Route::apiResource('users', UserController::class)->except(['destroy']);
+        Route::get('tenants/{tenant}/permissions', [TenantRoleController::class, 'permissions']);
         Route::get('tenants/{tenant}/roles', [TenantRoleController::class, 'index']);
+        Route::post('tenants/{tenant}/roles', [TenantRoleController::class, 'store']);
+        Route::get('tenants/{tenant}/roles/{role}', [TenantRoleController::class, 'show']);
+        Route::patch('tenants/{tenant}/roles/{role}', [TenantRoleController::class, 'update']);
+        Route::delete('tenants/{tenant}/roles/{role}', [TenantRoleController::class, 'destroy']);
+        Route::post('tenants/{tenant}/roles/{role}/duplicate', [TenantRoleController::class, 'duplicate']);
         Route::get('tenants/{tenant}/memberships', [TenantMembershipController::class, 'index']);
         Route::get('users/{user}/memberships', [UserMembershipController::class, 'index']);
         Route::post('tenants/{tenant}/memberships', [TenantMembershipController::class, 'store']);
@@ -60,6 +67,9 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::apiResource('seasons', SeasonController::class);
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('coaches', CoachController::class);
+    Route::get('permissions', [RoleController::class, 'permissions']);
+    Route::apiResource('roles', RoleController::class)->parameters(['roles' => 'role:slug']);
+    Route::post('roles/{role:slug}/duplicate', [RoleController::class, 'duplicate']);
 });
 
 // Documentación: Swagger UI y contrato OpenAPI. Fuera de local/staging (y de los tests) las
