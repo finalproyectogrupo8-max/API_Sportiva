@@ -53,6 +53,49 @@
                 }
             }
         },
+        "/auth/reset-password": {
+            "post": {
+                "operationId": "auth.resetPassword",
+                "summary": "Restablece la contrase\u00f1a utilizando el token de recuperaci\u00f3n recibido por correo",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResetPasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Contrase\u00f1a restablecida con \u00e9xito."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "operationId": "auth.login",
@@ -91,49 +134,6 @@
                                         "message": {
                                             "type": "string",
                                             "const": "Credenciales inv\u00e1lidas."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
-        "/auth/reset-password": {
-            "post": {
-                "operationId": "auth.resetPassword",
-                "summary": "Restablece la contrase\u00f1a utilizando el token de recuperaci\u00f3n recibido por correo",
-                "tags": [
-                    "Auth"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ResetPasswordRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Contrase\u00f1a restablecida con \u00e9xito."
                                         }
                                     },
                                     "required": [
@@ -4817,7 +4817,8 @@
                         "minLength": 8
                     },
                     "password_confirmation": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 8
                     }
                 },
                 "required": [
