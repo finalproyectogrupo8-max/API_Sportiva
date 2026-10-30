@@ -1,6 +1,6 @@
 # Roles y permisos del club
 
-> **Estado:** decidido en TIZ-10. **Implementado en la API (TIZ-11, `club-access-control`):** catálogo, roles estándar, sincronización, permisos con alcance, `/api/me` y roles al dar acceso desde `/admin`. **Pendiente:** ABM de roles custom y endpoints del club (TIZ-12), menú por permiso (FRO-13) y pantalla "Equipo del club" (FRO-14).
+> **Estado:** decidido en TIZ-10. **Implementado en la API (TIZ-11, `club-access-control`):** catálogo, roles estándar, sincronización, permisos con alcance, `/api/me` y roles al dar acceso desde `/admin`. **Roles custom y último administrador (TIZ-12, `club-custom-roles`):** endpoints del club y del admin de plataforma (§7). **Pendiente:** `/api/club-users` e invitaciones (dependen de los mails), menú por permiso (FRO-13) y pantalla "Equipo del club" (FRO-14).
 
 Este documento define **quién puede hacer qué dentro de un club**: el catálogo de permisos, los roles estándar, los roles custom y cómo se asignan. El modelo de tablas está en [modelo-datos-club/01](modelo-datos-club/01-identidad-y-autorizacion.md).
 
@@ -179,9 +179,11 @@ Club actual (token con club, middleware `tenant.token`):
 | `PATCH /api/roles/{role}`: 403 `role_is_system` si es estándar | `roles.update` |
 | `DELETE /api/roles/{role}`: 403 `role_is_system`, 409 `role_in_use` | `roles.delete` |
 | `POST /api/roles/{role}/duplicate` | `roles.create` |
-| `PUT /api/club-users/{clubUser}/roles`: reemplaza la lista completa, idempotente | `roles.assign` |
+| `PUT /api/club-users/{clubUser}/roles`: reemplaza la lista completa, idempotente. **Pendiente**, con la gestión del equipo | `roles.assign` |
 
-Admin de plataforma, mismo contrato bajo `/api/admin/tenants/{tenant}/...`: `permissions`, `roles` y `roles/{role}/duplicate`. Los roles de un miembro se asignan con `roles` en `POST` y `PATCH /api/admin/tenants/{tenant}/memberships` (ya implementado, igual que `GET /api/admin/tenants/{tenant}/roles`).
+`{role}` es el `slug` del rol (por ejemplo `/api/roles/coach`).
+
+Admin de plataforma, mismo contrato bajo `/api/admin/tenants/{tenant}/...`: `permissions`, `roles` y `roles/{role}/duplicate`. En un club que no está activo, crear, editar o borrar responde 409 `tenant_inactive`. Los roles de un miembro se asignan con `roles` en `POST` y `PATCH /api/admin/tenants/{tenant}/memberships` (ya implementado, igual que `GET /api/admin/tenants/{tenant}/roles`).
 
 Payload de un rol:
 
