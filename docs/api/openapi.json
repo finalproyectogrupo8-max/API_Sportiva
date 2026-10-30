@@ -4434,10 +4434,13 @@
                         "type": "string"
                     },
                     "description": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "is_system": {
-                        "type": "string",
+                        "type": "boolean",
                         "description": "Est\u00e1ndar: no se edita ni se borra, se duplica."
                     },
                     "users_count": {

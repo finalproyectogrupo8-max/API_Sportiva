@@ -7,7 +7,11 @@ use App\Models\Club\Role;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** Rol del club. Lo usan los endpoints del club y los del admin de plataforma. @mixin Role */
+/**
+ * Rol del club. Lo usan los endpoints del club y los del admin de plataforma.
+ *
+ * @mixin Role
+ */
 class ClubRoleResource extends JsonResource
 {
     public function toArray(Request $request): array
