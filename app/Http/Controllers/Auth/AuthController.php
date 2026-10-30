@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Club\Access\ClubAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\SelectTenantRequest;
@@ -12,6 +13,7 @@ use App\Http\Resources\Auth\SelectTenantResource;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\ApiError;
+use App\Tenancy\TenantDatabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -56,7 +58,7 @@ class AuthController extends Controller
     /**
      * Revalida la membresía y cambia el token actual por uno atado al club.
      */
-    public function selectTenant(SelectTenantRequest $request): SelectTenantResource|JsonResponse
+    public function selectTenant(SelectTenantRequest $request, TenantDatabase $tenantDatabase): SelectTenantResource|JsonResponse
     {
         $user = $request->user();
         $tenant = Tenant::where('slug', $request->validated('tenant'))->first();
@@ -74,6 +76,13 @@ class AuthController extends Controller
             return ApiError::forbidden('tenant_inactive');
         }
 
+        // Los roles quedan cargados (eager loading): el resource no vuelve a consultar la base del club.
+        $access = $tenantDatabase->run($tenant, fn () => ClubAccess::forGlobalUser($user->id));
+
+        if ($access->clubUser && ! $access->clubUser->isActive()) {
+            return ApiError::forbidden('club_user_disabled');
+        }
+
         $new = DB::transaction(function () use ($user, $tenant) {
             $user->currentAccessToken()->delete();
 
@@ -87,12 +96,16 @@ class AuthController extends Controller
             return $new;
         });
 
-        return new SelectTenantResource($new, $tenant);
+        return new SelectTenantResource($new, $tenant, $access);
     }
 
     public function me(Request $request): MeResource
     {
-        return new MeResource($request->user(), $request->attributes->get('tenant'));
+        return new MeResource(
+            $request->user(),
+            $request->attributes->get('tenant'),
+            $request->user()->clubAccess(),
+        );
     }
 
     /**

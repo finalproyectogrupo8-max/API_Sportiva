@@ -102,6 +102,23 @@
                                             "properties": {
                                                 "message": {
                                                     "type": "string",
+                                                    "const": "Tu usuario est\u00e1 deshabilitado en este club."
+                                                },
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "club_user_disabled"
+                                                }
+                                            },
+                                            "required": [
+                                                "message",
+                                                "code"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
                                                     "const": "El club no est\u00e1 activo."
                                                 },
                                                 "code": {
@@ -2973,6 +2990,58 @@
                 }
             }
         },
+        "/admin/tenants/{tenant}/roles": {
+            "get": {
+                "operationId": "tenantRole.index",
+                "summary": "Roles del club, para asignarlos a sus miembros. Primero los est\u00e1ndar, despu\u00e9s los custom.\nUn club que todav\u00eda no est\u00e1 activo no tiene base: devuelve una lista vac\u00eda",
+                "tags": [
+                    "TenantRole"
+                ],
+                "parameters": [
+                    {
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true,
+                        "description": "The tenant ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ClubRoleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ClubRoleResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "operationId": "users.index",
@@ -3623,6 +3692,76 @@
                 ],
                 "title": "CategoryResource"
             },
+            "ClubProfileResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "display_name": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "slug": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "slug",
+                                "name"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "display_name",
+                    "status",
+                    "roles"
+                ],
+                "title": "ClubProfileResource"
+            },
+            "ClubRoleResource": {
+                "type": "object",
+                "properties": {
+                    "slug": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_system": {
+                        "type": "boolean"
+                    },
+                    "users_count": {
+                        "type": "integer",
+                        "description": "Cu\u00e1ntos usuarios del club tienen el rol."
+                    }
+                },
+                "required": [
+                    "slug",
+                    "name",
+                    "description",
+                    "is_system"
+                ],
+                "title": "ClubRoleResource"
+            },
             "CoachResource": {
                 "type": "object",
                 "properties": {
@@ -3737,22 +3876,35 @@
                         "$ref": "#/components/schemas/TenantSummaryResource"
                     },
                     "profile": {
-                        "type": "null"
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ClubProfileResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     },
                     "permissions": {
                         "type": "array",
                         "items": {
                             "type": "string"
-                        },
-                        "minItems": 0,
-                        "maxItems": 0
+                        }
+                    },
+                    "permission_scopes": {
+                        "type": "object",
+                        "description": "Alcance de cada permiso: all (todo el club) u own (sus categor\u00edas).",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
                     }
                 },
                 "required": [
                     "user",
                     "tenant",
                     "profile",
-                    "permissions"
+                    "permissions",
+                    "permission_scopes"
                 ],
                 "title": "MeResource"
             },
@@ -3774,13 +3926,6 @@
                     "tenants"
                 ],
                 "title": "MeTenantsResource"
-            },
-            "MembershipRole": {
-                "type": "string",
-                "enum": [
-                    "admin"
-                ],
-                "title": "MembershipRole"
             },
             "SeasonResource": {
                 "type": "object",
@@ -3852,15 +3997,26 @@
                         ]
                     },
                     "profile": {
-                        "type": "null"
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ClubProfileResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     },
                     "permissions": {
                         "type": "array",
                         "items": {
                             "type": "string"
-                        },
-                        "minItems": 0,
-                        "maxItems": 0
+                        }
+                    },
+                    "permission_scopes": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
                     }
                 },
                 "required": [
@@ -3868,7 +4024,8 @@
                     "expires_at",
                     "tenant",
                     "profile",
-                    "permissions"
+                    "permissions",
+                    "permission_scopes"
                 ],
                 "title": "SelectTenantResource"
             },
@@ -4097,8 +4254,15 @@
                     "user_id": {
                         "type": "integer"
                     },
-                    "role": {
-                        "$ref": "#/components/schemas/MembershipRole"
+                    "roles": {
+                        "type": "array",
+                        "description": "Slugs de roles del club (GET /api/admin/tenants/{tenant}/roles). Que existan se valida\ncontra la base del club, en ClubMembers.",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 80
+                        },
+                        "minItems": 1,
+                        "uniqueItems": true
                     },
                     "is_active": {
                         "type": "string"
@@ -4106,7 +4270,7 @@
                 },
                 "required": [
                     "user_id",
-                    "role"
+                    "roles"
                 ],
                 "title": "StoreTenantMembershipRequest"
             },
@@ -4296,8 +4460,24 @@
                     "tenant_id": {
                         "type": "integer"
                     },
-                    "role": {
-                        "type": "string"
+                    "roles": {
+                        "type": "array",
+                        "description": "Roles del miembro en el club (base del club). Solo en los endpoints de un club.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "slug": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "slug",
+                                "name"
+                            ]
+                        }
                     },
                     "is_active": {
                         "type": "boolean"
@@ -4325,7 +4505,6 @@
                     "id",
                     "user_id",
                     "tenant_id",
-                    "role",
                     "is_active",
                     "created_at",
                     "updated_at"
@@ -4569,8 +4748,15 @@
             "UpdateTenantMembershipRequest": {
                 "type": "object",
                 "properties": {
-                    "role": {
-                        "$ref": "#/components/schemas/MembershipRole"
+                    "roles": {
+                        "type": "array",
+                        "description": "Reemplaza la lista completa de roles del miembro en el club.",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 80
+                        },
+                        "minItems": 1,
+                        "uniqueItems": true
                     },
                     "is_active": {
                         "type": "boolean"
@@ -4646,9 +4832,6 @@
                     "email": {
                         "type": "string"
                     },
-                    "role": {
-                        "type": "string"
-                    },
                     "is_platform_admin": {
                         "type": "boolean",
                         "description": "Solo para que el front decida si muestra /admin: la API verifica el permiso en cada request."
@@ -4658,7 +4841,6 @@
                     "id",
                     "name",
                     "email",
-                    "role",
                     "is_platform_admin"
                 ],
                 "title": "UserResource"

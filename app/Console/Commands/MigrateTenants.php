@@ -50,6 +50,11 @@ class MigrateTenants extends Command
             try {
                 $tenantDatabase->migrate($tenant, $fresh);
                 $this->info("✔ Base [{$tenant->database_name}] migrada exitosamente.");
+
+                // Roles y permisos al día con el catálogo (idempotente).
+                if ($this->call('club:sync-permissions', ['--tenant' => $tenant->slug]) !== self::SUCCESS) {
+                    $hasError = true;
+                }
             } catch (Throwable $e) {
                 $this->error("✖ Error al migrar base [{$tenant->database_name}]: {$e->getMessage()}");
                 $hasError = true;

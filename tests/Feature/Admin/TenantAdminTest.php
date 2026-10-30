@@ -156,7 +156,6 @@ class TenantAdminTest extends TestCase
         $this->assertDatabaseHas('tenant_memberships', [
             'user_id' => $user->id,
             'tenant_id' => $response->json('data.id'),
-            'role' => 'admin',
             'is_active' => true,
         ]);
     }

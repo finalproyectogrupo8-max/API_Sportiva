@@ -2,6 +2,8 @@
 
 namespace Tests\Concerns;
 
+use App\Club\Access\ClubMembers;
+use App\Club\Access\SyncClubPermissions;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
@@ -48,6 +50,8 @@ trait InteractsWithTenants
 
         foreach ([$this->tenantA, $this->tenantB] as $tenant) {
             $this->truncateTenantTables($tenant);
+            // Como en un club real: el alta deja los roles estándar y el catálogo de permisos.
+            $this->inTenant($tenant, fn () => app(SyncClubPermissions::class)->sync());
         }
 
         $this->registerTestItemRoutes();
@@ -63,15 +67,21 @@ trait InteractsWithTenants
         return $this->tenantB;
     }
 
-    /** Un token de club como el que emite select-tenant, con un usuario miembro activo del club. */
-    protected function clubToken(Tenant $tenant, ?User $user = null): string
+    /**
+     * Un token de club como el que emite select-tenant, con un usuario miembro activo del club.
+     * Con $roles (slugs), el usuario además tiene su club_user con esos roles.
+     *
+     * @param  list<string>|null  $roles
+     */
+    protected function clubToken(Tenant $tenant, ?User $user = null, ?array $roles = null): string
     {
         $user ??= User::factory()->create();
 
-        TenantMembership::firstOrCreate(
-            ['user_id' => $user->id, 'tenant_id' => $tenant->id],
-            ['role' => 'admin'],
-        );
+        TenantMembership::firstOrCreate(['user_id' => $user->id, 'tenant_id' => $tenant->id]);
+
+        if ($roles !== null) {
+            $this->inTenant($tenant, fn () => app(ClubMembers::class)->ensure($user, $roles));
+        }
 
         $token = $user->createToken(
             'tenant:'.$tenant->slug,

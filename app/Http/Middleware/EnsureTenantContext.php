@@ -51,6 +51,12 @@ class EnsureTenantContext
         $this->tenantDatabase->connect($tenant);
 
         try {
+            // Un club_user deshabilitado no opera en el club aunque la membresía central siga activa.
+            $clubUser = $user->clubAccess()->clubUser;
+            if ($clubUser && ! $clubUser->isActive()) {
+                return ApiError::forbidden('club_user_disabled');
+            }
+
             return $next($request);
         } finally {
             $this->tenantDatabase->disconnect();

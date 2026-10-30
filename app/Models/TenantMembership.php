@@ -15,7 +15,6 @@ class TenantMembership extends Model
     protected $fillable = [
         'user_id',
         'tenant_id',
-        'role',
         'is_active',
     ];
 

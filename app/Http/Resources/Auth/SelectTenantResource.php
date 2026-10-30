@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Auth;
 
+use App\Club\Access\ClubAccess;
 use App\Http\Resources\TenantSummaryResource;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ class SelectTenantResource extends JsonResource
 {
     public static $wrap = null;
 
-    public function __construct(NewAccessToken $token, private Tenant $tenant)
+    public function __construct(NewAccessToken $token, private Tenant $tenant, private ClubAccess $access)
     {
         parent::__construct($token);
     }
@@ -24,8 +25,11 @@ class SelectTenantResource extends JsonResource
             'token' => $this->plainTextToken,
             'expires_at' => $this->accessToken->expires_at->toIso8601String(),
             'tenant' => new TenantSummaryResource($this->tenant),
-            'profile' => null,
-            'permissions' => [],
+            'profile' => $this->access->clubUser ? new ClubProfileResource($this->access->clubUser) : null,
+            /** @var list<string> */
+            'permissions' => $this->access->permissionNames(),
+            /** @var array<string, string> */
+            'permission_scopes' => (object) $this->access->scopes(),
         ];
     }
 }

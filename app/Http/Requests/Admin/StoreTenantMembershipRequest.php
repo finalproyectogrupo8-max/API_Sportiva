@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Enums\MembershipRole;
+use App\Enums\TenantStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreTenantMembershipRequest extends FormRequest
 {
@@ -25,8 +26,22 @@ class StoreTenantMembershipRequest extends FormRequest
                 Rule::unique('tenant_memberships', 'user_id')
                     ->where(fn ($query) => $query->where('tenant_id', $tenant->id)),
             ],
-            'role' => ['required', Rule::enum(MembershipRole::class)],
+            // Slugs de roles del club (GET /api/admin/tenants/{tenant}/roles). Que existan se valida
+            // contra la base del club, en ClubMembers.
+            'roles' => ['required', 'array', 'min:1'],
+            'roles.*' => ['required', 'string', 'max:80', 'distinct'],
             'is_active' => ['prohibited'],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function (Validator $validator) {
+                if ($this->route('tenant')->status !== TenantStatus::Active->value) {
+                    $validator->errors()->add('roles', 'El club todavía no está activo: esperá a que termine el alta.');
+                }
+            },
         ];
     }
 
@@ -34,6 +49,8 @@ class StoreTenantMembershipRequest extends FormRequest
     {
         return [
             'user_id.unique' => 'El usuario ya tiene una membresía en este club.',
+            'roles.required' => 'Elegí al menos un rol.',
+            'roles.min' => 'Elegí al menos un rol.',
         ];
     }
 }

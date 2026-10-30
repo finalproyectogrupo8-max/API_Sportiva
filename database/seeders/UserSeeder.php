@@ -13,26 +13,24 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::firstOrCreate(
-            ['email' => 'admin@sportiva.com'],
-            [
-                'name' => 'Admin User',
-                'password' => Hash::make('admin123'),
-                'role' => 'admin',
-                'is_platform_admin' => true,
-                'is_active' => true,
-            ]
-        );
+        // forceFill: is_platform_admin e is_active no son asignables en masa, y firstOrCreate los ignoraba.
+        $this->seedUser('admin@sportiva.com', 'Admin User', 'admin123', isPlatformAdmin: true);
+        $this->seedUser('general@sportiva.com', 'General User', 'general123', isPlatformAdmin: false);
+    }
 
-        User::firstOrCreate(
-            ['email' => 'general@sportiva.com'],
-            [
-                'name' => 'General User',
-                'password' => Hash::make('general123'),
-                'role' => 'general',
-                'is_platform_admin' => false,
-                'is_active' => true,
-            ]
-        );
+    private function seedUser(string $email, string $name, string $password, bool $isPlatformAdmin): void
+    {
+        $user = User::query()->firstOrNew(['email' => $email]);
+
+        if ($user->exists) {
+            return;
+        }
+
+        $user->forceFill([
+            'name' => $name,
+            'password' => Hash::make($password),
+            'is_platform_admin' => $isPlatformAdmin,
+            'is_active' => true,
+        ])->save();
     }
 }

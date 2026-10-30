@@ -15,7 +15,7 @@ class AuditLogger
     private const FIELDS = [
         'tenant' => ['name', 'slug', 'database_name', 'status'],
         'user' => ['name', 'email', 'is_active'],
-        'membership' => ['user_id', 'tenant_id', 'role', 'is_active'],
+        'membership' => ['user_id', 'tenant_id', 'is_active'],
     ];
 
     public function __construct(private Request $request) {}
@@ -56,6 +56,22 @@ class AuditLogger
 
         if ($changes !== []) {
             $this->write($subject, $type, $changes, 'updated');
+        }
+    }
+
+    /**
+     * Roles del club asignados al miembro (viven en la base del club, no en la membresía).
+     *
+     * @param  list<string>  $from
+     * @param  list<string>  $to
+     */
+    public function recordMembershipRoles(TenantMembership $membership, array $from, array $to): void
+    {
+        sort($from);
+        sort($to);
+
+        if ($from !== $to) {
+            $this->write($membership, 'membership', ['roles' => ['from' => $from, 'to' => $to]], 'roles_updated');
         }
     }
 

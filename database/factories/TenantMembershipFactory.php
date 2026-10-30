@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\MembershipRole;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
@@ -18,7 +17,6 @@ class TenantMembershipFactory extends Factory
         return [
             'user_id' => User::factory(),
             'tenant_id' => Tenant::factory(),
-            'role' => MembershipRole::Admin->value,
             'is_active' => true,
         ];
     }

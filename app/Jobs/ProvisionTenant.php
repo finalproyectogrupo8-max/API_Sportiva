@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Club\Access\ClubMembers;
+use App\Club\Access\SyncClubPermissions;
 use App\Enums\TenantStatus;
 use App\Models\Tenant;
 use App\Tenancy\TenantDatabase;
@@ -25,7 +27,7 @@ class ProvisionTenant implements ShouldQueue
 
     public function __construct(public int $tenantId) {}
 
-    public function handle(TenantDatabase $tenantDatabase): void
+    public function handle(TenantDatabase $tenantDatabase, SyncClubPermissions $sync, ClubMembers $members): void
     {
         $tenant = Tenant::find($this->tenantId);
 
@@ -51,7 +53,13 @@ class ProvisionTenant implements ShouldQueue
             // 2. Ejecutar las migraciones de database/migrations/tenant
             $tenantDatabase->migrate($tenant);
 
-            // 3. Activar el club
+            // 3. Roles estándar y permisos; el admin inicial del alta recibe "Administrador del club"
+            $tenantDatabase->run($tenant, function () use ($sync, $members, $tenant) {
+                $sync->sync();
+                $members->backfillAdmins($tenant);
+            });
+
+            // 4. Activar el club
             $tenant->update(['status' => TenantStatus::Active->value]);
 
             Log::info("Club [{$tenant->slug}] provisionado y activado exitosamente.", [

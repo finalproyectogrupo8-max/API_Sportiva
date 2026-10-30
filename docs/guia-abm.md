@@ -4,7 +4,7 @@ Esta guía es la receta para escribir un ABM (alta, baja, modificación y consul
 
 > **🟡 PROPUESTO.** Estas convenciones se adelantaron para que el equipo arranque con las mismas reglas. Se confirman y ajustan con el **primer ABM real**: el de usuarios y clubes del panel de admin, en el change `platform-admin-and-provisioning`. Si algo de esta guía choca con ese código, gana el código, y esta guía se corrige.
 >
-> **Dependencias.** Los ABM **de club** usan la autenticación (`platform-auth`) y la conexión `tenant` (`tenant-connection`, ver [guia-bases-de-datos.md](guia-bases-de-datos.md)), que ya existen. Los permisos por rol (`hasClubPermission()`, caso 8 de los tests) llegan con `club-access-control`.
+> **Dependencias.** Los ABM **de club** usan la autenticación (`platform-auth`) y la conexión `tenant` (`tenant-connection`, ver [guia-bases-de-datos.md](guia-bases-de-datos.md)), que ya existen. Los permisos por rol (`hasClubPermission()`, caso 8 de los tests) están en `club-access-control`: ver [roles y permisos](roles-y-permisos.md).
 >
 > Versión: 17 de octubre de 2026 · Laravel 13.37.
 
@@ -318,9 +318,10 @@ Las reglas:
   }
   ```
 
-  🟡 `hasClubPermission()` es ilustrativo: se define en `platform-auth`.
+  `hasClubPermission()` y `clubPermissionScope()` están en `App\Models\User` (ver [roles y permisos §4](roles-y-permisos.md#4-alcance-todo-el-club-o-sus-categorías)). Con alcance `own` ("sus categorías"), el controlador filtra el listado y un registro ajeno responde 404: ver `Coach::scopeVisibleTo()`.
+- **En los tests,** `clubToken($tenant, roles: ['coach'])` crea el usuario con su `club_user` y esos roles. Sin `roles`, el usuario no tiene permisos.
 - **Las *permission keys*** se escriben `<recurso>.<acción>`, en inglés y en plural: `players.view`, `players.create`, `players.update`, `players.delete`. Para acciones especiales: `players.transfer`.
-- **Cada ABM nuevo agrega sus permisos** al seeder de roles del club. Si no, ningún rol los tiene, y nadie puede usar el ABM.
+- **Cada ABM nuevo agrega sus permisos** a `config/club-permissions.php` (catálogo y roles estándar). Si no, ningún rol los tiene, y nadie puede usar el ABM. `club:sync-permissions` (corre con `tenants:migrate`) los lleva a cada club.
 - **Sin permiso,** la respuesta es **403** con `code: forbidden`. El front usa ese `code` para decidir qué mostrar.
 
 ## 10. Bajas: soft delete o borrado real

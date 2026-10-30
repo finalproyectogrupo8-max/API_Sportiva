@@ -11,6 +11,7 @@ class ApiError
         'tenant_required' => 'Tenés que elegir un club.',
         'membership_inactive' => 'No tenés acceso a este club.',
         'tenant_inactive' => 'El club no está activo.',
+        'club_user_disabled' => 'Tu usuario está deshabilitado en este club.',
         'tenant_not_failed' => 'Solo se pueden reintentar clubes en estado fallido.',
         'resource_in_use' => 'El recurso está en uso y no se puede eliminar.',
     ];

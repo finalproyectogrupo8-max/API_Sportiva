@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Auth;
 
+use App\Club\Access\ClubAccess;
 use App\Http\Resources\TenantSummaryResource;
 use App\Http\Resources\UserResource;
 use App\Models\Tenant;
@@ -14,7 +15,7 @@ class MeResource extends JsonResource
 {
     public static $wrap = null;
 
-    public function __construct(User $user, private Tenant $tenant)
+    public function __construct(User $user, private Tenant $tenant, private ClubAccess $access)
     {
         parent::__construct($user);
     }
@@ -24,8 +25,15 @@ class MeResource extends JsonResource
         return [
             'user' => new UserResource($this->resource),
             'tenant' => new TenantSummaryResource($this->tenant),
-            'profile' => null,
-            'permissions' => [],
+            'profile' => $this->access->clubUser ? new ClubProfileResource($this->access->clubUser) : null,
+            /** @var list<string> */
+            'permissions' => $this->access->permissionNames(),
+            /**
+             * Alcance de cada permiso: all (todo el club) u own (sus categorías).
+             *
+             * @var array<string, string>
+             */
+            'permission_scopes' => (object) $this->access->scopes(),
         ];
     }
 }

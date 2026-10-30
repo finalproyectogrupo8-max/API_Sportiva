@@ -6,10 +6,12 @@ use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\InteractsWithTenants;
 use Tests\TestCase;
 
 class AuthFlowTest extends TestCase
 {
+    use InteractsWithTenants;
     use RefreshDatabase;
 
     /** El guard de Sanctum cachea el usuario entre requests del mismo test: se resetea. */
@@ -31,12 +33,17 @@ class AuthFlowTest extends TestCase
 
     private function joinClub(User $user, array $tenant = [], array $membership = []): Tenant
     {
-        $club = Tenant::factory()->create($tenant);
+        // river y boca son los clubes de prueba con base migrada: select-tenant y los endpoints de
+        // club leen la base del club. El resto no se selecciona nunca y no necesita base.
+        $club = match ($tenant['slug'] ?? null) {
+            'river' => tap($this->tenantA())->update($tenant),
+            'boca' => tap($this->tenantB())->update($tenant),
+            default => Tenant::factory()->create($tenant),
+        };
 
         TenantMembership::create([
             'user_id' => $user->id,
             'tenant_id' => $club->id,
-            'role' => 'admin',
             ...$membership,
         ]);
 
