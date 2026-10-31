@@ -18,6 +18,10 @@ class ApiError
         'role_in_use' => 'El rol está asignado a usuarios del club: sacáselo antes de borrarlo.',
         'last_admin' => 'El club tiene que tener al menos un Administrador del club activo.',
         'insufficient_stock' => 'Stock insuficiente para realizar la operación.',
+        'repair_already_resolved' => 'La reparación ya fue resuelta.',
+        'repair_not_assigned' => 'La reparación debe estar asignada para poder resolverse.',
+        'repair_cancelled' => 'La reparación está cancelada.',
+        'invalid_status_transition' => 'La reparación no se puede modificar en su estado actual.',
     ];
 
     public static function forbidden(string $code): JsonResponse

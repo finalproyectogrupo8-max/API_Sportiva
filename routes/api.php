@@ -19,13 +19,17 @@ use App\Http\Controllers\Club\CoachController;
 use App\Http\Controllers\Club\CompetitionController;
 use App\Http\Controllers\Club\DocumentController;
 use App\Http\Controllers\Club\EligibilityController;
+use App\Http\Controllers\Club\FacilityComponentController;
+use App\Http\Controllers\Club\FacilityController;
 use App\Http\Controllers\Club\InventoryBalanceController;
 use App\Http\Controllers\Club\InventoryMovementController;
 use App\Http\Controllers\Club\InventoryTransferController;
+use App\Http\Controllers\Club\MaintenanceRecordController;
 use App\Http\Controllers\Club\MatchController;
 use App\Http\Controllers\Club\MaterialController;
 use App\Http\Controllers\Club\PlayerContactController;
 use App\Http\Controllers\Club\PlayerController;
+use App\Http\Controllers\Club\RepairRequestController;
 use App\Http\Controllers\Club\RoleController;
 use App\Http\Controllers\Club\SeasonController;
 use App\Http\Controllers\Club\SportController;
@@ -145,6 +149,12 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::get('inventory/movements', [InventoryMovementController::class, 'index']);
     Route::post('inventory/movements', [InventoryMovementController::class, 'store']);
     Route::post('inventory/transfers', [InventoryTransferController::class, 'store']);
+    Route::apiResource('facilities', FacilityController::class);
+    Route::apiResource('facilities.components', FacilityComponentController::class)->shallow();
+    Route::apiResource('repair-requests', RepairRequestController::class);
+    Route::post('repair-requests/{repair_request}/assign', [RepairRequestController::class, 'assign']);
+    Route::post('repair-requests/{repair_request}/resolve', [RepairRequestController::class, 'resolve']);
+    Route::apiResource('maintenance-records', MaintenanceRecordController::class);
 });
 
 // Documentación: Swagger UI y contrato OpenAPI. Fuera de local/staging (y de los tests) las
