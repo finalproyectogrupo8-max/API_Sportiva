@@ -83,7 +83,7 @@ Libro de movimientos. **Inmutable**: un error se corrige con un movimiento `adju
 | `created_at` | TIMESTAMP | no | | Sin `updated_at`: la fila no cambia |
 
 - Índice: `(material_id, location_id, created_at)` para el historial de un material.
-- **Signo:** en `in`, `out`, `transfer_in` y `transfer_out` la cantidad es positiva y el tipo decide si suma o resta. En `adjustment` el borrador no define cómo se expresa una baja. Propuesta: permitir cantidad negativa solo en `adjustment` (`CHECK (quantity > 0 OR movement_type = 'adjustment')`). Se decide en el change del módulo.
+- **Signo (D14):** en `in`, `out`, `transfer_in` y `transfer_out` la cantidad es positiva y el tipo decide si suma o resta. En `adjustment`, se implementa con cantidad con signo (positivo suma, negativo resta; distinto de cero), documentada como decisión a confirmar con el equipo (TIZ-17).
 
 ## Reglas
 

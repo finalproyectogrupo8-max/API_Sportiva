@@ -19,12 +19,17 @@ use App\Http\Controllers\Club\CoachController;
 use App\Http\Controllers\Club\CompetitionController;
 use App\Http\Controllers\Club\DocumentController;
 use App\Http\Controllers\Club\EligibilityController;
+use App\Http\Controllers\Club\InventoryBalanceController;
+use App\Http\Controllers\Club\InventoryMovementController;
+use App\Http\Controllers\Club\InventoryTransferController;
 use App\Http\Controllers\Club\MatchController;
+use App\Http\Controllers\Club\MaterialController;
 use App\Http\Controllers\Club\PlayerContactController;
 use App\Http\Controllers\Club\PlayerController;
 use App\Http\Controllers\Club\RoleController;
 use App\Http\Controllers\Club\SeasonController;
 use App\Http\Controllers\Club\SportController;
+use App\Http\Controllers\Club\StorageLocationController;
 use App\Http\Controllers\Club\TrainingController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\NewsletterController;
@@ -134,6 +139,12 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::get('permissions', [RoleController::class, 'permissions']);
     Route::apiResource('roles', RoleController::class)->parameters(['roles' => 'role:slug']);
     Route::post('roles/{role:slug}/duplicate', [RoleController::class, 'duplicate']);
+    Route::apiResource('storage-locations', StorageLocationController::class);
+    Route::apiResource('materials', MaterialController::class);
+    Route::get('inventory/balances', [InventoryBalanceController::class, 'index']);
+    Route::get('inventory/movements', [InventoryMovementController::class, 'index']);
+    Route::post('inventory/movements', [InventoryMovementController::class, 'store']);
+    Route::post('inventory/transfers', [InventoryTransferController::class, 'store']);
 });
 
 // Documentación: Swagger UI y contrato OpenAPI. Fuera de local/staging (y de los tests) las
