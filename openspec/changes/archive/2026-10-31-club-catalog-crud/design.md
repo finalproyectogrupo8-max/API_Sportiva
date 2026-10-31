@@ -30,6 +30,13 @@ El código asume disponibles en `main` la conexión y el cambio de base de `tena
 | `categories` | `sport_id`, `season_id`, `is_active` | Desactivar (`is_active = false`); no borrar fila |
 | `coaches` | `search`, `status` | Soft delete (`deleted_at`) |
 
+## Decisiones D11 y D12 (cerradas en TIZ-14)
+
+- **D11, catálogo en uso:** `DELETE` responde 409 con `code: resource_in_use`. Aplica a una temporada con categorías (aunque estén inactivas, porque la FK lo impide) y a un deporte con categorías activas: desactivarlo dejaría categorías vivas de un deporte dado de baja.
+- **D12, tipo de baja:** `is_active` para deportes y categorías, que son catálogos que se reactivan; borrado real para temporadas sin uso; `deleted_at` para profes, que tienen historial.
+
+`store` responde el registro refrescado, para que los valores por defecto de la base (por ejemplo `is_active`) lleguen en la respuesta.
+
 Las relaciones se devuelven por IDs y se incluyen como Resources solo si el controller las cargó. `coaches.club_user_id` es nullable; el email es de contacto, no credencial de login.
 
 ## Tests

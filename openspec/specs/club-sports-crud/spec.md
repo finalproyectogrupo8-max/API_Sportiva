@@ -1,4 +1,9 @@
-## ADDED Requirements
+# club-sports-crud Specification
+
+## Purpose
+ABM de deportes en la base de cada club: endpoints, validación, permisos `sports.*`, tipo de baja y aislamiento entre clubes (club-catalog-crud, TIZ-14).
+
+## Requirements
 
 ### Requirement: ABM de deportes
 
@@ -23,6 +28,11 @@ La API SHALL exponer `apiResource` de deportes bajo `auth:sanctum` y `tenant.tok
 
 - **WHEN** un usuario con permiso borra un deporte
 - **THEN** la fila se conserva y `is_active` pasa a `false`
+
+#### Scenario: Deporte con categorías activas
+
+- **WHEN** un usuario con permiso borra un deporte que tiene categorías activas
+- **THEN** responde 409 con `code: resource_in_use` y el deporte sigue activo
 
 #### Scenario: Aislamiento entre clubes
 
