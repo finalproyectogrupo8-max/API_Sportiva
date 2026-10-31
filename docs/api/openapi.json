@@ -12110,6 +12110,249 @@
                     }
                 }
             }
+        },
+        "/venues": {
+            "get": {
+                "operationId": "venues.index",
+                "summary": "Filtro `is_active`. Sin paginar: un club tiene pocas sedes",
+                "tags": [
+                    "Venue"
+                ],
+                "parameters": [
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `VenueResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VenueResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "venues.store",
+                "tags": [
+                    "Venue"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreVenueRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`VenueResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VenueResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/venues/{venue}": {
+            "get": {
+                "operationId": "venues.show",
+                "tags": [
+                    "Venue"
+                ],
+                "parameters": [
+                    {
+                        "name": "venue",
+                        "in": "path",
+                        "required": true,
+                        "description": "The venue ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`VenueResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VenueResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "venues.update",
+                "tags": [
+                    "Venue"
+                ],
+                "parameters": [
+                    {
+                        "name": "venue",
+                        "in": "path",
+                        "required": true,
+                        "description": "The venue ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreVenueRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`VenueResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VenueResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "venues.destroy",
+                "summary": "Con partidos por jugarse en la sede responde 409: primero hay que moverlos",
+                "tags": [
+                    "Venue"
+                ],
+                "parameters": [
+                    {
+                        "name": "venue",
+                        "in": "path",
+                        "required": true,
+                        "description": "The venue ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "El recurso est\u00e1 en uso y no se puede eliminar."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "resource_in_use"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -13330,6 +13573,13 @@
                         ],
                         "description": "Hora de presentaci\u00f3n."
                     },
+                    "venue_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Sede del club donde se juega (de local), si se eligi\u00f3 una."
+                    },
                     "venue": {
                         "type": [
                             "string",
@@ -13394,6 +13644,7 @@
                     "opponent",
                     "match_date",
                     "meet_at",
+                    "venue_id",
                     "venue",
                     "maps_url",
                     "is_home",
@@ -14706,6 +14957,13 @@
                         "format": "date-time",
                         "description": "Hora de presentaci\u00f3n: antes del partido."
                     },
+                    "venue_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Sede del club (de local): completa `venue` y `maps_url` (TIZ-39)."
+                    },
                     "venue": {
                         "type": [
                             "string",
@@ -15381,6 +15639,52 @@
                     "password"
                 ],
                 "title": "StoreUserRequest"
+            },
+            "StoreVenueRequest": {
+                "type": "object",
+                "description": "Alta y edici\u00f3n de una sede del club (TIZ-39). En PATCH, todo es opcional.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "address": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "latitude": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Del buscador de direcciones; se mandan juntas o ninguna.",
+                        "minimum": -90,
+                        "maximum": 90
+                    },
+                    "longitude": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "minimum": -180,
+                        "maximum": 180
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    }
+                },
+                "required": [
+                    "name",
+                    "address"
+                ],
+                "title": "StoreVenueRequest"
             },
             "SupportTicketCreatedResource": {
                 "type": "object",
@@ -16420,6 +16724,59 @@
                     "is_platform_admin"
                 ],
                 "title": "UserResource"
+            },
+            "VenueResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "latitude": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "longitude": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "maps_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Link de Google Maps: por coordenadas si las hay, si no por direcci\u00f3n."
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "address",
+                    "latitude",
+                    "longitude",
+                    "maps_url",
+                    "is_active",
+                    "notes"
+                ],
+                "title": "VenueResource"
             }
         },
         "responses": {

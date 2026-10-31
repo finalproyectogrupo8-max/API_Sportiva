@@ -26,6 +26,8 @@ class StoreMatchRequest extends FormRequest
             'match_date' => [...$req, 'date'],
             // Hora de presentación: antes del partido.
             'meet_at' => [...$opt, 'nullable', 'date', 'before_or_equal:match_date'],
+            // Sede del club (de local): completa `venue` y `maps_url` (TIZ-39).
+            'venue_id' => [...$opt, 'nullable', 'integer', Rule::exists('tenant.venues', 'id')->whereNull('deleted_at')],
             'venue' => [...$opt, 'nullable', 'string', 'max:200'],
             'maps_url' => [...$opt, 'nullable', 'url', 'max:500'],
             'is_home' => [...$req, 'boolean'],

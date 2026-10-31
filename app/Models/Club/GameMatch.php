@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $opponent
  * @property CarbonImmutable $match_date
  * @property CarbonImmutable|null $meet_at
+ * @property int|null $venue_id
  * @property string|null $venue
  * @property string|null $maps_url
  * @property bool $is_home
@@ -35,7 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $public_token
  * @property bool $updated_after_publish
  */
-#[Fillable(['category_id', 'competition_id', 'opponent', 'match_date', 'meet_at', 'venue', 'maps_url', 'is_home', 'uniform', 'uniform_color', 'what_to_bring', 'our_score', 'opponent_score', 'status', 'notes', 'callup_published_at', 'public_token', 'updated_after_publish'])]
+#[Fillable(['category_id', 'competition_id', 'opponent', 'match_date', 'meet_at', 'venue_id', 'venue', 'maps_url', 'is_home', 'uniform', 'uniform_color', 'what_to_bring', 'our_score', 'opponent_score', 'status', 'notes', 'callup_published_at', 'public_token', 'updated_after_publish'])]
 class GameMatch extends Model
 {
     /** @use HasFactory<GameMatchFactory> */
@@ -82,5 +83,11 @@ class GameMatch extends Model
     public function attendance(): HasMany
     {
         return $this->hasMany(PlayerAttendance::class, 'match_id');
+    }
+
+    /** @return BelongsTo<Venue, $this> */
+    public function venueSite(): BelongsTo
+    {
+        return $this->belongsTo(Venue::class, 'venue_id');
     }
 }

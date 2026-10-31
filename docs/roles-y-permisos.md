@@ -46,6 +46,7 @@ Las claves siguen [guia-abm §9](guia-abm.md#9-autorización-policies-y-permisos
 | | `sports` | `view`, `create`, `update`, `delete` | — |
 | | `seasons` | `view`, `create`, `update`, `delete` | — |
 | | `categories` | `view`, `create`, `update`, `delete` | sí, solo `view` (TIZ-36) |
+| | `venues` (sedes del club, TIZ-39) | `view`, `create`, `update`, `delete` | — |
 | **Equipo del club** | `club_users` | `view`, `invite`, `update`, `disable` | — |
 | | `roles` | `view`, `create`, `update`, `delete`, `assign` | — |
 | **Comunicados** | `announcements` | `view`, `send` | sí |
@@ -119,6 +120,7 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, — = nada.
 | `repairs` | ✓ ver, crear | ver, crear | ver, crear | ver, crear | ✓ todas, incluida `assign` |
 | `maintenance` | ✓ ver | — | — | — | ✓ ver, crear, editar, eliminar |
 | `sports`, `seasons`, `categories` | ✓ ver, crear, editar, eliminar | ver `categories` (s) | ver `categories` (s) | — | — |
+| `venues` (sedes, TIZ-39) | ✓ ver, crear, editar, eliminar | ver | ver | ver | ver |
 | `club.update` | — | — | — | — | — |
 | `club_users`, `roles` | — | — | — | — | — |
 | `announcements` | ✓ ver, enviar | ver, enviar (s) | — | — | — |

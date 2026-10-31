@@ -21,6 +21,8 @@ class MatchResource extends JsonResource
             'match_date' => $this->match_date->toIso8601String(),
             /** Hora de presentación. */
             'meet_at' => $this->meet_at?->toIso8601String(),
+            /** Sede del club donde se juega (de local), si se eligió una. */
+            'venue_id' => $this->venue_id,
             'venue' => $this->venue,
             'maps_url' => $this->maps_url,
             'is_home' => $this->is_home,

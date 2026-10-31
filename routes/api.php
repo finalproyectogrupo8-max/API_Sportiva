@@ -35,6 +35,7 @@ use App\Http\Controllers\Club\SeasonController;
 use App\Http\Controllers\Club\SportController;
 use App\Http\Controllers\Club\StorageLocationController;
 use App\Http\Controllers\Club\TrainingController;
+use App\Http\Controllers\Club\VenueController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PublicCallupController;
@@ -125,6 +126,7 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::put('trainings/{training}/attendance', [AttendanceController::class, 'recordTraining']);
     Route::get('calendar', CalendarController::class);
     Route::apiResource('competitions', CompetitionController::class);
+    Route::apiResource('venues', VenueController::class);
     Route::post('competitions/{competition}/copy', [CompetitionController::class, 'copy']);
     Route::get('players/{player}/documents', [DocumentController::class, 'index']);
     Route::post('players/{player}/documents', [DocumentController::class, 'store']);
