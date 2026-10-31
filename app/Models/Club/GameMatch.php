@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @property int $id
  * @property int $category_id
+ * @property int|null $competition_id
  * @property string $opponent
  * @property CarbonImmutable $match_date
  * @property CarbonImmutable|null $meet_at
@@ -31,7 +32,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $status
  * @property string|null $notes
  */
-#[Fillable(['category_id', 'opponent', 'match_date', 'meet_at', 'venue', 'maps_url', 'is_home', 'uniform', 'uniform_color', 'what_to_bring', 'our_score', 'opponent_score', 'status', 'notes'])]
+#[Fillable(['category_id', 'competition_id', 'opponent', 'match_date', 'meet_at', 'venue', 'maps_url', 'is_home', 'uniform', 'uniform_color', 'what_to_bring', 'our_score', 'opponent_score', 'status', 'notes'])]
 class GameMatch extends Model
 {
     /** @use HasFactory<GameMatchFactory> */
@@ -58,6 +59,12 @@ class GameMatch extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /** @return BelongsTo<Competition, $this> */
+    public function competition(): BelongsTo
+    {
+        return $this->belongsTo(Competition::class);
     }
 
     /** @return HasMany<PlayerAttendance, $this> */

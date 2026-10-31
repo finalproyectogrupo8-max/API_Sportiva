@@ -21,6 +21,7 @@ class StoreMatchRequest extends FormRequest
 
         return [
             'category_id' => [...$req, 'integer', Rule::exists('tenant.categories', 'id')],
+            'competition_id' => [...$opt, 'nullable', 'integer', Rule::exists('tenant.competitions', 'id')->whereNull('deleted_at')],
             'opponent' => [...$req, 'string', 'max:120'],
             'match_date' => [...$req, 'date'],
             // Hora de presentación: antes del partido.

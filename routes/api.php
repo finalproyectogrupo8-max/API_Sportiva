@@ -14,6 +14,7 @@ use App\Http\Controllers\Club\CategoryController;
 use App\Http\Controllers\Club\CategoryMembershipController;
 use App\Http\Controllers\Club\ClubController;
 use App\Http\Controllers\Club\CoachController;
+use App\Http\Controllers\Club\CompetitionController;
 use App\Http\Controllers\Club\MatchController;
 use App\Http\Controllers\Club\PlayerContactController;
 use App\Http\Controllers\Club\PlayerController;
@@ -97,6 +98,8 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::get('trainings/{training}/attendance', [AttendanceController::class, 'showTraining']);
     Route::put('trainings/{training}/attendance', [AttendanceController::class, 'recordTraining']);
     Route::get('calendar', CalendarController::class);
+    Route::apiResource('competitions', CompetitionController::class);
+    Route::post('competitions/{competition}/copy', [CompetitionController::class, 'copy']);
     Route::get('permissions', [RoleController::class, 'permissions']);
     Route::apiResource('roles', RoleController::class)->parameters(['roles' => 'role:slug']);
     Route::post('roles/{role:slug}/duplicate', [RoleController::class, 'duplicate']);

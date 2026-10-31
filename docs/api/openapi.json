@@ -1976,6 +1976,487 @@
                 }
             }
         },
+        "/competitions": {
+            "get": {
+                "operationId": "competitions.index",
+                "summary": "Filtros: `season_id`, `sport_id`, `category_id` y `search`. Paginado",
+                "tags": [
+                    "Competition"
+                ],
+                "parameters": [
+                    {
+                        "name": "season_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sport_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `CompetitionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/CompetitionResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "categories",
+                                                            "requirements"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "competitions.store",
+                "tags": [
+                    "Competition"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreCompetitionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`CompetitionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/CompetitionResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "categories",
+                                                        "requirements"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/competitions/{competition}": {
+            "get": {
+                "operationId": "competitions.show",
+                "tags": [
+                    "Competition"
+                ],
+                "parameters": [
+                    {
+                        "name": "competition",
+                        "in": "path",
+                        "required": true,
+                        "description": "The competition ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CompetitionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/CompetitionResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "categories",
+                                                        "requirements"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "competitions.update",
+                "tags": [
+                    "Competition"
+                ],
+                "parameters": [
+                    {
+                        "name": "competition",
+                        "in": "path",
+                        "required": true,
+                        "description": "The competition ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreCompetitionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`CompetitionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/CompetitionResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "categories",
+                                                        "requirements"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "competitions.destroy",
+                "tags": [
+                    "Competition"
+                ],
+                "parameters": [
+                    {
+                        "name": "competition",
+                        "in": "path",
+                        "required": true,
+                        "description": "The competition ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/competitions/{competition}/copy": {
+            "post": {
+                "operationId": "competition.copy",
+                "summary": "Para la temporada siguiente: copia los requisitos, no las categor\u00edas (son de otra temporada)",
+                "tags": [
+                    "Competition"
+                ],
+                "parameters": [
+                    {
+                        "name": "competition",
+                        "in": "path",
+                        "required": true,
+                        "description": "The competition ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CopyCompetitionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`CompetitionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/CompetitionResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "categories",
+                                                        "requirements"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "operationId": "health",
@@ -7131,6 +7612,145 @@
                 ],
                 "title": "CoachResource"
             },
+            "CompetitionCategoryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "title": "CompetitionCategoryResource"
+            },
+            "CompetitionRequirementResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "validity_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Meses de validez; null si no vence."
+                    },
+                    "requires_file": {
+                        "type": "boolean"
+                    },
+                    "minors_only": {
+                        "type": "boolean",
+                        "description": "Solo se pide a menores de 18."
+                    },
+                    "is_required": {
+                        "type": "boolean"
+                    },
+                    "sort": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "validity_months",
+                    "requires_file",
+                    "minors_only",
+                    "is_required",
+                    "sort"
+                ],
+                "title": "CompetitionRequirementResource"
+            },
+            "CompetitionResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "sport_id": {
+                        "type": "integer"
+                    },
+                    "season_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "organizer": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "registration_deadline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "days_to_deadline": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "D\u00edas que faltan para el cierre de inscripci\u00f3n (negativo si ya pas\u00f3)."
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CompetitionCategoryResource"
+                        }
+                    },
+                    "requirements": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CompetitionRequirementResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "sport_id",
+                    "season_id",
+                    "name",
+                    "organizer",
+                    "registration_deadline",
+                    "days_to_deadline"
+                ],
+                "title": "CompetitionResource"
+            },
+            "CopyCompetitionRequest": {
+                "type": "object",
+                "description": "Copiar una competencia a otra temporada: trae los requisitos, no las categor\u00edas.",
+                "properties": {
+                    "season_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "registration_deadline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "season_id"
+                ],
+                "title": "CopyCompetitionRequest"
+            },
             "EndAssignmentRequest": {
                 "type": "object",
                 "description": "Cerrar una asignaci\u00f3n (jugador o profe en una categor\u00eda). Sin fecha, cierra hoy.",
@@ -7215,6 +7835,12 @@
                         "type": "string",
                         "description": "Nombre de la categor\u00eda, si se carg\u00f3."
                     },
+                    "competition_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
                     "opponent": {
                         "type": "string"
                     },
@@ -7288,6 +7914,7 @@
                 "required": [
                     "id",
                     "category_id",
+                    "competition_id",
                     "opponent",
                     "match_date",
                     "meet_at",
@@ -7905,12 +8532,98 @@
                 ],
                 "title": "StoreCoachRequest"
             },
+            "StoreCompetitionRequest": {
+                "type": "object",
+                "description": "Alta y edici\u00f3n de competencias con sus requisitos y categor\u00edas. En PATCH, `requirements` y\n`category_ids` reemplazan la lista completa si vienen; si no vienen, no se tocan.",
+                "properties": {
+                    "sport_id": {
+                        "type": "integer"
+                    },
+                    "season_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "organizer": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 150
+                    },
+                    "registration_deadline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "category_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "uniqueItems": true
+                    },
+                    "requirements": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "description": "Con id se edita ese requisito; sin id se crea. Los que no vienen se borran."
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "maxLength": 120
+                                },
+                                "validity_months": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 1,
+                                    "maximum": 120
+                                },
+                                "requires_file": {
+                                    "type": "boolean"
+                                },
+                                "minors_only": {
+                                    "type": "boolean"
+                                },
+                                "is_required": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "name"
+                            ]
+                        },
+                        "maxItems": 30
+                    }
+                },
+                "required": [
+                    "sport_id",
+                    "season_id",
+                    "name"
+                ],
+                "title": "StoreCompetitionRequest"
+            },
             "StoreMatchRequest": {
                 "type": "object",
                 "description": "Alta y edici\u00f3n de partidos. En PATCH todo es opcional; el resultado se carga as\u00ed.",
                 "properties": {
                     "category_id": {
                         "type": "integer"
+                    },
+                    "competition_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "opponent": {
                         "type": "string",

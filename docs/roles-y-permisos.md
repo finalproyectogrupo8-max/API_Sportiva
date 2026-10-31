@@ -30,6 +30,7 @@ Las claves siguen [guia-abm §9](guia-abm.md#9-autorización-policies-y-permisos
 | | `attendance` | `view`, `record` | sí |
 | **Análisis** (`analisis`) | `physical_evaluations` | `view`, `create`, `update`, `delete` | sí |
 | **Proyecto** (`competencia`) | `project` | `view`, `update` | — |
+| **Habilitación** (`habilitacion`) | `competitions` (ligas, torneos y sus requisitos, TIZ-31) | `view`, `create`, `update`, `delete` | sí, solo `view` |
 | **Indumentaria** (`indumentaria`) | `apparel_items` (catálogo de prendas) | `view`, `create`, `update`, `delete` | — |
 | | `apparel_orders` | `view`, `create`, `update`, `delete`, `approve`, `deliver` | sí |
 | **Materiales** (`materiales`) | `materials` | `view`, `create`, `update`, `delete` | — |
@@ -96,6 +97,7 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, — = nada.
 | `players` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
 | `categories.manage_players` | ✓ | — | — | — | — |
 | `player_contacts` | ✓ ver, editar | ver (s) | — | — | — |
+| `competitions` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
 | `coaches` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
 | `categories.manage_coaches` | ✓ | — | — | — | — |
 | `matches` | ✓ ver, crear, editar, eliminar | ver, crear, editar (s) | ver (s) | ver | ver |
@@ -134,6 +136,7 @@ Cada permiso asignado a un rol tiene un **alcance**: `all` (todo el club) o `own
 | `player_contacts` | Los contactos de los jugadores de sus categorías |
 | `coaches` | Su propia ficha y los profes de sus categorías |
 | `categories.view` | Solo sus categorías: el profe de fútbol no ve las de básquet (TIZ-36) |
+| `competitions.view` | Las competencias que juega alguna de sus categorías (TIZ-31) |
 | `matches`, `trainings`, `attendance` | Los partidos y entrenamientos de sus categorías |
 | `physical_evaluations` | Las evaluaciones de los jugadores de sus categorías |
 | `apparel_orders`, `material_orders` | Los pedidos que pidió él (`requested_by`), para sus categorías |

@@ -74,6 +74,12 @@ return [
                 'project' => ['label' => 'Objetivos y tabla', 'actions' => ['view', 'update']],
             ],
         ],
+        'habilitacion' => [
+            'label' => 'Habilitación',
+            'resources' => [
+                'competitions' => ['label' => 'Competencias y requisitos', 'actions' => $crud, 'scoped' => ['view']],
+            ],
+        ],
         'indumentaria' => [
             'label' => 'Indumentaria',
             'resources' => [
@@ -158,6 +164,7 @@ return [
                 'sports.view', 'sports.create', 'sports.update', 'sports.delete',
                 'seasons.view', 'seasons.create', 'seasons.update', 'seasons.delete',
                 'categories.view', 'categories.create', 'categories.update', 'categories.delete',
+                'competitions.view', 'competitions.create', 'competitions.update', 'competitions.delete',
                 'announcements.view', 'announcements.send',
             ],
         ],
@@ -178,6 +185,7 @@ return [
                 'material_orders.view:own', 'material_orders.create:own', 'material_orders.update:own',
                 'facilities.view', 'repairs.view', 'repairs.create',
                 'categories.view:own',
+                'competitions.view:own',
                 'announcements.view:own', 'announcements.send:own',
             ],
         ],
@@ -194,6 +202,7 @@ return [
                 'material_orders.view:own', 'material_orders.create:own', 'material_orders.update:own',
                 'facilities.view', 'repairs.view', 'repairs.create',
                 'categories.view:own',
+                'competitions.view:own',
             ],
         ],
         'inventory_manager' => [
