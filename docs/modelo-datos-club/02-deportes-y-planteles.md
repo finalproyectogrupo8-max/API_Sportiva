@@ -9,6 +9,7 @@ erDiagram
     sports ||--o{ categories : agrupa
     seasons ||--o{ categories : agrupa
     players ||--o{ player_category_memberships : integra
+    players ||--o{ player_contacts : tiene
     categories ||--o{ player_category_memberships : contiene
     club_users |o--o| coaches : "cuenta de"
     categories ||--o{ category_coaches : dirige
@@ -113,7 +114,7 @@ Contiene **datos personales**, muchas veces de menores.
 | `id` | BIGINT UNSIGNED | no | PK | |
 | `first_name` | VARCHAR(100) | no | | |
 | `last_name` | VARCHAR(100) | no | | |
-| `birth_date` | DATE | sí | | |
+| `birth_date` | DATE | sí | | Obligatoria en el alta por API (define los requisitos "solo menores", TIZ-32). La columna sigue nullable por los datos previos |
 | `document_number` | VARCHAR(30) | sí | | Solo si el club lo necesita (pendiente de definir) |
 | `registration_number` | VARCHAR(50) | sí | | Ficha o pase federativo |
 | `preferred_position` | VARCHAR(50) | sí | | |
@@ -142,8 +143,26 @@ Historial del jugador por categoría y temporada.
 | `created_at`, `updated_at` | TIMESTAMP | sí | | |
 
 - Índice: `(player_id, category_id, status)`, para consultar las asignaciones activas.
-- Que un jugador no tenga dos asignaciones activas incompatibles (por ejemplo, dos categorías del mismo deporte) se valida en la aplicación, porque depende de la regla de negocio de cada deporte.
+- Un jugador tiene **una sola asignación activa por deporte** (TIZ-15). Se valida en la aplicación: `POST /categories/{id}/memberships` responde 422, salvo que se mande `close_previous`, que cierra la anterior con la fecha de inicio de la nueva (pase de categoría). Puede jugar a la vez categorías de deportes distintos.
 - El número de camiseta único dentro de una categoría también se valida en la aplicación, solo entre las asignaciones activas.
+- Dar de baja a un jugador (soft delete) cierra sus asignaciones activas.
+
+## `player_contacts`
+
+Tutores y contactos del jugador (TIZ-15). Reciben los avisos de la convocatoria (TIZ-33).
+
+| Columna | Tipo | Null | Restricciones | Descripción |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | no | PK | |
+| `player_id` | BIGINT UNSIGNED | no | FK → `players.id`, `ON DELETE CASCADE` | |
+| `name` | VARCHAR(150) | no | | |
+| `relationship` | VARCHAR(20) | no | | `mother` / `father` / `guardian` / `self` / `other` |
+| `phone` | VARCHAR(40) | sí | | Teléfono o mail: al menos uno |
+| `email` | VARCHAR(255) | sí | | |
+| `is_primary` | BOOLEAN | no | default `false` | Uno solo por jugador; el primero que se carga lo es |
+| `created_at`, `updated_at` | TIMESTAMP | sí | | |
+
+- Índice: `(player_id, is_primary)`.
 
 ## `coaches`
 
