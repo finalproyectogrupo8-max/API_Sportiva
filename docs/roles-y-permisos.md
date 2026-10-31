@@ -41,7 +41,7 @@ Las claves siguen [guia-abm §9](guia-abm.md#9-autorización-policies-y-permisos
 | **Configuración** | `club` (perfil del club) | `update` | — |
 | | `sports` | `view`, `create`, `update`, `delete` | — |
 | | `seasons` | `view`, `create`, `update`, `delete` | — |
-| | `categories` | `view`, `create`, `update`, `delete` | — |
+| | `categories` | `view`, `create`, `update`, `delete` | sí, solo `view` (TIZ-36) |
 | **Equipo del club** | `club_users` | `view`, `invite`, `update`, `disable` | — |
 | | `roles` | `view`, `create`, `update`, `delete`, `assign` | — |
 | **Comunicados** | `announcements` | `view`, `send` | sí |
@@ -109,7 +109,7 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, — = nada.
 | `facilities` | ✓ ver | ver | ver | ver | ✓ ver, crear, editar, eliminar |
 | `repairs` | ✓ ver, crear | ver, crear | ver, crear | ver, crear | ✓ todas, incluida `assign` |
 | `maintenance` | ✓ ver | — | — | — | ✓ ver, crear, editar, eliminar |
-| `sports`, `seasons`, `categories` | ✓ ver, crear, editar, eliminar | ver (`categories`) | ver (`categories`) | — | — |
+| `sports`, `seasons`, `categories` | ✓ ver, crear, editar, eliminar | ver `categories` (s) | ver `categories` (s) | — | — |
 | `club.update` | — | — | — | — | — |
 | `club_users`, `roles` | — | — | — | — | — |
 | `announcements` | ✓ ver, enviar | ver, enviar (s) | — | — | — |
@@ -130,6 +130,7 @@ Cada permiso asignado a un rol tiene un **alcance**: `all` (todo el club) o `own
 | `players` | Los jugadores con membresía vigente en sus categorías |
 | `categories.manage_players` | Los planteles de sus categorías |
 | `coaches` | Su propia ficha y los profes de sus categorías |
+| `categories.view` | Solo sus categorías: el profe de fútbol no ve las de básquet (TIZ-36) |
 | `matches`, `trainings`, `attendance` | Los partidos y entrenamientos de sus categorías |
 | `physical_evaluations` | Las evaluaciones de los jugadores de sus categorías |
 | `apparel_orders`, `material_orders` | Los pedidos que pidió él (`requested_by`), para sus categorías |

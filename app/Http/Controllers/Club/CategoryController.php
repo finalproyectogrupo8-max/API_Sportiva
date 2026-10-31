@@ -25,6 +25,7 @@ class CategoryController extends Controller
         $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
 
         $categories = Category::query()
+            ->visibleTo($request->user()->clubAccess())
             ->when($filters['sport_id'] ?? null, fn ($query, $sportId) => $query->where('sport_id', $sportId))
             ->when($filters['season_id'] ?? null, fn ($query, $seasonId) => $query->where('season_id', $seasonId))
             ->when(array_key_exists('is_active', $filters), fn ($query) => $query->where('is_active', $filters['is_active']))
@@ -47,6 +48,9 @@ class CategoryController extends Controller
     public function show(Category $category): CategoryResource
     {
         Gate::authorize('view', $category);
+
+        // Fuera de "sus categorías" responde 404: no se revela que existe.
+        abort_unless(Category::query()->visibleTo(request()->user()->clubAccess())->whereKey($category->getKey())->exists(), 404);
 
         return CategoryResource::make($category);
     }

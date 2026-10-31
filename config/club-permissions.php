@@ -111,7 +111,7 @@ return [
                 'club' => ['label' => 'Perfil del club', 'actions' => ['update']],
                 'sports' => ['label' => 'Deportes', 'actions' => $crud],
                 'seasons' => ['label' => 'Temporadas', 'actions' => $crud],
-                'categories' => ['label' => 'Categorías', 'actions' => $crud],
+                'categories' => ['label' => 'Categorías', 'actions' => $crud, 'scoped' => ['view']],
             ],
         ],
         'equipo' => [
@@ -174,7 +174,7 @@ return [
                 'apparel_orders.view:own', 'apparel_orders.create:own', 'apparel_orders.update:own',
                 'material_orders.view:own', 'material_orders.create:own', 'material_orders.update:own',
                 'facilities.view', 'repairs.view', 'repairs.create',
-                'categories.view',
+                'categories.view:own',
                 'announcements.view:own', 'announcements.send:own',
             ],
         ],
@@ -190,7 +190,7 @@ return [
                 'project.view',
                 'material_orders.view:own', 'material_orders.create:own', 'material_orders.update:own',
                 'facilities.view', 'repairs.view', 'repairs.create',
-                'categories.view',
+                'categories.view:own',
             ],
         ],
         'inventory_manager' => [
