@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[Fillable(['sport_id', 'season_id', 'name', 'min_age', 'max_age', 'is_active'])]
 class Category extends Model
@@ -38,6 +39,12 @@ class Category extends Model
         if ($access->isOwnScope('categories.view')) {
             $query->whereIn('id', $access->ownCategoryIds() ?: [0]);
         }
+    }
+
+    /** @return BelongsToMany<Competition, $this> */
+    public function competitions(): BelongsToMany
+    {
+        return $this->belongsToMany(Competition::class, 'category_competitions');
     }
 
     public function sport(): BelongsTo

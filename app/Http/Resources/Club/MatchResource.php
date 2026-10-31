@@ -16,6 +16,7 @@ class MatchResource extends JsonResource
             'category_id' => $this->category_id,
             /** Nombre de la categoría, si se cargó. */
             'category_name' => $this->whenLoaded('category', fn () => $this->category->name),
+            'competition_id' => $this->competition_id,
             'opponent' => $this->opponent,
             'match_date' => $this->match_date->toIso8601String(),
             /** Hora de presentación. */
