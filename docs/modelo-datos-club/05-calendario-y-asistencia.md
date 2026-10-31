@@ -101,3 +101,25 @@ erDiagram
 - `UNIQUE (player_id, training_id)` y `UNIQUE (player_id, match_id)`: un registro por jugador y evento. Tienen que ser **dos** índices: uno solo sobre las tres columnas no evitaría duplicados, porque MySQL no compara `NULL` en un índice único ([diferencia 7](README.md#diferencias-con-el-borrador-y-con-el-repo)).
 - Corregir una asistencia actualiza la fila (el `UNIQUE` lo obliga). El borrador no tiene `updated_at`; se propone agregarlo para saber cuándo se corrigió.
 - Que el jugador pertenezca a la categoría del evento se valida en la aplicación con `player_category_memberships`.
+
+## `match_callups`
+
+Convocados a un partido (TIZ-33).
+
+| Columna | Tipo | Null | Restricciones | Descripción |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | no | PK | |
+| `match_id` | BIGINT UNSIGNED | no | FK → `matches.id`, `ON DELETE CASCADE` | |
+| `player_id` | BIGINT UNSIGNED | no | FK → `players.id` | Solo jugadores del plantel y habilitados (TIZ-32) |
+| `shirt_number` | SMALLINT UNSIGNED | sí | | Sale del plantel si no se manda; no se repite en la convocatoria |
+| `response` | VARCHAR(20) | no | default `pending` | `pending` / `going` / `not_going` |
+| `response_note` | VARCHAR(255) | sí | | Motivo de "No puedo" |
+| `responded_at` | TIMESTAMP | sí | | |
+| `token` | VARCHAR(100) | no | UK | Link personal para confirmar: `<club>.<aleatorio>` |
+| `created_at`, `updated_at` | TIMESTAMP | sí | | |
+
+- `UNIQUE (match_id, player_id)`.
+- `matches` suma `callup_published_at`, `public_token` (UK, `<club>.<aleatorio>`, la página pública) y `updated_after_publish`: se marca si cambia la fecha, la hora, el lugar o la camiseta después de publicar.
+- Los tokens llevan el club adelante porque cada club tiene su base: la API sabe dónde buscar sin login.
+- Las páginas públicas (`/api/public/callups/...`) muestran solo nombre e inicial del apellido y número: nunca DNI, contactos ni documentos.
+- Los links apuntan al front (`FRONTEND_URL`): `/convocatoria/<public_token>` y `/convocatoria/responder/<token>`.

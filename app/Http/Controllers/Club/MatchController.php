@@ -67,6 +67,10 @@ class MatchController extends Controller
         }
 
         $match->fill($data);
+        // Convocatoria publicada y cambió algo que ya se avisó: hay que volver a avisar (TIZ-33).
+        if ($match->callup_published_at && $match->isDirty(['match_date', 'meet_at', 'venue', 'maps_url', 'uniform', 'uniform_color'])) {
+            $match->updated_after_publish = true;
+        }
         if (! isset($data['status']) && $match->our_score !== null && $match->opponent_score !== null) {
             $match->status = 'played';
         }

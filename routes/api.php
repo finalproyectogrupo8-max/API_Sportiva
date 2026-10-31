@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\UserMembershipController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Club\AttendanceController;
 use App\Http\Controllers\Club\CalendarController;
+use App\Http\Controllers\Club\CallupController;
 use App\Http\Controllers\Club\CategoryCoachController;
 use App\Http\Controllers\Club\CategoryController;
 use App\Http\Controllers\Club\CategoryMembershipController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\Club\SportController;
 use App\Http\Controllers\Club\TrainingController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\PublicCallupController;
 use App\Http\Controllers\SupportTicketController;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +77,14 @@ Route::middleware(['auth:sanctum', 'abilities:platform:admin', 'platform.admin']
         Route::apiResource('tickets', AdminSupportTicketController::class)->only(['index', 'show', 'update']);
     });
 
+// Convocatoria (TIZ-33): lo que abren el jugador y su familia desde el link, sin login.
+Route::middleware('throttle:60,1')->prefix('public/callups')->group(function () {
+    Route::get('respond/{token}', [PublicCallupController::class, 'showPersonal']);
+    Route::post('respond/{token}', [PublicCallupController::class, 'respond']);
+    Route::get('{token}/calendar.ics', [PublicCallupController::class, 'calendar']);
+    Route::get('{token}', [PublicCallupController::class, 'show']);
+});
+
 // Escudo de un club activo: se muestra antes de entrar (selector, panel). No es un dato sensible.
 Route::get('public/clubs/{slug}/logo', [ClubLogoController::class, 'show'])->middleware('throttle:120,1');
 
@@ -116,6 +126,9 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::post('players/{player}/requirements/{requirement}/submit', [EligibilityController::class, 'submit']);
     Route::post('players/{player}/requirements/{requirement}/approve', [EligibilityController::class, 'approve']);
     Route::post('players/{player}/requirements/{requirement}/reject', [EligibilityController::class, 'reject']);
+    Route::get('matches/{match}/callup', [CallupController::class, 'show']);
+    Route::put('matches/{match}/callup', [CallupController::class, 'update']);
+    Route::post('matches/{match}/callup/publish', [CallupController::class, 'publish']);
     Route::post('club/logo', [ClubLogoController::class, 'store']);
     Route::delete('club/logo', [ClubLogoController::class, 'destroy']);
     Route::get('permissions', [RoleController::class, 'permissions']);

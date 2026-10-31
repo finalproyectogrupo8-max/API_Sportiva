@@ -106,6 +106,7 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, — = nada.
 | `categories.manage_coaches` | ✓ | — | — | — | — |
 | `matches` | ✓ ver, crear, editar, eliminar | ver, crear, editar (s) | ver (s) | ver | ver |
 | `trainings` | ✓ ver, crear, editar, eliminar | ver, crear, editar (s) | ver (s) | ver | ver |
+| `callups` (convocatorias, TIZ-33) | ✓ ver, armar, publicar | ver, armar, publicar (s) | ver (s) | ver | — |
 | `attendance` | ✓ ver, registrar | ver, registrar (s) | ver (s) | — | — |
 | `physical_evaluations` | ✓ ver | ver (s) | ver, crear, editar, eliminar (s) | — | — |
 | `project` | ✓ ver, editar | ver | ver | — | — |

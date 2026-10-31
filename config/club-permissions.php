@@ -36,6 +36,7 @@ return [
         'invite' => 'Invitar',
         'disable' => 'Deshabilitar',
         'upload' => 'Subir',
+        'publish' => 'Publicar',
         'send' => 'Enviar',
     ],
 
@@ -62,6 +63,7 @@ return [
                 'matches' => ['label' => 'Partidos', 'actions' => $crud, 'scoped' => $crud],
                 'trainings' => ['label' => 'Entrenamientos', 'actions' => $crud, 'scoped' => $crud],
                 'attendance' => ['label' => 'Asistencia', 'actions' => ['view', 'record'], 'scoped' => ['view', 'record']],
+                'callups' => ['label' => 'Convocatorias', 'actions' => ['view', 'update', 'publish'], 'scoped' => ['view', 'update', 'publish']],
             ],
         ],
         'analisis' => [
@@ -158,6 +160,7 @@ return [
                 'matches.view', 'matches.create', 'matches.update', 'matches.delete',
                 'trainings.view', 'trainings.create', 'trainings.update', 'trainings.delete',
                 'attendance.view', 'attendance.record',
+                'callups.view', 'callups.update', 'callups.publish',
                 'physical_evaluations.view',
                 'project.view', 'project.update',
                 'apparel_items.view',
@@ -184,6 +187,7 @@ return [
                 'matches.view:own', 'matches.create:own', 'matches.update:own',
                 'trainings.view:own', 'trainings.create:own', 'trainings.update:own',
                 'attendance.view:own', 'attendance.record:own',
+                'callups.view:own', 'callups.update:own', 'callups.publish:own',
                 'physical_evaluations.view:own',
                 'project.view',
                 'apparel_items.view',
@@ -202,7 +206,7 @@ return [
             'permissions' => [
                 'players.view:own',
                 'coaches.view:own',
-                'matches.view:own', 'trainings.view:own', 'attendance.view:own',
+                'matches.view:own', 'trainings.view:own', 'attendance.view:own', 'callups.view:own',
                 'physical_evaluations.view:own', 'physical_evaluations.create:own',
                 'physical_evaluations.update:own', 'physical_evaluations.delete:own',
                 'project.view',
@@ -217,7 +221,7 @@ return [
             'name' => 'Utilero / Encargado',
             'description' => 'Materiales, indumentaria y entregas.',
             'permissions' => [
-                'matches.view', 'trainings.view',
+                'matches.view', 'trainings.view', 'callups.view',
                 'apparel_items.view', 'apparel_items.create', 'apparel_items.update', 'apparel_items.delete',
                 'apparel_orders.view', 'apparel_orders.create', 'apparel_orders.update', 'apparel_orders.deliver',
                 'materials.view', 'materials.create', 'materials.update', 'materials.delete',
