@@ -13,7 +13,7 @@ use InvalidArgumentException;
 class AuditLogger
 {
     private const FIELDS = [
-        'tenant' => ['name', 'slug', 'database_name', 'status'],
+        'tenant' => ['name', 'slug', 'database_name', 'status', 'short_name', 'city', 'founded_year', 'primary_color'],
         'user' => ['name', 'email', 'is_active'],
         'membership' => ['user_id', 'tenant_id', 'is_active'],
     ];

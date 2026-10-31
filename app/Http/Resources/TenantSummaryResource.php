@@ -14,6 +14,11 @@ class TenantSummaryResource extends JsonResource
         return [
             'slug' => $this->slug,
             'name' => $this->name,
+            'short_name' => $this->short_name,
+            'city' => $this->city,
+            'founded_year' => $this->founded_year,
+            /** Hexadecimal (#rrggbb). Acento del club: escudo y chips. */
+            'primary_color' => $this->primary_color,
         ];
     }
 }

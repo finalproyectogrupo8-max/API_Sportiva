@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Http\Requests\Concerns\TenantProfileRules;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreTenantRequest extends FormRequest
 {
+    use TenantProfileRules;
+
     public function authorize(): bool
     {
         return true;
@@ -14,6 +17,7 @@ class StoreTenantRequest extends FormRequest
     public function rules(): array
     {
         return [
+            ...$this->tenantProfileRules(),
             'name' => ['required', 'string', 'max:255'],
             // club_ (5) + slug (máx. 50) = 55 caracteres, bajo el límite de 64 de MySQL
             'slug' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9_]+$/', 'unique:tenants,slug'],
@@ -26,5 +30,10 @@ class StoreTenantRequest extends FormRequest
             'admin.email' => ['required_with:admin', 'email', 'max:255', 'unique:users,email'],
             'admin.password' => ['required_with:admin', 'string', 'min:12', 'max:255'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return $this->tenantProfileMessages();
     }
 }
