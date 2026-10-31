@@ -22,6 +22,7 @@ Las claves siguen [guia-abm §9](guia-abm.md#9-autorización-policies-y-permisos
 |---|---|---|---|
 | **Jugadores** (`jugadores`) | `players` | `view`, `create`, `update`, `delete` | sí |
 | | `categories` | `manage_players` (armar planteles) | sí |
+| | `player_contacts` | `view`, `update` (tutores y contactos, TIZ-15) | sí |
 | **Profes** (`profes`) | `coaches` | `view`, `create`, `update`, `delete` | sí (`view`) |
 | | `categories` | `manage_coaches` (asignar profes a categorías) | — |
 | **Partidos** (`partidos`) | `matches` | `view`, `create`, `update`, `delete` | sí |
@@ -94,6 +95,7 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, — = nada.
 |---|---|---|---|---|---|
 | `players` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
 | `categories.manage_players` | ✓ | — | — | — | — |
+| `player_contacts` | ✓ ver, editar | ver (s) | — | — | — |
 | `coaches` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
 | `categories.manage_coaches` | ✓ | — | — | — | — |
 | `matches` | ✓ ver, crear, editar, eliminar | ver, crear, editar (s) | ver (s) | ver | ver |
@@ -129,6 +131,7 @@ Cada permiso asignado a un rol tiene un **alcance**: `all` (todo el club) o `own
 |---|---|
 | `players` | Los jugadores con membresía vigente en sus categorías |
 | `categories.manage_players` | Los planteles de sus categorías |
+| `player_contacts` | Los contactos de los jugadores de sus categorías |
 | `coaches` | Su propia ficha y los profes de sus categorías |
 | `categories.view` | Solo sus categorías: el profe de fútbol no ve las de básquet (TIZ-36) |
 | `matches`, `trainings`, `attendance` | Los partidos y entrenamientos de sus categorías |

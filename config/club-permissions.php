@@ -44,6 +44,7 @@ return [
             'resources' => [
                 'players' => ['label' => 'Jugadores', 'actions' => $crud, 'scoped' => $crud],
                 'categories' => ['label' => 'Planteles', 'actions' => ['manage_players'], 'scoped' => ['manage_players']],
+                'player_contacts' => ['label' => 'Contactos y tutores', 'actions' => ['view', 'update'], 'scoped' => ['view', 'update']],
             ],
         ],
         'profes' => [
@@ -141,6 +142,7 @@ return [
             'permissions' => [
                 'players.view', 'players.create', 'players.update', 'players.delete',
                 'categories.manage_players',
+                'player_contacts.view', 'player_contacts.update',
                 'coaches.view', 'coaches.create', 'coaches.update', 'coaches.delete',
                 'categories.manage_coaches',
                 'matches.view', 'matches.create', 'matches.update', 'matches.delete',
@@ -164,6 +166,7 @@ return [
             'description' => 'Entrenador de una o más categorías.',
             'permissions' => [
                 'players.view:own',
+                'player_contacts.view:own',
                 'coaches.view:own',
                 'matches.view:own', 'matches.create:own', 'matches.update:own',
                 'trainings.view:own', 'trainings.create:own', 'trainings.update:own',

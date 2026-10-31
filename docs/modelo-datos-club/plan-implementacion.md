@@ -81,7 +81,7 @@ Se cierran **en el change de OpenSpec de la ola** que las necesita (en el `desig
 | D12 | Catálogos: baja lógica (`deleted_at`) o desactivar (`is_active`) | **Cerrada (TIZ-14):** `is_active` para deportes y categorías, borrado real para temporadas sin uso, `deleted_at` para profes | 1 |
 | D13 | Cómo se genera `orders.order_number` | Secuencia por club con prefijo de año (`2027-0001`), generada en una transacción | 4 |
 | D14 | Signo de la cantidad en `inventory_movements` de tipo `adjustment` | Ver [04-inventario](04-inventario.md#inventory_movements) | 4 |
-| D15 | ¿Hace falta `players.document_number`? Retención de evaluaciones físicas y auditoría | Definirlo con el equipo antes de la ola 2 (datos personales de menores) | 2 y 4 |
+| D15 | ¿Hace falta `players.document_number`? Retención de evaluaciones físicas y auditoría | **Parcial (TIZ-15):** `document_number` queda opcional, solo si la liga lo pide; nada médico en `players.notes` (los aptos van como requisitos y documentos privados, TIZ-29 y TIZ-32). Falta definir la retención con el equipo | 2 y 4 |
 
 ## 4. Orden de implementación (olas)
 
