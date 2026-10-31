@@ -48,8 +48,9 @@ erDiagram
 | `opponent` | VARCHAR(120) | no | | Rival |
 | `match_date` | DATETIME | no | | Fecha y hora (UTC) |
 | `meet_at` | DATETIME | sí | `<= match_date` | Hora de presentación (TIZ-16) |
-| `venue` | VARCHAR(200) | sí | | Lugar |
-| `maps_url` | VARCHAR(500) | sí | | Link al mapa del lugar (TIZ-16) |
+| `venue_id` | BIGINT UNSIGNED | sí | FK → `venues.id` | Sede del club, de local (TIZ-39) |
+| `venue` | VARCHAR(200) | sí | | Lugar. Con sede, "Sede · dirección" (lo completa la API) |
+| `maps_url` | VARCHAR(500) | sí | | Link al mapa del lugar (TIZ-16). Lo arma la API con la sede o con la dirección si no viene |
 | `is_home` | BOOLEAN | no | | Local o visitante |
 | `uniform` | VARCHAR(10) | sí | | `home` (titular) / `away` (alternativa) (TIZ-16) |
 | `uniform_color` | VARCHAR(50) | sí | | |
@@ -65,6 +66,24 @@ erDiagram
 - El resultado se carga con `PATCH`: con los dos puntajes, el partido pasa a `played` salvo que se mande otro estado.
 - `competition_id` llega con TIZ-31, y `callup_published_at` y `public_token` con la convocatoria (TIZ-33).
 - En el código el modelo se llama `GameMatch`, porque `match` es palabra reservada de PHP.
+- Las horas se guardan en UTC. El front manda la hora en UTC: Laravel guarda la hora tal como llega, sin pasarla a su zona.
+
+## `venues`
+
+Sedes del club, donde juega de local: la cancha de la sede principal, un parque deportivo, etc. (TIZ-39).
+
+| Columna | Tipo | Null | Restricciones | Descripción |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | no | PK | |
+| `name` | VARCHAR(120) | no | | "Sede principal", "Parque deportivo" |
+| `address` | VARCHAR(255) | no | | Dirección, como la eligió el buscador del front |
+| `latitude`, `longitude` | DECIMAL(10,7) | sí | juntas o ninguna | Punto en el mapa |
+| `is_active` | BOOLEAN | no | default `true` | |
+| `notes` | TEXT | sí | | |
+| `created_at`, `updated_at`, `deleted_at` | TIMESTAMP | sí | | Baja lógica |
+
+- El link de Google Maps (`maps_url` del recurso) se arma por coordenadas, o por dirección si no las hay. No hace falta API key.
+- No se puede borrar una sede con partidos programados por jugarse en ella (409).
 
 ## `trainings`
 

@@ -9,6 +9,8 @@ use App\Http\Requests\Club\StoreMatchRequest;
 use App\Http\Resources\Club\MatchResource;
 use App\Models\Club\Category;
 use App\Models\Club\GameMatch;
+use App\Models\Club\Venue;
+use App\Support\MapsUrl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -43,7 +45,7 @@ class MatchController extends Controller
         $data = $request->validated();
         $this->ensureCategoryInScope(Category::findOrFail($data['category_id']), 'matches.create');
 
-        $match = GameMatch::create(['status' => 'scheduled', ...$data]);
+        $match = GameMatch::create(['status' => 'scheduled', ...$this->withPlace($data)]);
 
         return MatchResource::make($match->refresh()->load('category'))->response()->setStatusCode(201);
     }
@@ -66,7 +68,7 @@ class MatchController extends Controller
             $this->ensureCategoryInScope(Category::findOrFail($data['category_id']), 'matches.update');
         }
 
-        $match->fill($data);
+        $match->fill($this->withPlace($data, $match));
         // Convocatoria publicada y cambió algo que ya se avisó: hay que volver a avisar (TIZ-33).
         if ($match->callup_published_at && $match->isDirty(['match_date', 'meet_at', 'venue', 'maps_url', 'uniform', 'uniform_color'])) {
             $match->updated_after_publish = true;
@@ -92,5 +94,27 @@ class MatchController extends Controller
     private function ensureVisible(GameMatch $match, string $permission): void
     {
         abort_unless(GameMatch::query()->visibleTo($this->access(), $permission)->whereKey($match->getKey())->exists(), 404);
+    }
+
+    /**
+     * Lugar del partido (TIZ-39). Con sede del club: el lugar y el link salen de la sede. Sin sede
+     * y sin link: el link se arma con la dirección escrita (partido de visitante).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function withPlace(array $data, ?GameMatch $match = null): array
+    {
+        if (! empty($data['venue_id'])) {
+            $venue = Venue::findOrFail($data['venue_id']);
+
+            return [...$data, 'venue' => $venue->label(), 'maps_url' => $venue->mapsUrl()];
+        }
+
+        if (array_key_exists('venue', $data) && empty($data['maps_url'])) {
+            $data['maps_url'] = MapsUrl::for($data['venue']);
+        }
+
+        return $data;
     }
 }
