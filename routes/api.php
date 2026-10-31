@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserMembershipController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Club\CategoryController;
+use App\Http\Controllers\Club\ClubController;
 use App\Http\Controllers\Club\CoachController;
 use App\Http\Controllers\Club\RoleController;
 use App\Http\Controllers\Club\SeasonController;
@@ -63,6 +64,8 @@ Route::middleware(['auth:sanctum', 'abilities:platform:admin', 'platform.admin']
     });
 
 Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
+    Route::get('club', [ClubController::class, 'show']);
+    Route::patch('club', [ClubController::class, 'update']);
     Route::apiResource('sports', SportController::class);
     Route::apiResource('seasons', SeasonController::class);
     Route::apiResource('categories', CategoryController::class);

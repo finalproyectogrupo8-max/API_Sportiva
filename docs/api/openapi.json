@@ -610,6 +610,78 @@
                 }
             }
         },
+        "/club": {
+            "get": {
+                "operationId": "club.show",
+                "tags": [
+                    "Club"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ClubResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ClubResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "club.update",
+                "tags": [
+                    "Club"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateClubRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ClubResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ClubResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/coaches": {
             "get": {
                 "operationId": "coaches.index",
@@ -4424,6 +4496,73 @@
                 ],
                 "title": "ClubProfileResource"
             },
+            "ClubResource": {
+                "type": "object",
+                "properties": {
+                    "slug": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "short_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "founded_year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "primary_color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Hexadecimal (#rrggbb). Acento del club: escudo y chips."
+                    },
+                    "stats": {
+                        "type": "object",
+                        "properties": {
+                            "active_players": {
+                                "type": "integer",
+                                "description": "Jugadores con estado activo. Se calcula, no se guarda.",
+                                "minimum": 0
+                            },
+                            "sports": {
+                                "type": "array",
+                                "description": "Nombres de los deportes activos del club.",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "active_players",
+                            "sports"
+                        ]
+                    }
+                },
+                "required": [
+                    "slug",
+                    "name",
+                    "short_name",
+                    "city",
+                    "founded_year",
+                    "primary_color",
+                    "stats"
+                ],
+                "title": "ClubResource"
+            },
             "ClubRoleResource": {
                 "type": "object",
                 "properties": {
@@ -5101,6 +5240,35 @@
             "StoreTenantRequest": {
                 "type": "object",
                 "properties": {
+                    "short_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 6
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "founded_year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1800,
+                        "maximum": 2026
+                    },
+                    "primary_color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
                     "name": {
                         "type": "string",
                         "maxLength": 255
@@ -5347,6 +5515,31 @@
                     "name": {
                         "type": "string"
                     },
+                    "short_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "founded_year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "primary_color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Hexadecimal (#rrggbb). Acento del club: escudo y chips."
+                    },
                     "database_name": {
                         "type": "string"
                     },
@@ -5370,6 +5563,10 @@
                     "id",
                     "slug",
                     "name",
+                    "short_name",
+                    "city",
+                    "founded_year",
+                    "primary_color",
                     "database_name",
                     "status",
                     "created_at",
@@ -5395,11 +5592,40 @@
                     },
                     "name": {
                         "type": "string"
+                    },
+                    "short_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "founded_year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "primary_color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Hexadecimal (#rrggbb). Acento del club: escudo y chips."
                     }
                 },
                 "required": [
                     "slug",
-                    "name"
+                    "name",
+                    "short_name",
+                    "city",
+                    "founded_year",
+                    "primary_color"
                 ],
                 "title": "TenantSummaryResource"
             },
@@ -5447,6 +5673,56 @@
                     }
                 },
                 "title": "UpdateCategoryRequest"
+            },
+            "UpdateClubRequest": {
+                "type": "object",
+                "description": "Perfil del club editado por su administrador (permiso club.update).",
+                "properties": {
+                    "short_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 6
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "founded_year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1800,
+                        "maximum": 2026
+                    },
+                    "primary_color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "slug": {
+                        "type": "string",
+                        "description": "Los maneja la plataforma."
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "database_name": {
+                        "type": "string"
+                    }
+                },
+                "title": "UpdateClubRequest"
             },
             "UpdateCoachRequest": {
                 "type": "object",
@@ -5641,6 +5917,35 @@
             "UpdateTenantRequest": {
                 "type": "object",
                 "properties": {
+                    "short_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 6
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "founded_year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1800,
+                        "maximum": 2026
+                    },
+                    "primary_color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
                     "name": {
                         "type": "string",
                         "maxLength": 255
