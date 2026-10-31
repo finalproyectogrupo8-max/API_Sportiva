@@ -15,6 +15,11 @@ class TenantResource extends JsonResource
             'id' => $this->id,
             'slug' => $this->slug,
             'name' => $this->name,
+            'short_name' => $this->short_name,
+            'city' => $this->city,
+            'founded_year' => $this->founded_year,
+            /** Hexadecimal (#rrggbb). Acento del club: escudo y chips. */
+            'primary_color' => $this->primary_color,
             'database_name' => $this->database_name,
             'status' => $this->status,
             'created_at' => $this->created_at?->toIso8601String(),

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\TenantStatus;
+use App\Http\Requests\Concerns\TenantProfileRules;
 use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Validator;
 
 class UpdateTenantRequest extends FormRequest
 {
+    use TenantProfileRules;
+
     public function authorize(): bool
     {
         return true;
@@ -18,6 +21,7 @@ class UpdateTenantRequest extends FormRequest
     public function rules(): array
     {
         return [
+            ...$this->tenantProfileRules(),
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'status' => ['sometimes', 'required', Rule::in([
                 TenantStatus::Active->value,
@@ -27,6 +31,11 @@ class UpdateTenantRequest extends FormRequest
             'slug' => ['prohibited'],
             'database_name' => ['prohibited'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return $this->tenantProfileMessages();
     }
 
     /**

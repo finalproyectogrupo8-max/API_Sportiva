@@ -180,6 +180,8 @@ Club actual (token con club, middleware `tenant.token`):
 | `DELETE /api/roles/{role}`: 403 `role_is_system`, 409 `role_in_use` | `roles.delete` |
 | `POST /api/roles/{role}/duplicate` | `roles.create` |
 | `PUT /api/club-users/{clubUser}/roles`: reemplaza la lista completa, idempotente. **Pendiente**, con la gestión del equipo | `roles.assign` |
+| `GET /api/club`: perfil del club (sigla, ciudad, fundación, color) con jugadores activos y deportes (TIZ-13) | Cualquier miembro |
+| `PATCH /api/club`: editar el nombre y el perfil. `slug` y `status` los maneja la plataforma (TIZ-13) | `club.update` |
 
 `{role}` es el `slug` del rol (por ejemplo `/api/roles/coach`).
 
