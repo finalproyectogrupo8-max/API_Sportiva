@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\Club\Player;
 use App\Models\PersonalAccessToken;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Server;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -28,6 +30,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Alias estable en documents.documentable_type (TIZ-29), en lugar del nombre de la clase.
+        Relation::morphMap(['player' => Player::class]);
+
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)

@@ -31,7 +31,7 @@ class PlayerController extends Controller
 
         $players = Player::query()
             ->visibleTo($this->access())
-            ->with('activeMemberships.category')
+            ->with(['activeMemberships.category', 'photo'])
             ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query->where(fn (Builder $query) => $query
                 ->where('first_name', 'like', "%{$search}%")
                 ->orWhere('last_name', 'like', "%{$search}%")
@@ -63,7 +63,7 @@ class PlayerController extends Controller
         $this->authorizeClub('players.view');
         $this->ensurePlayerVisible($player);
 
-        return PlayerResource::make($player->load('activeMemberships.category'));
+        return PlayerResource::make($player->load(['activeMemberships.category', 'photo']));
     }
 
     public function update(UpdatePlayerRequest $request, Player $player): PlayerResource
@@ -73,7 +73,7 @@ class PlayerController extends Controller
 
         $player->update($request->validated());
 
-        return PlayerResource::make($player->refresh()->load('activeMemberships.category'));
+        return PlayerResource::make($player->refresh()->load(['activeMemberships.category', 'photo']));
     }
 
     /** Baja lógica. Las asignaciones activas se cierran: el jugador deja de figurar en el plantel. */

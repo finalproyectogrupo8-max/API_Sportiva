@@ -35,6 +35,7 @@ return [
         'assign' => 'Asignar',
         'invite' => 'Invitar',
         'disable' => 'Deshabilitar',
+        'upload' => 'Subir',
         'send' => 'Enviar',
     ],
 
@@ -45,6 +46,7 @@ return [
                 'players' => ['label' => 'Jugadores', 'actions' => $crud, 'scoped' => $crud],
                 'categories' => ['label' => 'Planteles', 'actions' => ['manage_players'], 'scoped' => ['manage_players']],
                 'player_contacts' => ['label' => 'Contactos y tutores', 'actions' => ['view', 'update'], 'scoped' => ['view', 'update']],
+                'player_documents' => ['label' => 'Documentos (apto, ficha, DNI)', 'actions' => ['view', 'upload', 'delete'], 'scoped' => ['view', 'upload']],
             ],
         ],
         'profes' => [
@@ -149,6 +151,7 @@ return [
                 'players.view', 'players.create', 'players.update', 'players.delete',
                 'categories.manage_players',
                 'player_contacts.view', 'player_contacts.update',
+                'player_documents.view', 'player_documents.upload', 'player_documents.delete',
                 'coaches.view', 'coaches.create', 'coaches.update', 'coaches.delete',
                 'categories.manage_coaches',
                 'matches.view', 'matches.create', 'matches.update', 'matches.delete',
@@ -174,6 +177,7 @@ return [
             'permissions' => [
                 'players.view:own',
                 'player_contacts.view:own',
+                'player_documents.view:own', 'player_documents.upload:own',
                 'coaches.view:own',
                 'matches.view:own', 'matches.create:own', 'matches.update:own',
                 'trainings.view:own', 'trainings.create:own', 'trainings.update:own',

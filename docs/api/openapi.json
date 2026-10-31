@@ -1591,6 +1591,121 @@
                 }
             }
         },
+        "/public/clubs/{slug}/logo": {
+            "get": {
+                "operationId": "clubLogo.show",
+                "summary": "P\u00fablico: el escudo de un club activo",
+                "tags": [
+                    "ClubLogo"
+                ],
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Transfer-Encoding": {
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "enum": [
+                                        "chunked"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/club/logo": {
+            "post": {
+                "operationId": "clubLogo.store",
+                "tags": [
+                    "ClubLogo"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "logo": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "contentMediaType": "application/octet-stream",
+                                        "description": "Maximum file size: 1024 kilobytes."
+                                    }
+                                },
+                                "required": [
+                                    "logo"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ClubResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ClubResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "clubLogo.destroy",
+                "tags": [
+                    "ClubLogo"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/coaches": {
             "get": {
                 "operationId": "coaches.index",
@@ -2457,6 +2572,191 @@
                 }
             }
         },
+        "/players/{player}/documents": {
+            "get": {
+                "operationId": "document.index",
+                "tags": [
+                    "Document"
+                ],
+                "parameters": [
+                    {
+                        "name": "player",
+                        "in": "path",
+                        "required": true,
+                        "description": "The player ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `DocumentResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DocumentResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "document.store",
+                "summary": "La foto nueva reemplaza a la anterior",
+                "tags": [
+                    "Document"
+                ],
+                "parameters": [
+                    {
+                        "name": "player",
+                        "in": "path",
+                        "required": true,
+                        "description": "The player ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreDocumentRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`DocumentResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/DocumentResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/documents/{document}/download": {
+            "get": {
+                "operationId": "document.download",
+                "summary": "El archivo, para mostrarlo o bajarlo. La foto la ve quien ve al jugador (`players.view`); los\npapeles piden `player_documents.view`",
+                "tags": [
+                    "Document"
+                ],
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "description": "The document ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Transfer-Encoding": {
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "enum": [
+                                        "chunked"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/documents/{document}": {
+            "delete": {
+                "operationId": "document.destroy",
+                "tags": [
+                    "Document"
+                ],
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "description": "The document ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "operationId": "health",
@@ -3028,6 +3328,7 @@
                                                     {
                                                         "type": "object",
                                                         "required": [
+                                                            "photo_document_id",
                                                             "memberships"
                                                         ]
                                                     }
@@ -3244,6 +3545,7 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
+                                                        "photo_document_id",
                                                         "memberships"
                                                     ]
                                                 }
@@ -3306,6 +3608,7 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
+                                                        "photo_document_id",
                                                         "memberships"
                                                     ]
                                                 }
@@ -7484,6 +7787,13 @@
                         ],
                         "description": "Hexadecimal (#rrggbb). Acento del club: escudo y chips."
                     },
+                    "logo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "URL del escudo en la API (`GET /api/public/clubs/{slug}/logo`), o null si no tiene."
+                    },
                     "stats": {
                         "type": "object",
                         "properties": {
@@ -7513,6 +7823,7 @@
                     "city",
                     "founded_year",
                     "primary_color",
+                    "logo_url",
                     "stats"
                 ],
                 "title": "ClubResource"
@@ -7750,6 +8061,43 @@
                     "season_id"
                 ],
                 "title": "CopyCompetitionRequest"
+            },
+            "DocumentResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "description": "`photo`, `medical`, `id_document`, `federation_card`, `authorization` u `other`."
+                    },
+                    "original_name": {
+                        "type": "string"
+                    },
+                    "mime": {
+                        "type": "string"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "description": "Tama\u00f1o en bytes."
+                    },
+                    "uploaded_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "kind",
+                    "original_name",
+                    "mime",
+                    "size",
+                    "uploaded_at"
+                ],
+                "title": "DocumentResource"
             },
             "EndAssignmentRequest": {
                 "type": "object",
@@ -8202,6 +8550,10 @@
                     "status": {
                         "type": "string"
                     },
+                    "photo_document_id": {
+                        "type": "integer",
+                        "description": "Id del documento con la foto (`GET /api/documents/{id}/download`), si se carg\u00f3 y tiene."
+                    },
                     "notes": {
                         "type": [
                             "string",
@@ -8611,6 +8963,34 @@
                     "name"
                 ],
                 "title": "StoreCompetitionRequest"
+            },
+            "StoreDocumentRequest": {
+                "type": "object",
+                "description": "Subir un documento de un jugador (multipart).",
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "photo",
+                            "medical",
+                            "id_document",
+                            "federation_card",
+                            "authorization",
+                            "other"
+                        ]
+                    },
+                    "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "contentMediaType": "application/octet-stream",
+                        "description": "PDF o foto del celular (HEIC), hasta 10 MB. La foto de la ficha, solo imagen y hasta 5 MB."
+                    }
+                },
+                "required": [
+                    "kind",
+                    "file"
+                ],
+                "title": "StoreDocumentRequest"
             },
             "StoreMatchRequest": {
                 "type": "object",
@@ -9401,6 +9781,13 @@
                         ],
                         "description": "Hexadecimal (#rrggbb). Acento del club: escudo y chips."
                     },
+                    "logo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "URL del escudo en la API (`GET /api/public/clubs/{slug}/logo`), o null si no tiene."
+                    },
                     "database_name": {
                         "type": "string"
                     },
@@ -9428,6 +9815,7 @@
                     "city",
                     "founded_year",
                     "primary_color",
+                    "logo_url",
                     "database_name",
                     "status",
                     "created_at",
@@ -9478,6 +9866,13 @@
                             "null"
                         ],
                         "description": "Hexadecimal (#rrggbb). Acento del club: escudo y chips."
+                    },
+                    "logo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "URL del escudo en la API (`GET /api/public/clubs/{slug}/logo`), o null si no tiene."
                     }
                 },
                 "required": [
@@ -9486,7 +9881,8 @@
                     "short_name",
                     "city",
                     "founded_year",
-                    "primary_color"
+                    "primary_color",
+                    "logo_url"
                 ],
                 "title": "TenantSummaryResource"
             },

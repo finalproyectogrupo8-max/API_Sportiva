@@ -20,6 +20,8 @@ class TenantResource extends JsonResource
             'founded_year' => $this->founded_year,
             /** Hexadecimal (#rrggbb). Acento del club: escudo y chips. */
             'primary_color' => $this->primary_color,
+            /** URL del escudo en la API (`GET /api/public/clubs/{slug}/logo`), o null si no tiene. */
+            'logo_url' => $this->logo_path ? url("/api/public/clubs/{$this->slug}/logo").'?v='.substr(md5($this->logo_path), 0, 8) : null,
             'database_name' => $this->database_name,
             'status' => $this->status,
             'created_at' => $this->created_at?->toIso8601String(),

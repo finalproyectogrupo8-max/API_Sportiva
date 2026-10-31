@@ -23,6 +23,7 @@ Las claves siguen [guia-abm §9](guia-abm.md#9-autorización-policies-y-permisos
 | **Jugadores** (`jugadores`) | `players` | `view`, `create`, `update`, `delete` | sí |
 | | `categories` | `manage_players` (armar planteles) | sí |
 | | `player_contacts` | `view`, `update` (tutores y contactos, TIZ-15) | sí |
+| | `player_documents` | `view`, `upload`, `delete` (apto, ficha, DNI, TIZ-29) | sí, `view` y `upload` |
 | **Profes** (`profes`) | `coaches` | `view`, `create`, `update`, `delete` | sí (`view`) |
 | | `categories` | `manage_coaches` (asignar profes a categorías) | — |
 | **Partidos** (`partidos`) | `matches` | `view`, `create`, `update`, `delete` | sí |
@@ -97,6 +98,7 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, — = nada.
 | `players` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
 | `categories.manage_players` | ✓ | — | — | — | — |
 | `player_contacts` | ✓ ver, editar | ver (s) | — | — | — |
+| `player_documents` | ✓ ver, subir, borrar | ver, subir (s) | — | — | — |
 | `competitions` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
 | `coaches` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
 | `categories.manage_coaches` | ✓ | — | — | — | — |

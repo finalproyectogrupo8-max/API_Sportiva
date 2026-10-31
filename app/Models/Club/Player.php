@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -51,6 +53,18 @@ class Player extends Model
     public function activeMemberships(): HasMany
     {
         return $this->memberships()->where('status', PlayerCategoryMembership::STATUS_ACTIVE);
+    }
+
+    /** @return MorphMany<Document, $this> */
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(Document::class, 'documentable');
+    }
+
+    /** @return MorphOne<Document, $this> */
+    public function photo(): MorphOne
+    {
+        return $this->morphOne(Document::class, 'documentable')->where('kind', 'photo')->latestOfMany();
     }
 
     /** @return HasMany<PlayerContact, $this> */

@@ -28,6 +28,12 @@ return [
     |
     */
 
+    /*
+    | Disco de los documentos de los clubes (TIZ-29): privado. En producción, s3 (bucket compatible).
+    | El local de desarrollo se borra en cada deploy de Laravel Cloud: no sirve en producción.
+    */
+    'documents_disk' => env('DOCUMENTS_DISK', 'local'),
+
     'disks' => [
 
         'local' => [
