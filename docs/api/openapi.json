@@ -650,6 +650,183 @@
                 }
             }
         },
+        "/matches/{match}/callup": {
+            "get": {
+                "operationId": "callup.show",
+                "tags": [
+                    "Callup"
+                ],
+                "parameters": [
+                    {
+                        "name": "match",
+                        "in": "path",
+                        "required": true,
+                        "description": "The match ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CallupSheetResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CallupSheetResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "callup.update",
+                "summary": "Reemplaza la lista. `players`: `[{player_id, shirt_number?}]`",
+                "tags": [
+                    "Callup"
+                ],
+                "parameters": [
+                    {
+                        "name": "match",
+                        "in": "path",
+                        "required": true,
+                        "description": "The match ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "players": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "player_id": {
+                                                    "type": "integer"
+                                                },
+                                                "shirt_number": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 0,
+                                                    "maximum": 999
+                                                }
+                                            },
+                                            "required": [
+                                                "player_id"
+                                            ]
+                                        },
+                                        "maxItems": 60,
+                                        "uniqueItems": true
+                                    }
+                                },
+                                "required": [
+                                    "players"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`CallupSheetResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CallupSheetResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/matches/{match}/callup/publish": {
+            "post": {
+                "operationId": "callup.publish",
+                "summary": "Publica (o vuelve a publicar despu\u00e9s de un cambio). Genera la p\u00e1gina p\u00fablica y los mensajes",
+                "tags": [
+                    "Callup"
+                ],
+                "parameters": [
+                    {
+                        "name": "match",
+                        "in": "path",
+                        "required": true,
+                        "description": "The match ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CallupSheetResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CallupSheetResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/categories": {
             "get": {
                 "operationId": "categories.index",
@@ -4212,6 +4389,663 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/public/callups/respond/{token}": {
+            "get": {
+                "operationId": "publicCallup.showPersonal",
+                "tags": [
+                    "PublicCallup"
+                ],
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "club": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "short_name": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "primary_color": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "logo_url": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "name",
+                                                                "short_name",
+                                                                "primary_color",
+                                                                "logo_url"
+                                                            ]
+                                                        },
+                                                        "match": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "category": {
+                                                                    "type": "string"
+                                                                },
+                                                                "competition": {
+                                                                    "type": "string"
+                                                                },
+                                                                "opponent": {
+                                                                    "type": "string"
+                                                                },
+                                                                "is_home": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "match_date": {
+                                                                    "type": "string"
+                                                                },
+                                                                "meet_at": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "venue": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "maps_url": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "uniform": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "uniform_color": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "what_to_bring": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "status": {
+                                                                    "type": "string"
+                                                                },
+                                                                "updated": {
+                                                                    "type": "boolean"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "category",
+                                                                "competition",
+                                                                "opponent",
+                                                                "is_home",
+                                                                "match_date",
+                                                                "meet_at",
+                                                                "venue",
+                                                                "maps_url",
+                                                                "uniform",
+                                                                "uniform_color",
+                                                                "what_to_bring",
+                                                                "status",
+                                                                "updated"
+                                                            ]
+                                                        },
+                                                        "players": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "shirt_number": {
+                                                                        "type": [
+                                                                            "integer",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "name",
+                                                                    "shirt_number"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "club",
+                                                        "match",
+                                                        "players"
+                                                    ]
+                                                },
+                                                "me": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "response": {
+                                                            "type": "string"
+                                                        },
+                                                        "note": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "name",
+                                                        "response",
+                                                        "note"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "me"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "publicCallup.respond",
+                "summary": "\"Voy\" o \"No puedo\", con motivo opcional. Se puede cambiar la respuesta",
+                "tags": [
+                    "PublicCallup"
+                ],
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "response": {
+                                        "type": "string",
+                                        "enum": [
+                                            "going",
+                                            "not_going"
+                                        ]
+                                    },
+                                    "note": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    }
+                                },
+                                "required": [
+                                    "response"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "page": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "club": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "short_name": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "primary_color": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "logo_url": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "name",
+                                                                "short_name",
+                                                                "primary_color",
+                                                                "logo_url"
+                                                            ]
+                                                        },
+                                                        "match": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "category": {
+                                                                    "type": "string"
+                                                                },
+                                                                "competition": {
+                                                                    "type": "string"
+                                                                },
+                                                                "opponent": {
+                                                                    "type": "string"
+                                                                },
+                                                                "is_home": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "match_date": {
+                                                                    "type": "string"
+                                                                },
+                                                                "meet_at": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "venue": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "maps_url": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "uniform": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "uniform_color": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "what_to_bring": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "status": {
+                                                                    "type": "string"
+                                                                },
+                                                                "updated": {
+                                                                    "type": "boolean"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "category",
+                                                                "competition",
+                                                                "opponent",
+                                                                "is_home",
+                                                                "match_date",
+                                                                "meet_at",
+                                                                "venue",
+                                                                "maps_url",
+                                                                "uniform",
+                                                                "uniform_color",
+                                                                "what_to_bring",
+                                                                "status",
+                                                                "updated"
+                                                            ]
+                                                        },
+                                                        "players": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "shirt_number": {
+                                                                        "type": [
+                                                                            "integer",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "name",
+                                                                    "shirt_number"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "club",
+                                                        "match",
+                                                        "players"
+                                                    ]
+                                                },
+                                                "me": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "response": {
+                                                            "type": "string"
+                                                        },
+                                                        "note": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "name",
+                                                        "response",
+                                                        "note"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "page",
+                                                "me"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/public/callups/{token}/calendar.ics": {
+            "get": {
+                "operationId": "publicCallup.calendar",
+                "summary": "El partido como evento de calendario (.ics) para \"Agregar al calendario\"",
+                "tags": [
+                    "PublicCallup"
+                ],
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "text/calendar; charset=utf-8": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "attachment; filename=\"partido.ics\""
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/public/callups/{token}": {
+            "get": {
+                "operationId": "publicCallup.show",
+                "tags": [
+                    "PublicCallup"
+                ],
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "club": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "short_name": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "primary_color": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "logo_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "name",
+                                                        "short_name",
+                                                        "primary_color",
+                                                        "logo_url"
+                                                    ]
+                                                },
+                                                "match": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "category": {
+                                                            "type": "string"
+                                                        },
+                                                        "competition": {
+                                                            "type": "string"
+                                                        },
+                                                        "opponent": {
+                                                            "type": "string"
+                                                        },
+                                                        "is_home": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "match_date": {
+                                                            "type": "string"
+                                                        },
+                                                        "meet_at": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "venue": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "maps_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "uniform": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "uniform_color": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "what_to_bring": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "status": {
+                                                            "type": "string"
+                                                        },
+                                                        "updated": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "category",
+                                                        "competition",
+                                                        "opponent",
+                                                        "is_home",
+                                                        "match_date",
+                                                        "meet_at",
+                                                        "venue",
+                                                        "maps_url",
+                                                        "uniform",
+                                                        "uniform_color",
+                                                        "what_to_bring",
+                                                        "status",
+                                                        "updated"
+                                                    ]
+                                                },
+                                                "players": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "shirt_number": {
+                                                                "type": [
+                                                                    "integer",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "name",
+                                                            "shirt_number"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "club",
+                                                "match",
+                                                "players"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -7989,6 +8823,128 @@
                 ],
                 "title": "CalendarEventResource"
             },
+            "CallupRowResource": {
+                "type": "object",
+                "properties": {
+                    "player_id": {
+                        "type": "integer"
+                    },
+                    "player_name": {
+                        "type": "string"
+                    },
+                    "shirt_number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "response": {
+                        "type": "string",
+                        "description": "`pending`, `going` o `not_going`."
+                    },
+                    "response_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "responded_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "personal_url": {
+                        "type": "string",
+                        "description": "Link personal para confirmar (p\u00e1gina del front)."
+                    },
+                    "whatsapp_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "WhatsApp al contacto principal con el mensaje armado; null si no tiene tel\u00e9fono."
+                    }
+                },
+                "required": [
+                    "player_id",
+                    "player_name",
+                    "shirt_number",
+                    "response",
+                    "response_note",
+                    "responded_at",
+                    "personal_url",
+                    "whatsapp_url"
+                ],
+                "title": "CallupRowResource"
+            },
+            "CallupSheetResource": {
+                "type": "object",
+                "properties": {
+                    "match_id": {
+                        "type": "integer"
+                    },
+                    "published_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "updated_after_publish": {
+                        "type": "boolean",
+                        "description": "Cambi\u00f3 la fecha, la hora o el lugar despu\u00e9s de publicar: hay que volver a avisar."
+                    },
+                    "public_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "P\u00e1gina p\u00fablica de la convocatoria; null hasta publicar."
+                    },
+                    "group_message": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Mensaje para el grupo de WhatsApp; null hasta publicar."
+                    },
+                    "going": {
+                        "type": "integer"
+                    },
+                    "not_going": {
+                        "type": "integer"
+                    },
+                    "pending": {
+                        "type": "integer"
+                    },
+                    "callups": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CallupRowResource"
+                        }
+                    },
+                    "squad": {
+                        "type": "array",
+                        "description": "El plantel de la categor\u00eda, con qui\u00e9n est\u00e1 habilitado y qui\u00e9n est\u00e1 convocado.",
+                        "items": {
+                            "$ref": "#/components/schemas/SquadOptionResource"
+                        }
+                    }
+                },
+                "required": [
+                    "match_id",
+                    "published_at",
+                    "updated_after_publish",
+                    "public_url",
+                    "group_message",
+                    "going",
+                    "not_going",
+                    "pending",
+                    "callups",
+                    "squad"
+                ],
+                "title": "CallupSheetResource"
+            },
             "CategoryCoachResource": {
                 "type": "object",
                 "properties": {
@@ -9282,6 +10238,46 @@
                     "updated_at"
                 ],
                 "title": "SportResource"
+            },
+            "SquadOptionResource": {
+                "type": "object",
+                "properties": {
+                    "player_id": {
+                        "type": "integer"
+                    },
+                    "player_name": {
+                        "type": "string"
+                    },
+                    "shirt_number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "is_eligible": {
+                        "type": "boolean",
+                        "description": "Habilitado para jugar: solo estos se pueden convocar."
+                    },
+                    "missing": {
+                        "type": "array",
+                        "description": "Requisitos obligatorios que le faltan.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "called_up": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "player_id",
+                    "player_name",
+                    "shirt_number",
+                    "is_eligible",
+                    "missing",
+                    "called_up"
+                ],
+                "title": "SquadOptionResource"
             },
             "StoreCategoryCoachRequest": {
                 "type": "object",

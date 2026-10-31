@@ -31,8 +31,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $opponent_score
  * @property string $status
  * @property string|null $notes
+ * @property CarbonImmutable|null $callup_published_at
+ * @property string|null $public_token
+ * @property bool $updated_after_publish
  */
-#[Fillable(['category_id', 'competition_id', 'opponent', 'match_date', 'meet_at', 'venue', 'maps_url', 'is_home', 'uniform', 'uniform_color', 'what_to_bring', 'our_score', 'opponent_score', 'status', 'notes'])]
+#[Fillable(['category_id', 'competition_id', 'opponent', 'match_date', 'meet_at', 'venue', 'maps_url', 'is_home', 'uniform', 'uniform_color', 'what_to_bring', 'our_score', 'opponent_score', 'status', 'notes', 'callup_published_at', 'public_token', 'updated_after_publish'])]
 class GameMatch extends Model
 {
     /** @use HasFactory<GameMatchFactory> */
@@ -52,6 +55,8 @@ class GameMatch extends Model
             'is_home' => 'boolean',
             'our_score' => 'integer',
             'opponent_score' => 'integer',
+            'callup_published_at' => 'immutable_datetime',
+            'updated_after_publish' => 'boolean',
         ];
     }
 
@@ -65,6 +70,12 @@ class GameMatch extends Model
     public function competition(): BelongsTo
     {
         return $this->belongsTo(Competition::class);
+    }
+
+    /** @return HasMany<MatchCallup, $this> */
+    public function callups(): HasMany
+    {
+        return $this->hasMany(MatchCallup::class, 'match_id');
     }
 
     /** @return HasMany<PlayerAttendance, $this> */
