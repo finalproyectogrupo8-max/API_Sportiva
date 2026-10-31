@@ -92,6 +92,7 @@ Route::middleware('throttle:60,1')->prefix('public/callups')->group(function () 
     Route::get('respond/{token}', [PublicCallupController::class, 'showPersonal']);
     Route::post('respond/{token}', [PublicCallupController::class, 'respond']);
     Route::get('{token}/calendar.ics', [PublicCallupController::class, 'calendar']);
+    Route::post('{token}/players/{callup}', [PublicCallupController::class, 'respondFromGroup'])->whereNumber('callup');
     Route::get('{token}', [PublicCallupController::class, 'show']);
 });
 
