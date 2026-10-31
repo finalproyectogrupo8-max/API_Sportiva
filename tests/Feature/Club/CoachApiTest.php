@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Club;
 
+use App\Models\Club\Category;
 use App\Models\Club\Coach;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Concerns\InteractsWithTenants;
 use Tests\TestCase;
 
@@ -105,5 +107,28 @@ class CoachApiTest extends TestCase
         $this->withClubToken($token)->deleteJson("/api/coaches/{$coachB->id}")->assertNotFound();
 
         $this->assertSame('Del club B', $this->inTenant($this->tenantB(), fn () => Coach::find($coachB->id)->last_name));
+    }
+
+    public function test_lists_current_categories_of_each_coach(): void
+    {
+        $coach = $this->inTenant($this->tenantA(), function () {
+            $coach = Coach::factory()->create();
+            $u15 = Category::factory()->create(['name' => 'U15']);
+            $u17 = Category::factory()->create(['name' => 'U17']);
+            DB::connection('tenant')->table('category_coaches')->insert([
+                ['category_id' => $u15->id, 'coach_id' => $coach->id, 'assignment_type' => 'head_coach', 'start_date' => '2026-01-01', 'end_date' => null],
+                ['category_id' => $u17->id, 'coach_id' => $coach->id, 'assignment_type' => 'assistant', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31'],
+            ]);
+
+            return $coach;
+        });
+        $token = $this->token();
+
+        $this->withClubToken($token)->getJson('/api/coaches')
+            ->assertOk()->assertJsonCount(1, 'data.0.assignments')
+            ->assertJsonPath('data.0.assignments.0.category_name', 'U15')
+            ->assertJsonPath('data.0.assignments.0.assignment_type', 'head_coach');
+        $this->withClubToken($token)->getJson("/api/coaches/{$coach->id}")
+            ->assertOk()->assertJsonPath('data.assignments.0.category_name', 'U15');
     }
 }

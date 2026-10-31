@@ -14,6 +14,8 @@ class CategoryCoachResource extends JsonResource
         return [
             'id' => $this->id,
             'category_id' => $this->category_id,
+            /** Nombre de la categoría, si se cargó. */
+            'category_name' => $this->whenLoaded('category', fn () => $this->category->name),
             'coach_id' => $this->coach_id,
             /** Nombre y apellido del profe, si se cargó. */
             'coach_name' => $this->whenLoaded('coach', fn () => trim($this->coach->first_name.' '.$this->coach->last_name)),
