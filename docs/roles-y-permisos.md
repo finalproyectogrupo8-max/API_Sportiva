@@ -32,6 +32,7 @@ Las claves siguen [guia-abm §9](guia-abm.md#9-autorización-policies-y-permisos
 | **Análisis** (`analisis`) | `physical_evaluations` | `view`, `create`, `update`, `delete` | sí |
 | **Proyecto** (`competencia`) | `project` | `view`, `update` | — |
 | **Habilitación** (`habilitacion`) | `competitions` (ligas, torneos y sus requisitos, TIZ-31) | `view`, `create`, `update`, `delete` | sí, solo `view` |
+| | `player_requirements` (papeles de cada jugador, TIZ-32) | `view`, `update` (presentar), `approve` (aprobar o rechazar) | sí, `view` y `update` |
 | **Indumentaria** (`indumentaria`) | `apparel_items` (catálogo de prendas) | `view`, `create`, `update`, `delete` | — |
 | | `apparel_orders` | `view`, `create`, `update`, `delete`, `approve`, `deliver` | sí |
 | **Materiales** (`materiales`) | `materials` | `view`, `create`, `update`, `delete` | — |
@@ -100,6 +101,7 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, — = nada.
 | `player_contacts` | ✓ ver, editar | ver (s) | — | — | — |
 | `player_documents` | ✓ ver, subir, borrar | ver, subir (s) | — | — | — |
 | `competitions` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
+| `player_requirements` | ✓ ver, presentar, aprobar | ver, presentar (s) | ver (s) | — | — |
 | `coaches` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
 | `categories.manage_coaches` | ✓ | — | — | — | — |
 | `matches` | ✓ ver, crear, editar, eliminar | ver, crear, editar (s) | ver (s) | ver | ver |

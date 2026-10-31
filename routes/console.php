@@ -9,3 +9,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('sanctum:prune-expired', ['--hours=24'])->daily();
+
+// TIZ-32: requisitos de habilitación vencidos, en todos los clubes.
+Schedule::command('club:expire-requirements')->dailyAt('03:00');

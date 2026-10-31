@@ -1,6 +1,6 @@
 # Modelo de datos de la base de cada club
 
-> **Estado: esquema migrado, ABM en curso.** Las 37 tablas existen como migraciones en `database/migrations/tenant/` y se aplican a **cada** base `club_<slug>`. Los modelos, endpoints y permisos de cada módulo siguen pasando por su change de OpenSpec (`/opsx:propose`). Si un change necesita cambiar una tabla, lo hace con una migración nueva (nunca editando una mergeada) y actualiza el documento del módulo.
+> **Estado: esquema migrado, ABM en curso.** Las 38 tablas existen como migraciones en `database/migrations/tenant/` y se aplican a **cada** base `club_<slug>`. Los modelos, endpoints y permisos de cada módulo siguen pasando por su change de OpenSpec (`/opsx:propose`). Si un change necesita cambiar una tabla, lo hace con una migración nueva (nunca editando una mergeada) y actualiza el documento del módulo.
 
 Fuente: el borrador técnico *OLIM · Modelo relacional de bases de datos y autenticación multi-tenant* (PDF del equipo), adaptado a las convenciones de este repo. Las diferencias con el borrador están en [Diferencias con el borrador](#diferencias-con-el-borrador-y-con-el-repo).
 
@@ -20,10 +20,10 @@ Contexto general: [arquitectura multi-tenant](../arquitectura-multi-tenant.md) y
 | 6 | [Evaluaciones físicas](06-evaluaciones-fisicas.md) | `physical_evaluations`, `physical_measurements` |
 | 7 | [Instalaciones y mantenimiento](07-instalaciones-y-mantenimiento.md) | `facilities`, `facility_components`, `repair_requests`, `maintenance_records` |
 | 8 | [Auditoría, historial y notificaciones](08-auditoria-y-notificaciones.md) | `audit_logs`, `order_status_history`, `notifications` |
-| 9 | [Competencias y habilitación](09-competencias-y-habilitacion.md) | `competitions`, `category_competitions`, `competition_requirements` |
+| 9 | [Competencias y habilitación](09-competencias-y-habilitacion.md) | `competitions`, `category_competitions`, `competition_requirements`, `player_requirements` |
 | 10 | [Documentos](10-documentos.md) | `documents` |
 
-En total son 37 tablas, todas en la misma base del club: las 32 del borrador más `player_contacts` (TIZ-15), las 3 de competencias (TIZ-31) y `documents` (TIZ-29).
+En total son 38 tablas, todas en la misma base del club: las 32 del borrador más `player_contacts` (TIZ-15), las 3 de competencias (TIZ-31), `documents` (TIZ-29) y `player_requirements` (TIZ-32).
 
 ## Decisiones de modelado
 

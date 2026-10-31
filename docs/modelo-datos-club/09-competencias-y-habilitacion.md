@@ -60,3 +60,30 @@ erDiagram
 ## Cambio en `matches`
 
 `competition_id` (nullable, FK → `competitions.id`, `ON DELETE SET NULL`): la competencia del partido.
+
+## `player_requirements`
+
+Estado de cada requisito por jugador (TIZ-32). Sin fila, el requisito está **pendiente**.
+
+| Columna | Tipo | Null | Restricciones | Descripción |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | no | PK | |
+| `player_id` | BIGINT UNSIGNED | no | FK → `players.id`, `ON DELETE CASCADE` | |
+| `competition_requirement_id` | BIGINT UNSIGNED | no | FK → `competition_requirements.id`, `ON DELETE CASCADE` | |
+| `status` | VARCHAR(20) | no | | `pending` / `submitted` / `approved` / `rejected` / `expired` |
+| `document_id` | BIGINT UNSIGNED | sí | FK → `documents.id`, `ON DELETE SET NULL` | El papel presentado (obligatorio si el requisito `requires_file`) |
+| `submitted_at` | TIMESTAMP | sí | | |
+| `expires_at` | DATE | sí | | Al aprobar: hoy + `validity_months`, o la fecha que se mande |
+| `reviewed_by` | BIGINT UNSIGNED | sí | FK → `club_users.id` | Quién aprobó o rechazó |
+| `reviewed_at` | TIMESTAMP | sí | | |
+| `rejection_reason` | VARCHAR(255) | sí | | |
+| `created_at`, `updated_at` | TIMESTAMP | sí | | |
+
+- `UNIQUE (player_id, competition_requirement_id)`; índice `(status, expires_at)` para el vencimiento.
+
+### Quién está habilitado
+
+- A un jugador le aplican los requisitos de las competencias de **sus categorías activas**. Los `minors_only` no aplican si ya cumplió 18.
+- Está **habilitado** si tiene aprobados y vigentes todos los obligatorios que le aplican.
+- Un aprobado con `expires_at` pasado cuenta como vencido al momento. Además, `club:expire-requirements` corre todos los días a las 03:00 y deja el estado guardado en `expired`.
+- Endpoints: `GET /api/eligibility` (resumen por categoría), `GET /api/categories/{id}/eligibility` (grilla), `GET /api/players/{id}/eligibility` y `POST /api/players/{player}/requirements/{requirement}/submit | approve | reject`.

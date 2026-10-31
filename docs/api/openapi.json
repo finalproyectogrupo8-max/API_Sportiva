@@ -2757,6 +2757,368 @@
                 }
             }
         },
+        "/eligibility": {
+            "get": {
+                "operationId": "eligibility.index",
+                "summary": "Resumen del club: una fila por categor\u00eda activa con competencias",
+                "tags": [
+                    "Eligibility"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `CategoryEligibilityResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CategoryEligibilityResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/categories/{category}/eligibility": {
+            "get": {
+                "operationId": "eligibility.category",
+                "summary": "La grilla de una categor\u00eda: jugadores \u00d7 requisitos",
+                "tags": [
+                    "Eligibility"
+                ],
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "description": "The category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `PlayerEligibilityResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PlayerEligibilityResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/players/{player}/eligibility": {
+            "get": {
+                "operationId": "eligibility.player",
+                "tags": [
+                    "Eligibility"
+                ],
+                "parameters": [
+                    {
+                        "name": "player",
+                        "in": "path",
+                        "required": true,
+                        "description": "The player ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PlayerEligibilityResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PlayerEligibilityResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/players/{player}/requirements/{requirement}/submit": {
+            "post": {
+                "operationId": "eligibility.submit",
+                "summary": "Presentar un papel. Si el requisito pide archivo, `document_id` (subido con TIZ-29) es obligatorio",
+                "tags": [
+                    "Eligibility"
+                ],
+                "parameters": [
+                    {
+                        "name": "player",
+                        "in": "path",
+                        "required": true,
+                        "description": "The player ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "requirement",
+                        "in": "path",
+                        "required": true,
+                        "description": "The requirement ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "document_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PlayerEligibilityResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PlayerEligibilityResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/players/{player}/requirements/{requirement}/approve": {
+            "post": {
+                "operationId": "eligibility.approve",
+                "summary": "Aprobar. Vence a los `validity_months` del requisito, salvo que se mande `expires_at` (la fecha\ndel apto). Se puede aprobar sin presentar antes si el club recibi\u00f3 el papel en mano",
+                "tags": [
+                    "Eligibility"
+                ],
+                "parameters": [
+                    {
+                        "name": "player",
+                        "in": "path",
+                        "required": true,
+                        "description": "The player ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "requirement",
+                        "in": "path",
+                        "required": true,
+                        "description": "The requirement ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "document_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "expires_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PlayerEligibilityResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PlayerEligibilityResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/players/{player}/requirements/{requirement}/reject": {
+            "post": {
+                "operationId": "eligibility.reject",
+                "tags": [
+                    "Eligibility"
+                ],
+                "parameters": [
+                    {
+                        "name": "player",
+                        "in": "path",
+                        "required": true,
+                        "description": "The player ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "requirement",
+                        "in": "path",
+                        "required": true,
+                        "description": "The requirement ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    }
+                                },
+                                "required": [
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PlayerEligibilityResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PlayerEligibilityResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "operationId": "health",
@@ -7670,6 +8032,52 @@
                 ],
                 "title": "CategoryCoachResource"
             },
+            "CategoryEligibilityResource": {
+                "type": "object",
+                "properties": {
+                    "category_id": {
+                        "type": "integer"
+                    },
+                    "category_name": {
+                        "type": "string"
+                    },
+                    "players": {
+                        "type": "integer",
+                        "description": "Jugadores activos en la categor\u00eda."
+                    },
+                    "eligible": {
+                        "type": "integer",
+                        "description": "Cu\u00e1ntos est\u00e1n habilitados."
+                    },
+                    "registration_deadline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Cierre de inscripci\u00f3n m\u00e1s pr\u00f3ximo (todav\u00eda no pasado)."
+                    },
+                    "days_to_deadline": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "expiring_soon": {
+                        "type": "integer",
+                        "description": "Requisitos aprobados que vencen en los pr\u00f3ximos 30 d\u00edas."
+                    }
+                },
+                "required": [
+                    "category_id",
+                    "category_name",
+                    "players",
+                    "eligible",
+                    "registration_deadline",
+                    "days_to_deadline",
+                    "expiring_soon"
+                ],
+                "title": "CategoryEligibilityResource"
+            },
             "CategoryResource": {
                 "type": "object",
                 "properties": {
@@ -8498,6 +8906,46 @@
                 ],
                 "title": "PlayerContactResource"
             },
+            "PlayerEligibilityResource": {
+                "type": "object",
+                "properties": {
+                    "player_id": {
+                        "type": "integer"
+                    },
+                    "player_name": {
+                        "type": "string"
+                    },
+                    "shirt_number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "is_eligible": {
+                        "type": "boolean",
+                        "description": "Tiene aprobados y vigentes todos los requisitos obligatorios que le aplican."
+                    },
+                    "missing": {
+                        "type": "integer",
+                        "description": "Requisitos obligatorios que le faltan."
+                    },
+                    "requirements": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RequirementStatusResource"
+                        }
+                    }
+                },
+                "required": [
+                    "player_id",
+                    "player_name",
+                    "shirt_number",
+                    "is_eligible",
+                    "missing",
+                    "requirements"
+                ],
+                "title": "PlayerEligibilityResource"
+            },
             "PlayerResource": {
                 "type": "object",
                 "properties": {
@@ -8640,6 +9088,70 @@
                     "records"
                 ],
                 "title": "RecordAttendanceRequest"
+            },
+            "RequirementStatusResource": {
+                "type": "object",
+                "properties": {
+                    "requirement_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "competition_id": {
+                        "type": "integer"
+                    },
+                    "competition_name": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "`pending`, `submitted`, `approved`, `rejected`, `expired` o `not_applicable`."
+                    },
+                    "is_required": {
+                        "type": "boolean"
+                    },
+                    "requires_file": {
+                        "type": "boolean"
+                    },
+                    "expires_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "expiring_soon": {
+                        "type": "boolean",
+                        "description": "Aprobado y vence en los pr\u00f3ximos 30 d\u00edas."
+                    },
+                    "document_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Documento adjunto (`GET /api/documents/{id}/download`)."
+                    },
+                    "rejection_reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "requirement_id",
+                    "name",
+                    "competition_id",
+                    "competition_name",
+                    "status",
+                    "is_required",
+                    "requires_file",
+                    "expires_at",
+                    "expiring_soon",
+                    "document_id",
+                    "rejection_reason"
+                ],
+                "title": "RequirementStatusResource"
             },
             "SeasonResource": {
                 "type": "object",

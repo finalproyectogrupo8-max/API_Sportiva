@@ -80,6 +80,7 @@ return [
             'label' => 'Habilitación',
             'resources' => [
                 'competitions' => ['label' => 'Competencias y requisitos', 'actions' => $crud, 'scoped' => ['view']],
+                'player_requirements' => ['label' => 'Papeles de cada jugador', 'actions' => ['view', 'update', 'approve'], 'scoped' => ['view', 'update']],
             ],
         ],
         'indumentaria' => [
@@ -168,6 +169,7 @@ return [
                 'seasons.view', 'seasons.create', 'seasons.update', 'seasons.delete',
                 'categories.view', 'categories.create', 'categories.update', 'categories.delete',
                 'competitions.view', 'competitions.create', 'competitions.update', 'competitions.delete',
+                'player_requirements.view', 'player_requirements.update', 'player_requirements.approve',
                 'announcements.view', 'announcements.send',
             ],
         ],
@@ -190,6 +192,7 @@ return [
                 'facilities.view', 'repairs.view', 'repairs.create',
                 'categories.view:own',
                 'competitions.view:own',
+                'player_requirements.view:own', 'player_requirements.update:own',
                 'announcements.view:own', 'announcements.send:own',
             ],
         ],
@@ -207,6 +210,7 @@ return [
                 'facilities.view', 'repairs.view', 'repairs.create',
                 'categories.view:own',
                 'competitions.view:own',
+                'player_requirements.view:own',
             ],
         ],
         'inventory_manager' => [
