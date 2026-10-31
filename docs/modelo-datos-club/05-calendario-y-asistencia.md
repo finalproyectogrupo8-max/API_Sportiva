@@ -47,9 +47,13 @@ erDiagram
 | `category_id` | BIGINT UNSIGNED | no | FK → `categories.id` | Categoría que juega |
 | `opponent` | VARCHAR(120) | no | | Rival |
 | `match_date` | DATETIME | no | | Fecha y hora (UTC) |
+| `meet_at` | DATETIME | sí | `<= match_date` | Hora de presentación (TIZ-16) |
 | `venue` | VARCHAR(200) | sí | | Lugar |
+| `maps_url` | VARCHAR(500) | sí | | Link al mapa del lugar (TIZ-16) |
 | `is_home` | BOOLEAN | no | | Local o visitante |
+| `uniform` | VARCHAR(10) | sí | | `home` (titular) / `away` (alternativa) (TIZ-16) |
 | `uniform_color` | VARCHAR(50) | sí | | |
+| `what_to_bring` | TEXT | sí | | Qué llevar, para el aviso de la convocatoria (TIZ-16) |
 | `our_score` | SMALLINT UNSIGNED | sí | | |
 | `opponent_score` | SMALLINT UNSIGNED | sí | | |
 | `status` | VARCHAR(20) | no | | `scheduled` / `played` / `postponed` / `cancelled` |
@@ -58,7 +62,9 @@ erDiagram
 | `deleted_at` | TIMESTAMP | sí | | *(convención ABM)* |
 
 - Índice: `(category_id, match_date)` para el fixture de una categoría.
-- El resultado se carga solo con `status = played`. Se valida en la aplicación.
+- El resultado se carga con `PATCH`: con los dos puntajes, el partido pasa a `played` salvo que se mande otro estado.
+- `competition_id` llega con TIZ-31, y `callup_published_at` y `public_token` con la convocatoria (TIZ-33).
+- En el código el modelo se llama `GameMatch`, porque `match` es palabra reservada de PHP.
 
 ## `trainings`
 

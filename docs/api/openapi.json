@@ -10,6 +10,344 @@
         }
     ],
     "paths": {
+        "/matches/{match}/attendance": {
+            "get": {
+                "operationId": "attendance.showMatch",
+                "tags": [
+                    "Attendance"
+                ],
+                "parameters": [
+                    {
+                        "name": "match",
+                        "in": "path",
+                        "required": true,
+                        "description": "The match ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "player_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "player_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "shirt_number": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
+                                                    },
+                                                    "notes": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "player_id",
+                                                    "player_name",
+                                                    "shirt_number",
+                                                    "status",
+                                                    "notes"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "attendance.recordMatch",
+                "tags": [
+                    "Attendance"
+                ],
+                "parameters": [
+                    {
+                        "name": "match",
+                        "in": "path",
+                        "required": true,
+                        "description": "The match ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecordAttendanceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "player_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "player_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "shirt_number": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
+                                                    },
+                                                    "notes": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "player_id",
+                                                    "player_name",
+                                                    "shirt_number",
+                                                    "status",
+                                                    "notes"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/trainings/{training}/attendance": {
+            "get": {
+                "operationId": "attendance.showTraining",
+                "tags": [
+                    "Attendance"
+                ],
+                "parameters": [
+                    {
+                        "name": "training",
+                        "in": "path",
+                        "required": true,
+                        "description": "The training ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "player_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "player_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "shirt_number": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
+                                                    },
+                                                    "notes": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "player_id",
+                                                    "player_name",
+                                                    "shirt_number",
+                                                    "status",
+                                                    "notes"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "attendance.recordTraining",
+                "tags": [
+                    "Attendance"
+                ],
+                "parameters": [
+                    {
+                        "name": "training",
+                        "in": "path",
+                        "required": true,
+                        "description": "The training ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecordAttendanceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "player_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "player_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "shirt_number": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
+                                                    },
+                                                    "notes": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "player_id",
+                                                    "player_name",
+                                                    "shirt_number",
+                                                    "status",
+                                                    "notes"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "operationId": "auth.login",
@@ -221,6 +559,93 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/calendar": {
+            "get": {
+                "operationId": "club.calendar",
+                "tags": [
+                    "Calendar"
+                ],
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "description": "Hasta dos meses por consulta: una vista de mes con sus bordes.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `CalendarEventResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CalendarEventResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -1567,6 +1992,425 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/matches": {
+            "get": {
+                "operationId": "matches.index",
+                "tags": [
+                    "Match"
+                ],
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "date",
+                                "-date"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `MatchResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/MatchResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "category_name"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "matches.store",
+                "tags": [
+                    "Match"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreMatchRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`MatchResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/MatchResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category_name"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/matches/{match}": {
+            "get": {
+                "operationId": "matches.show",
+                "tags": [
+                    "Match"
+                ],
+                "parameters": [
+                    {
+                        "name": "match",
+                        "in": "path",
+                        "required": true,
+                        "description": "The match ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MatchResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/MatchResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category_name"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "matches.update",
+                "summary": "Tambi\u00e9n carga el resultado: con los dos puntajes, el partido pasa a `played` salvo que se mande otro estado",
+                "tags": [
+                    "Match"
+                ],
+                "parameters": [
+                    {
+                        "name": "match",
+                        "in": "path",
+                        "required": true,
+                        "description": "The match ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreMatchRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`MatchResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/MatchResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category_name"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "matches.destroy",
+                "tags": [
+                    "Match"
+                ],
+                "parameters": [
+                    {
+                        "name": "match",
+                        "in": "path",
+                        "required": true,
+                        "description": "The match ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -4920,6 +5764,424 @@
                 }
             }
         },
+        "/trainings": {
+            "get": {
+                "operationId": "trainings.index",
+                "tags": [
+                    "Training"
+                ],
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "date",
+                                "-date"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `TrainingResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/TrainingResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "category_name"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "trainings.store",
+                "tags": [
+                    "Training"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreTrainingRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`TrainingResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/TrainingResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category_name"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/trainings/{training}": {
+            "get": {
+                "operationId": "trainings.show",
+                "tags": [
+                    "Training"
+                ],
+                "parameters": [
+                    {
+                        "name": "training",
+                        "in": "path",
+                        "required": true,
+                        "description": "The training ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`TrainingResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/TrainingResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category_name"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "trainings.update",
+                "tags": [
+                    "Training"
+                ],
+                "parameters": [
+                    {
+                        "name": "training",
+                        "in": "path",
+                        "required": true,
+                        "description": "The training ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreTrainingRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`TrainingResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/TrainingResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category_name"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "trainings.destroy",
+                "tags": [
+                    "Training"
+                ],
+                "parameters": [
+                    {
+                        "name": "training",
+                        "in": "path",
+                        "required": true,
+                        "description": "The training ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "operationId": "users.index",
@@ -5526,6 +6788,61 @@
                 ],
                 "title": "App.Http.Resources.Admin.UserResource"
             },
+            "CalendarEventResource": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "`match` o `training`."
+                    },
+                    "id": {
+                        "type": "integer"
+                    },
+                    "category_id": {
+                        "type": "integer"
+                    },
+                    "category_name": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "starts_at": {
+                        "type": "string"
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "location": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Solo partidos: `scheduled`, `played`, `postponed` o `cancelled`."
+                    }
+                },
+                "required": [
+                    "type",
+                    "id",
+                    "category_id",
+                    "category_name",
+                    "title",
+                    "starts_at",
+                    "ends_at",
+                    "location",
+                    "status"
+                ],
+                "title": "CalendarEventResource"
+            },
             "CategoryCoachResource": {
                 "type": "object",
                 "properties": {
@@ -5885,6 +7202,108 @@
                 ],
                 "title": "LoginResource"
             },
+            "MatchResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "category_id": {
+                        "type": "integer"
+                    },
+                    "category_name": {
+                        "type": "string",
+                        "description": "Nombre de la categor\u00eda, si se carg\u00f3."
+                    },
+                    "opponent": {
+                        "type": "string"
+                    },
+                    "match_date": {
+                        "type": "string"
+                    },
+                    "meet_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Hora de presentaci\u00f3n."
+                    },
+                    "venue": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "maps_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_home": {
+                        "type": "boolean"
+                    },
+                    "uniform": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "`home` (titular) o `away` (alternativa)."
+                    },
+                    "uniform_color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "what_to_bring": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "our_score": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "opponent_score": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "`scheduled`, `played`, `postponed` o `cancelled`."
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "category_id",
+                    "opponent",
+                    "match_date",
+                    "meet_at",
+                    "venue",
+                    "maps_url",
+                    "is_home",
+                    "uniform",
+                    "uniform_color",
+                    "what_to_bring",
+                    "our_score",
+                    "opponent_score",
+                    "status",
+                    "notes"
+                ],
+                "title": "MatchResource"
+            },
             "MeResource": {
                 "type": "object",
                 "properties": {
@@ -6199,6 +7618,50 @@
                 ],
                 "title": "PlayerResource"
             },
+            "RecordAttendanceRequest": {
+                "type": "object",
+                "description": "Asistencia de un evento en un solo request (la pantalla m\u00f3vil la manda entera).",
+                "properties": {
+                    "records": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "player_id": {
+                                    "type": "integer"
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "present",
+                                        "absent",
+                                        "excused",
+                                        "late"
+                                    ]
+                                },
+                                "notes": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            },
+                            "required": [
+                                "player_id",
+                                "status"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 200,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "records"
+                ],
+                "title": "RecordAttendanceRequest"
+            },
             "SeasonResource": {
                 "type": "object",
                 "properties": {
@@ -6441,6 +7904,113 @@
                     "status"
                 ],
                 "title": "StoreCoachRequest"
+            },
+            "StoreMatchRequest": {
+                "type": "object",
+                "description": "Alta y edici\u00f3n de partidos. En PATCH todo es opcional; el resultado se carga as\u00ed.",
+                "properties": {
+                    "category_id": {
+                        "type": "integer"
+                    },
+                    "opponent": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "match_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "meet_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "Hora de presentaci\u00f3n: antes del partido."
+                    },
+                    "venue": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 200
+                    },
+                    "maps_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uri",
+                        "maxLength": 500
+                    },
+                    "is_home": {
+                        "type": "boolean"
+                    },
+                    "uniform": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "home",
+                            "away",
+                            null
+                        ]
+                    },
+                    "uniform_color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 50
+                    },
+                    "what_to_bring": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    },
+                    "our_score": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 999
+                    },
+                    "opponent_score": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 999
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "scheduled",
+                            "played",
+                            "postponed",
+                            "cancelled"
+                        ]
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    }
+                },
+                "required": [
+                    "category_id",
+                    "opponent",
+                    "match_date",
+                    "is_home"
+                ],
+                "title": "StoreMatchRequest"
             },
             "StoreMembershipRequest": {
                 "type": "object",
@@ -6841,6 +8411,56 @@
                 ],
                 "title": "StoreTenantRequest"
             },
+            "StoreTrainingRequest": {
+                "type": "object",
+                "description": "Alta y edici\u00f3n de entrenamientos. En PATCH todo es opcional.",
+                "properties": {
+                    "category_id": {
+                        "type": "integer"
+                    },
+                    "coach_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "location": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 150
+                    },
+                    "objectives": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    }
+                },
+                "required": [
+                    "category_id",
+                    "starts_at",
+                    "ends_at"
+                ],
+                "title": "StoreTrainingRequest"
+            },
             "StoreUserRequest": {
                 "type": "object",
                 "properties": {
@@ -7166,6 +8786,62 @@
                     "discarded"
                 ],
                 "title": "TicketStatus"
+            },
+            "TrainingResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "category_id": {
+                        "type": "integer"
+                    },
+                    "category_name": {
+                        "type": "string",
+                        "description": "Nombre de la categor\u00eda, si se carg\u00f3."
+                    },
+                    "coach_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "starts_at": {
+                        "type": "string"
+                    },
+                    "ends_at": {
+                        "type": "string"
+                    },
+                    "location": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "objectives": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "category_id",
+                    "coach_id",
+                    "starts_at",
+                    "ends_at",
+                    "location",
+                    "objectives",
+                    "notes"
+                ],
+                "title": "TrainingResource"
             },
             "UpdateCategoryRequest": {
                 "type": "object",
