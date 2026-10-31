@@ -83,7 +83,7 @@ class PublicCallupController extends Controller
                 'DTEND:'.$match->match_date->addHours(2)->utc()->format('Ymd\THis\Z'),
                 'SUMMARY:'.$escape(($tenant->short_name ?: $tenant->name).' · '.$title),
                 'LOCATION:'.$escape($match->venue),
-                'DESCRIPTION:'.$escape(($match->meet_at ? 'Presentación '.$match->meet_at->format('H:i').'. ' : '').($match->what_to_bring ? 'Llevar: '.$match->what_to_bring : '')),
+                'DESCRIPTION:'.$escape(($match->meet_at ? 'Presentación '.$match->meet_at->copy()->setTimezone(config('app.club_timezone'))->format('H:i').'. ' : '').($match->what_to_bring ? 'Llevar: '.$match->what_to_bring : '')),
                 'END:VEVENT', 'END:VCALENDAR', '',
             ]);
 

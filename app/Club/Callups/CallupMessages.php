@@ -53,12 +53,15 @@ class CallupMessages
 
     private function summary(GameMatch $match): string
     {
-        $date = $match->match_date->locale('es');
+        // Las horas se guardan en UTC: se muestran en la zona del club.
+        $tz = config('app.club_timezone');
+        $date = $match->match_date->copy()->setTimezone($tz)->locale('es');
+        $meet = $match->meet_at?->copy()->setTimezone($tz);
 
         return implode("\n", array_filter([
             ($match->is_home ? 'vs ' : 'en cancha de ').$match->opponent,
             ucfirst($date->isoFormat('dddd D [de] MMMM')).' · '
-                .($match->meet_at ? 'Presentación '.$match->meet_at->format('H:i').' · ' : '')
+                .($meet ? 'Presentación '.$meet->format('H:i').' · ' : '')
                 .'Partido '.$date->format('H:i'),
             $match->venue ? 'Lugar: '.$match->venue.($match->maps_url ? ' ('.$match->maps_url.')' : '') : null,
             $match->uniform ? 'Camiseta '.($match->uniform === 'home' ? 'titular' : 'alternativa').($match->uniform_color ? " ({$match->uniform_color})" : '') : null,
