@@ -6803,6 +6803,9 @@
                                                             "items": {
                                                                 "type": "object",
                                                                 "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
                                                                     "name": {
                                                                         "type": "string"
                                                                     },
@@ -6811,11 +6814,16 @@
                                                                             "integer",
                                                                             "null"
                                                                         ]
+                                                                    },
+                                                                    "response": {
+                                                                        "type": "string"
                                                                     }
                                                                 },
                                                                 "required": [
+                                                                    "id",
                                                                     "name",
-                                                                    "shirt_number"
+                                                                    "shirt_number",
+                                                                    "response"
                                                                 ]
                                                             }
                                                         }
@@ -7037,6 +7045,9 @@
                                                             "items": {
                                                                 "type": "object",
                                                                 "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
                                                                     "name": {
                                                                         "type": "string"
                                                                     },
@@ -7045,11 +7056,16 @@
                                                                             "integer",
                                                                             "null"
                                                                         ]
+                                                                    },
+                                                                    "response": {
+                                                                        "type": "string"
                                                                     }
                                                                 },
                                                                 "required": [
+                                                                    "id",
                                                                     "name",
-                                                                    "shirt_number"
+                                                                    "shirt_number",
+                                                                    "response"
                                                                 ]
                                                             }
                                                         }
@@ -7137,6 +7153,230 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/public/callups/{token}/players/{callup}": {
+            "post": {
+                "operationId": "publicCallup.respondFromGroup",
+                "summary": "Respuesta desde el link del grupo: cada uno toca su nombre y elige \"Voy\" o \"No puedo\".\nComo una encuesta del grupo, no pide m\u00e1s que el link; el link personal sigue existiendo",
+                "tags": [
+                    "PublicCallup"
+                ],
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "callup",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "response": {
+                                        "type": "string",
+                                        "enum": [
+                                            "going",
+                                            "not_going"
+                                        ]
+                                    },
+                                    "note": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    }
+                                },
+                                "required": [
+                                    "response"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "club": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "short_name": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "primary_color": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "logo_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "name",
+                                                        "short_name",
+                                                        "primary_color",
+                                                        "logo_url"
+                                                    ]
+                                                },
+                                                "match": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "category": {
+                                                            "type": "string"
+                                                        },
+                                                        "competition": {
+                                                            "type": "string"
+                                                        },
+                                                        "opponent": {
+                                                            "type": "string"
+                                                        },
+                                                        "is_home": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "match_date": {
+                                                            "type": "string"
+                                                        },
+                                                        "meet_at": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "venue": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "maps_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "uniform": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "uniform_color": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "what_to_bring": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "status": {
+                                                            "type": "string"
+                                                        },
+                                                        "updated": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "category",
+                                                        "competition",
+                                                        "opponent",
+                                                        "is_home",
+                                                        "match_date",
+                                                        "meet_at",
+                                                        "venue",
+                                                        "maps_url",
+                                                        "uniform",
+                                                        "uniform_color",
+                                                        "what_to_bring",
+                                                        "status",
+                                                        "updated"
+                                                    ]
+                                                },
+                                                "players": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "shirt_number": {
+                                                                "type": [
+                                                                    "integer",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "response": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "name",
+                                                            "shirt_number",
+                                                            "response"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "club",
+                                                "match",
+                                                "players"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -7282,6 +7522,9 @@
                                                     "items": {
                                                         "type": "object",
                                                         "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
                                                             "name": {
                                                                 "type": "string"
                                                             },
@@ -7290,11 +7533,16 @@
                                                                     "integer",
                                                                     "null"
                                                                 ]
+                                                            },
+                                                            "response": {
+                                                                "type": "string"
                                                             }
                                                         },
                                                         "required": [
+                                                            "id",
                                                             "name",
-                                                            "shirt_number"
+                                                            "shirt_number",
+                                                            "response"
                                                         ]
                                                     }
                                                 }

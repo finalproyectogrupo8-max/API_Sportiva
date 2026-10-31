@@ -142,6 +142,34 @@ class CallupApiTest extends TestCase
         $this->getJson('/api/public/callups/respond/sin-club')->assertNotFound();
     }
 
+    public function test_each_player_answers_from_the_group_link(): void
+    {
+        $d = $this->setUpMatch();
+        $token = $this->token();
+        $url = "/api/matches/{$d['match']->id}/callup";
+        $this->withClubToken($token)->putJson($url, ['players' => [['player_id' => $d['Ana']->id], ['player_id' => $d['Bea']->id]]]);
+        $sheet = $this->withClubToken($token)->postJson("{$url}/publish")->assertOk()->json('data');
+        $public = substr($sheet['public_url'], strlen(config('app.frontend_url').'/convocatoria/'));
+
+        // La página del grupo lista a cada convocado con su id y su respuesta (sin el motivo).
+        $players = $this->getJson("/api/public/callups/{$public}")->assertOk()
+            ->assertJsonPath('data.players.0.name', 'Ana A.')
+            ->assertJsonPath('data.players.0.response', 'pending')
+            ->json('data.players');
+
+        $this->postJson("/api/public/callups/{$public}/players/{$players[1]['id']}", ['response' => 'not_going', 'note' => 'Lesionada'])
+            ->assertOk()
+            ->assertJsonPath('data.players.1.response', 'not_going')
+            ->assertJsonMissingPath('data.players.1.note');
+        $this->postJson("/api/public/callups/{$public}/players/{$players[0]['id']}", ['response' => 'tal vez'])->assertUnprocessable();
+        $this->postJson("/api/public/callups/{$public}/players/999999", ['response' => 'going'])->assertNotFound();
+
+        $this->withClubToken($token)->getJson($url)
+            ->assertJsonPath('data.not_going', 1)
+            ->assertJsonPath('data.pending', 1)
+            ->assertJsonPath('data.callups.1.response_note', 'Lesionada');
+    }
+
     public function test_changes_after_publishing_ask_to_notify_again(): void
     {
         $d = $this->setUpMatch();

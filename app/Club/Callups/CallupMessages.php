@@ -41,7 +41,7 @@ class CallupMessages
             "*Convocados ({$callups->count()})*",
             ...$list->all(),
             '',
-            $this->publicUrl($match) ? 'Confirmá si vas: '.$this->publicUrl($match) : null,
+            $this->publicUrl($match) ? '👉 Tocá tu nombre y confirmá si vas: '.$this->publicUrl($match) : null,
         ], fn ($line) => $line !== null));
     }
 
