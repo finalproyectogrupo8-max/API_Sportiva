@@ -2,12 +2,22 @@
 
 namespace App\Models\Club;
 
+use Carbon\CarbonImmutable;
 use Database\Factories\Club\SportFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Deporte del club (fútbol, básquet, vóley).
+ *
+ * @property int $id
+ * @property string $name
+ * @property bool $is_active
+ * @property CarbonImmutable $created_at
+ * @property CarbonImmutable $updated_at
+ */
 #[Fillable(['name', 'is_active'])]
 class Sport extends Model
 {
