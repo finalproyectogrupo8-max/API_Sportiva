@@ -73,6 +73,10 @@ return [
 
     'timezone' => 'UTC',
 
+    // Zona del club para los textos que leen las personas (mensajes de WhatsApp, calendario).
+    // La base guarda en UTC; esto solo cambia cómo se muestra la hora.
+    'club_timezone' => env('CLUB_TIMEZONE', 'America/Argentina/Buenos_Aires'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

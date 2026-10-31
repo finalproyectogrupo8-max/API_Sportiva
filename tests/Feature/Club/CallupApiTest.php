@@ -48,7 +48,8 @@ class CallupApiTest extends TestCase
 
             $match = GameMatch::factory()->create([
                 'category_id' => $category->id, 'competition_id' => $competition->id, 'opponent' => 'Club Norte',
-                'match_date' => '2026-11-07 10:00:00', 'meet_at' => '2026-11-07 09:15:00', 'venue' => 'Estadio Cubierto',
+                // En UTC, como lo manda el front: en Buenos Aires son las 10:00 y las 09:15.
+                'match_date' => '2026-11-07 13:00:00', 'meet_at' => '2026-11-07 12:15:00', 'venue' => 'Estadio Cubierto',
                 'is_home' => true, 'uniform' => 'home', 'uniform_color' => 'Azul',
             ]);
 
@@ -100,7 +101,8 @@ class CallupApiTest extends TestCase
         $this->assertNotNull($sheet['published_at']);
         $this->assertStringStartsWith(config('app.frontend_url').'/convocatoria/'.$this->tenantA()->slug.'.', $sheet['public_url']);
         $this->assertStringContainsString('vs Club Norte', $sheet['group_message']);
-        $this->assertStringContainsString('Presentación 09:15', $sheet['group_message']);
+        $this->assertStringContainsString('Presentación 09:15 · Partido 10:00', $sheet['group_message']);
+        $this->assertStringContainsString('Sábado 7 de noviembre', $sheet['group_message']);
         $this->assertStringContainsString('Camiseta titular (Azul)', $sheet['group_message']);
         $this->assertStringStartsWith('https://wa.me/5491155550000?text=', $sheet['callups'][0]['whatsapp_url']);
         $this->assertNull($sheet['callups'][1]['whatsapp_url']);
@@ -116,7 +118,9 @@ class CallupApiTest extends TestCase
             ->getContent();
         $this->assertStringNotContainsString('40111222', $page);
         $this->assertStringNotContainsString('5555', $page);
-        $this->get("/api/public/callups/{$publicToken}/calendar.ics")->assertOk()->assertHeader('Content-Type', 'text/calendar; charset=utf-8');
+        $ics = $this->get("/api/public/callups/{$publicToken}/calendar.ics")->assertOk()->assertHeader('Content-Type', 'text/calendar; charset=utf-8')->getContent();
+        $this->assertStringContainsString('DTSTART:20261107T121500Z', $ics);
+        $this->assertStringContainsString('Presentación 09:15', $ics);
 
         // Ana confirma con su link; Bea dice que no puede.
         $anaToken = substr($sheet['callups'][0]['personal_url'], strlen(config('app.frontend_url').'/convocatoria/responder/'));
