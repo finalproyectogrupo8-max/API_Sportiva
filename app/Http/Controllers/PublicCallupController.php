@@ -63,13 +63,15 @@ class PublicCallupController extends Controller
         }
     }
 
-    /** El partido como evento de calendario (.ics) para "Agregar al calendario". */
+    /** El partido como evento de calendario (.ics) para "Agregar al calendario". Acepta el token público o el personal. */
     public function calendar(string $token): Response
     {
         $tenant = $this->connectClub($token);
 
         try {
-            $match = $this->publishedMatch($token);
+            // Sirve el link del grupo y también el personal de cada jugador.
+            $match = GameMatch::query()->where('public_token', $token)->whereNotNull('callup_published_at')->first()
+                ?? $this->callup($token)->match;
             $start = $match->meet_at ?? $match->match_date;
             $escape = fn (?string $text) => str_replace([',', ';', "\n"], ['\,', '\;', '\n'], (string) $text);
             $title = $match->category->name.' '.($match->is_home ? 'vs ' : 'en ').$match->opponent;

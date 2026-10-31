@@ -7105,7 +7105,7 @@
         "/public/callups/{token}/calendar.ics": {
             "get": {
                 "operationId": "publicCallup.calendar",
-                "summary": "El partido como evento de calendario (.ics) para \"Agregar al calendario\"",
+                "summary": "El partido como evento de calendario (.ics) para \"Agregar al calendario\". Acepta el token p\u00fablico o el personal",
                 "tags": [
                     "PublicCallup"
                 ],
