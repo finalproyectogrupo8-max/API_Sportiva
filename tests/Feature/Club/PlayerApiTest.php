@@ -159,4 +159,27 @@ class PlayerApiTest extends TestCase
 
         $this->withClubToken($this->token('coordinator'))->getJson('/api/players')->assertJsonCount(3, 'data');
     }
+
+    public function test_history_lists_current_and_ended_categories(): void
+    {
+        $player = $this->inTenant($this->tenantA(), function () {
+            $player = Player::factory()->create();
+            $u13 = Category::factory()->create(['name' => 'U13']);
+            $u15 = Category::factory()->create(['name' => 'U15']);
+            PlayerCategoryMembership::create(['player_id' => $player->id, 'category_id' => $u13->id, 'start_date' => '2025-03-01', 'end_date' => '2026-02-28', 'status' => 'ended']);
+            PlayerCategoryMembership::create(['player_id' => $player->id, 'category_id' => $u15->id, 'start_date' => '2026-03-01', 'shirt_number' => 9, 'status' => 'active']);
+
+            return $player;
+        });
+
+        $this->withClubToken($this->token())->getJson("/api/players/{$player->id}/memberships")
+            ->assertOk()->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.category_name', 'U15')
+            ->assertJsonPath('data.0.status', 'active')
+            ->assertJsonPath('data.1.category_name', 'U13')
+            ->assertJsonPath('data.1.end_date', '2026-02-28');
+
+        $this->withClubToken($this->token('inventory_manager'))->getJson("/api/players/{$player->id}/memberships")->assertForbidden();
+        $this->withClubToken($this->token())->getJson('/api/players/999999/memberships')->assertNotFound();
+    }
 }

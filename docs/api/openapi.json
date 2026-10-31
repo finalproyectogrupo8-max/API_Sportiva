@@ -1418,10 +1418,68 @@
                 }
             }
         },
+        "/players/{player}/memberships": {
+            "get": {
+                "operationId": "categoryMembership.forPlayer",
+                "summary": "Historial de categor\u00edas del jugador: vigentes y cerradas, de la m\u00e1s reciente a la m\u00e1s vieja",
+                "tags": [
+                    "CategoryMembership"
+                ],
+                "parameters": [
+                    {
+                        "name": "player",
+                        "in": "path",
+                        "required": true,
+                        "description": "The player ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `MembershipResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/MembershipResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "category_name"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/categories/{category}/memberships": {
             "get": {
                 "operationId": "categoryMembership.index",
-                "summary": "`?status=active` (por defecto), `ended` o `all`",
                 "tags": [
                     "CategoryMembership"
                 ],
@@ -1945,7 +2003,17 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/CoachResource"
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/CoachResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "assignments"
+                                                        ]
+                                                    }
+                                                ]
                                             }
                                         },
                                         "links": {
@@ -2157,7 +2225,17 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/CoachResource"
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/CoachResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "assignments"
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -12276,6 +12354,10 @@
                     "category_id": {
                         "type": "integer"
                     },
+                    "category_name": {
+                        "type": "string",
+                        "description": "Nombre de la categor\u00eda, si se carg\u00f3."
+                    },
                     "coach_id": {
                         "type": "integer"
                     },
@@ -12603,6 +12685,13 @@
                     },
                     "status": {
                         "type": "string"
+                    },
+                    "assignments": {
+                        "type": "array",
+                        "description": "Categor\u00edas que tiene a cargo hoy. Solo en el listado y la ficha.",
+                        "items": {
+                            "$ref": "#/components/schemas/CategoryCoachResource"
+                        }
                     },
                     "created_at": {
                         "type": "string"

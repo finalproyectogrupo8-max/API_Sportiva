@@ -109,6 +109,7 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::post('players/{player}/contacts', [PlayerContactController::class, 'store']);
     Route::patch('player-contacts/{contact}', [PlayerContactController::class, 'update']);
     Route::delete('player-contacts/{contact}', [PlayerContactController::class, 'destroy']);
+    Route::get('players/{player}/memberships', [CategoryMembershipController::class, 'forPlayer']);
     Route::get('categories/{category}/memberships', [CategoryMembershipController::class, 'index']);
     Route::post('categories/{category}/memberships', [CategoryMembershipController::class, 'store']);
     Route::patch('memberships/{membership}', [CategoryMembershipController::class, 'update']);

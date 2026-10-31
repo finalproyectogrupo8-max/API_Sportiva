@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -31,6 +32,18 @@ class Coach extends Model
     use HasFactory, SoftDeletes;
 
     protected $connection = 'tenant';
+
+    /** @return HasMany<CategoryCoach, $this> */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(CategoryCoach::class);
+    }
+
+    /** Asignaciones vigentes (sin fecha de fin o con fin desde hoy). @return HasMany<CategoryCoach, $this> */
+    public function currentAssignments(): HasMany
+    {
+        return $this->assignments()->current();
+    }
 
     /**
      * Con coaches.view en alcance "sus categorías": su propia ficha y los profes que comparten
