@@ -126,6 +126,8 @@ class CallupApiTest extends TestCase
         // Ana confirma con su link; Bea dice que no puede.
         $anaToken = substr($sheet['callups'][0]['personal_url'], strlen(config('app.frontend_url').'/convocatoria/responder/'));
         $beaToken = substr($sheet['callups'][1]['personal_url'], strlen(config('app.frontend_url').'/convocatoria/responder/'));
+        $this->get("/api/public/callups/{$anaToken}/calendar.ics")->assertOk()->assertSee('DTSTART:20261107T121500Z', false);
+        $this->get('/api/public/callups/'.$this->tenantA()->slug.'.inexistente/calendar.ics')->assertNotFound();
         $this->getJson("/api/public/callups/respond/{$anaToken}")->assertOk()->assertJsonPath('data.me.name', 'Ana A.')->assertJsonPath('data.page.match.opponent', 'Club Norte')->assertJsonPath('data.me.response', 'pending');
         $this->postJson("/api/public/callups/respond/{$anaToken}", ['response' => 'going'])->assertOk()->assertJsonPath('data.me.response', 'going');
         $this->postJson("/api/public/callups/respond/{$beaToken}", ['response' => 'not_going', 'note' => 'Viaje familiar'])->assertOk();
