@@ -104,6 +104,7 @@ class CallupApiTest extends TestCase
         $this->assertStringContainsString('Presentación 09:15 · Partido 10:00', $sheet['group_message']);
         $this->assertStringContainsString('Sábado 7 de noviembre', $sheet['group_message']);
         $this->assertStringContainsString('Camiseta titular (Azul)', $sheet['group_message']);
+        $this->assertStringContainsString("*Convocados (2)*\n4 · Ana Acosta\n7 · Bea Benítez", $sheet['group_message']);
         $this->assertStringStartsWith('https://wa.me/5491155550000?text=', $sheet['callups'][0]['whatsapp_url']);
         $this->assertNull($sheet['callups'][1]['whatsapp_url']);
 

@@ -5,6 +5,7 @@ namespace App\Club\Callups;
 use App\Models\Club\GameMatch;
 use App\Models\Club\MatchCallup;
 use App\Models\Tenant;
+use Illuminate\Support\Collection;
 
 /**
  * Links y textos de la convocatoria (TIZ-33). Los links apuntan a páginas del front
@@ -22,14 +23,26 @@ class CallupMessages
         return config('app.frontend_url').'/convocatoria/responder/'.$callup->token;
     }
 
-    /** Mensaje para el grupo de WhatsApp de la categoría. */
-    public function groupMessage(GameMatch $match, Tenant $tenant): string
+    /**
+     * Mensaje para el grupo de WhatsApp de la categoría: los datos del partido, la lista de
+     * convocados y el link para confirmar (así las respuestas llegan al sistema).
+     *
+     * @param  Collection<int, MatchCallup>  $callups  Ya ordenados por número.
+     */
+    public function groupMessage(GameMatch $match, Tenant $tenant, Collection $callups): string
     {
+        $list = $callups->map(fn (MatchCallup $c) => ($c->shirt_number !== null ? $c->shirt_number.' · ' : '• ')
+            .trim($c->player->first_name.' '.$c->player->last_name));
+
         return implode("\n", array_filter([
-            "Convocatoria {$match->category->name} · ".($tenant->short_name ?: $tenant->name),
+            "*Convocatoria {$match->category->name} · ".($tenant->short_name ?: $tenant->name).'*',
             $this->summary($match),
+            '',
+            "*Convocados ({$callups->count()})*",
+            ...$list->all(),
+            '',
             $this->publicUrl($match) ? 'Confirmá si vas: '.$this->publicUrl($match) : null,
-        ]));
+        ], fn ($line) => $line !== null));
     }
 
     /** Mensaje personal para el contacto principal del jugador, con su link para confirmar. */

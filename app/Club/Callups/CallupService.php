@@ -54,7 +54,7 @@ class CallupService
             $match->callup_published_at?->toIso8601String(),
             $match->updated_after_publish,
             $this->messages->publicUrl($match),
-            $published ? $this->messages->groupMessage($match, $tenant) : null,
+            $published ? $this->messages->groupMessage($match, $tenant, $callups) : null,
             $callups->where('response', MatchCallup::GOING)->count(),
             $callups->where('response', MatchCallup::NOT_GOING)->count(),
             $callups->where('response', MatchCallup::PENDING)->count(),
