@@ -3,9 +3,13 @@
 namespace Tests\Feature\Club;
 
 use App\Models\Club\Category;
+use App\Models\Club\ClubUser;
+use App\Models\Club\Coach;
 use App\Models\Club\Season;
 use App\Models\Club\Sport;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Concerns\InteractsWithTenants;
 use Tests\TestCase;
 
@@ -125,5 +129,28 @@ class CategoryApiTest extends TestCase
         $this->withClubToken($token)->deleteJson("/api/categories/{$categoryB->id}")->assertNotFound();
 
         $this->assertTrue($this->inTenant($this->tenantB(), fn () => Category::find($categoryB->id)->is_active));
+    }
+
+    public function test_coach_only_sees_own_categories(): void
+    {
+        $user = User::factory()->create();
+        $token = $this->clubToken($this->tenantA(), $user, ['coach']);
+
+        [$futbol, $basquet] = $this->inTenant($this->tenantA(), function () use ($user) {
+            $season = Season::factory()->create();
+            $futbol = Category::factory()->create(['name' => 'Fútbol Sub-15', 'season_id' => $season->id, 'sport_id' => Sport::factory()->create(['name' => 'Fútbol'])->id]);
+            $basquet = Category::factory()->create(['name' => 'Básquet Sub-15', 'season_id' => $season->id, 'sport_id' => Sport::factory()->create(['name' => 'Básquet'])->id]);
+            $coach = Coach::factory()->create(['club_user_id' => ClubUser::query()->where('global_user_id', $user->id)->sole()->id]);
+            DB::connection('tenant')->table('category_coaches')->insert(['category_id' => $futbol->id, 'coach_id' => $coach->id, 'assignment_type' => 'head_coach']);
+
+            return [$futbol, $basquet];
+        });
+
+        $this->withClubToken($token)->getJson('/api/categories')
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.name', 'Fútbol Sub-15');
+        $this->withClubToken($token)->getJson("/api/categories/{$futbol->id}")->assertOk();
+        $this->withClubToken($token)->getJson("/api/categories/{$basquet->id}")->assertNotFound();
+
+        $this->withClubToken($this->token('coordinator'))->getJson('/api/categories')->assertJsonCount(2, 'data');
     }
 }
