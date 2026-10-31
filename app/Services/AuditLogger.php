@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\Club\Document;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
@@ -13,7 +14,7 @@ use InvalidArgumentException;
 class AuditLogger
 {
     private const FIELDS = [
-        'tenant' => ['name', 'slug', 'database_name', 'status', 'short_name', 'city', 'founded_year', 'primary_color'],
+        'tenant' => ['name', 'slug', 'database_name', 'status', 'short_name', 'city', 'founded_year', 'primary_color', 'logo_path'],
         'user' => ['name', 'email', 'is_active'],
         'membership' => ['user_id', 'tenant_id', 'is_active'],
     ];
@@ -73,6 +74,22 @@ class AuditLogger
         if ($from !== $to) {
             $this->write($membership, 'membership', ['roles' => ['from' => $from, 'to' => $to]], 'roles_updated');
         }
+    }
+
+    /**
+     * Acceso a un documento del club (TIZ-29): quién descargó o borró qué. Los documentos de salud
+     * son datos sensibles (Ley 25.326), así que cada acceso queda registrado.
+     */
+    public function recordDocument(Document $document, Tenant $tenant, string $event): void
+    {
+        AuditLog::query()->create([
+            'actor_id' => $this->request->user()?->getKey(),
+            'action' => 'document.'.$event,
+            'subject_type' => 'document',
+            'subject_id' => $document->getKey(),
+            'changes' => ['tenant' => $tenant->slug, 'kind' => $document->kind, 'owner' => $document->documentable_type.':'.$document->documentable_id],
+            'ip' => $this->request->ip(),
+        ]);
     }
 
     public function recordDeleted(Model $subject): void

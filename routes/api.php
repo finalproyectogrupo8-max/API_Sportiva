@@ -13,8 +13,10 @@ use App\Http\Controllers\Club\CategoryCoachController;
 use App\Http\Controllers\Club\CategoryController;
 use App\Http\Controllers\Club\CategoryMembershipController;
 use App\Http\Controllers\Club\ClubController;
+use App\Http\Controllers\Club\ClubLogoController;
 use App\Http\Controllers\Club\CoachController;
 use App\Http\Controllers\Club\CompetitionController;
+use App\Http\Controllers\Club\DocumentController;
 use App\Http\Controllers\Club\MatchController;
 use App\Http\Controllers\Club\PlayerContactController;
 use App\Http\Controllers\Club\PlayerController;
@@ -72,6 +74,9 @@ Route::middleware(['auth:sanctum', 'abilities:platform:admin', 'platform.admin']
         Route::apiResource('tickets', AdminSupportTicketController::class)->only(['index', 'show', 'update']);
     });
 
+// Escudo de un club activo: se muestra antes de entrar (selector, panel). No es un dato sensible.
+Route::get('public/clubs/{slug}/logo', [ClubLogoController::class, 'show'])->middleware('throttle:120,1');
+
 Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::get('club', [ClubController::class, 'show']);
     Route::patch('club', [ClubController::class, 'update']);
@@ -100,6 +105,12 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::get('calendar', CalendarController::class);
     Route::apiResource('competitions', CompetitionController::class);
     Route::post('competitions/{competition}/copy', [CompetitionController::class, 'copy']);
+    Route::get('players/{player}/documents', [DocumentController::class, 'index']);
+    Route::post('players/{player}/documents', [DocumentController::class, 'store']);
+    Route::get('documents/{document}/download', [DocumentController::class, 'download']);
+    Route::delete('documents/{document}', [DocumentController::class, 'destroy']);
+    Route::post('club/logo', [ClubLogoController::class, 'store']);
+    Route::delete('club/logo', [ClubLogoController::class, 'destroy']);
     Route::get('permissions', [RoleController::class, 'permissions']);
     Route::apiResource('roles', RoleController::class)->parameters(['roles' => 'role:slug']);
     Route::post('roles/{role:slug}/duplicate', [RoleController::class, 'duplicate']);

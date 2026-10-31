@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $city
  * @property int|null $founded_year
  * @property string|null $primary_color
+ * @property string|null $logo_path
  * @property string $database_name
  * @property string $status
  */

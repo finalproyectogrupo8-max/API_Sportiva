@@ -23,6 +23,8 @@ class PlayerResource extends JsonResource
             'preferred_position' => $this->preferred_position,
             'dominant_side' => $this->dominant_side,
             'status' => $this->status,
+            /** Id del documento con la foto (`GET /api/documents/{id}/download`), si se cargó y tiene. */
+            'photo_document_id' => $this->whenLoaded('photo', fn () => $this->photo?->id),
             'notes' => $this->notes,
             /** Categorías en las que juega hoy, con su número. Solo si el controlador las cargó. */
             'memberships' => MembershipResource::collection($this->whenLoaded('activeMemberships')),
