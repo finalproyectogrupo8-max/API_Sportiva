@@ -17,6 +17,7 @@ class ApiError
         'role_is_system' => 'Los roles estándar no se editan ni se borran: duplicalo para crear uno propio.',
         'role_in_use' => 'El rol está asignado a usuarios del club: sacáselo antes de borrarlo.',
         'last_admin' => 'El club tiene que tener al menos un Administrador del club activo.',
+        'insufficient_stock' => 'Stock insuficiente para realizar la operación.',
     ];
 
     public static function forbidden(string $code): JsonResponse
