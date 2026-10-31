@@ -19,6 +19,8 @@ class CoachResource extends JsonResource
             'phone' => $this->phone,
             'email' => $this->email,
             'status' => $this->status,
+            /** Categorías que tiene a cargo hoy. Solo en el listado y la ficha. */
+            'assignments' => CategoryCoachResource::collection($this->whenLoaded('currentAssignments')),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

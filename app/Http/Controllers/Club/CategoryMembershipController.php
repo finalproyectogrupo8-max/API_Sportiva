@@ -9,6 +9,7 @@ use App\Http\Requests\Club\StoreMembershipRequest;
 use App\Http\Requests\Club\UpdateMembershipRequest;
 use App\Http\Resources\Club\MembershipResource;
 use App\Models\Club\Category;
+use App\Models\Club\Player;
 use App\Models\Club\PlayerCategoryMembership;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,6 +27,22 @@ class CategoryMembershipController extends Controller
     use ChecksClubScope;
 
     /** `?status=active` (por defecto), `ended` o `all`. */
+    /** Historial de categorías del jugador: vigentes y cerradas, de la más reciente a la más vieja. */
+    public function forPlayer(Player $player): AnonymousResourceCollection
+    {
+        $this->authorizeClub('players.view');
+        $this->ensurePlayerVisible($player);
+
+        $memberships = $player->memberships()
+            ->with('category')
+            ->orderByRaw("status = 'active' desc")
+            ->orderByDesc('start_date')
+            ->orderByDesc('id')
+            ->get();
+
+        return MembershipResource::collection($memberships);
+    }
+
     public function index(Request $request, Category $category): AnonymousResourceCollection
     {
         $this->authorizeClub('players.view');
