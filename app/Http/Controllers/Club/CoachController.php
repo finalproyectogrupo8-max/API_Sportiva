@@ -44,7 +44,7 @@ class CoachController extends Controller
 
         $coach = Coach::create($request->validated());
 
-        return CoachResource::make($coach)->response()->setStatusCode(201);
+        return CoachResource::make($coach->refresh())->response()->setStatusCode(201);
     }
 
     public function show(Coach $coach): CoachResource

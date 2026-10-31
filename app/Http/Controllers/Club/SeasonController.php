@@ -42,7 +42,7 @@ class SeasonController extends Controller
 
         $season = Season::create($request->validated());
 
-        return SeasonResource::make($season)->response()->setStatusCode(201);
+        return SeasonResource::make($season->refresh())->response()->setStatusCode(201);
     }
 
     public function show(Season $season): SeasonResource

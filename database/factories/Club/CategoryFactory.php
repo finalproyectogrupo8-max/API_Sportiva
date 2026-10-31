@@ -17,7 +17,7 @@ class CategoryFactory extends Factory
         return [
             'sport_id' => Sport::factory(),
             'season_id' => Season::factory(),
-            'name' => fake()->unique()->randomElement(['U21', 'First', 'Youth']),
+            'name' => 'Categoría '.fake()->unique()->numerify('####'),
             'min_age' => null,
             'max_age' => null,
             'is_active' => true,

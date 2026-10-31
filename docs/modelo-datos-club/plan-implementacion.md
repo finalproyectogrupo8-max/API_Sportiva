@@ -37,7 +37,7 @@ Documentos que hay que leer antes, en este orden:
 | Login, selección de club, tokens atados al club | Hecho (mergeado) | `platform-auth` (le quedan tareas del ABM de clubes) |
 | Conexión `tenant`, cambio de base por request y en jobs, servicio `TenantDatabase` (crear, migrar y conectar bases de club), permisos de MySQL local para `club_%`, soporte de tests multi-club | Hecho | [`tenant-connection`](../../openspec/changes/tenant-connection/proposal.md) (implementado) |
 | Módulo 1 (`club_users`, roles y permisos) y la resolución de permisos (`hasClubPermission`, `permissions[]` en `/me`) | **Dev de ABM** (ver [D10](#3-decisiones-que-hay-que-cerrar-antes-de-migrar)) | `club-access-control` ✅ |
-| ABM de los módulos 2 a 8 | **Dev de ABM** | Uno por ola (sección 4) |
+| ABM de los módulos 2 a 8 | **Dev de ABM** | Uno por ola (sección 4). Ola 1 (deportes, temporadas, categorías y profes): `club-catalog-crud` ✅ (TIZ-14) |
 | Alta de clubes y usuarios, panel de admin, `ProvisionTenant`, `tenants:create`, `tenants:migrate`, conexión `provisioning`, worker de la cola, permisos de MySQL en Laravel Cloud | **Tiziano** | `platform-admin-and-provisioning`. Usa `TenantDatabase` de `tenant-connection` y el seeder de roles de `club-access-control` |
 
 ### Archivos que el dev de ABM **no** toca
@@ -77,8 +77,8 @@ Se cierran **en el change de OpenSpec de la ola** que las necesita (en el `desig
 |---|---|---|---|
 | D1–D9 | Las 9 [diferencias con el borrador](README.md#diferencias-con-el-borrador-y-con-el-repo) | La opción "en este doc" de cada una | 1 (se revisan todas juntas) |
 | D10 | Quién hace el módulo 1 (identidad y roles del club) | **Dev de ABM**, en `club-access-control`: todos los ABM lo necesitan para los permisos. El alta de clubes de Tiziano llama a su seeder de roles. Además, hay que resolver la [diferencia 4](README.md#diferencias-con-el-borrador-y-con-el-repo): `tenant_memberships` ya tiene una columna `role` en la base central | Antes de la ola 1 |
-| D11 | Qué responde `DELETE` sobre un catálogo que está en uso (por ejemplo, un deporte con categorías) | 409 con un `code` propio. La FK `RESTRICT` lo protege igual, pero sin manejarlo responde 500 | 1 |
-| D12 | Catálogos: baja lógica (`deleted_at`) o desactivar (`is_active`) | `is_active` para `sports`; `deleted_at` para el resto, según el doc de cada módulo | 1 |
+| D11 | Qué responde `DELETE` sobre un catálogo que está en uso (por ejemplo, un deporte con categorías) | **Cerrada (TIZ-14):** 409 `resource_in_use` para una temporada con categorías y un deporte con categorías activas | 1 |
+| D12 | Catálogos: baja lógica (`deleted_at`) o desactivar (`is_active`) | **Cerrada (TIZ-14):** `is_active` para deportes y categorías, borrado real para temporadas sin uso, `deleted_at` para profes | 1 |
 | D13 | Cómo se genera `orders.order_number` | Secuencia por club con prefijo de año (`2027-0001`), generada en una transacción | 4 |
 | D14 | Signo de la cantidad en `inventory_movements` de tipo `adjustment` | Ver [04-inventario](04-inventario.md#inventory_movements) | 4 |
 | D15 | ¿Hace falta `players.document_number`? Retención de evaluaciones físicas y auditoría | Definirlo con el equipo antes de la ola 2 (datos personales de menores) | 2 y 4 |
