@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Club\Alerts\Channels\DatabaseNotificationChannel;
+use App\Club\Alerts\Channels\NotificationChannel;
 use App\Models\Club\Player;
 use App\Models\PersonalAccessToken;
 use Dedoc\Scramble\Scramble;
@@ -23,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Sin /docs/api: la documentación se registra en routes/api.php como /api/docs.
         Scramble::ignoreDefaultRoutes();
+
+        $this->app->bind(NotificationChannel::class, DatabaseNotificationChannel::class);
     }
 
     /**

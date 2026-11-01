@@ -55,6 +55,12 @@ class PlayerRequirement extends Model
         return $this->status;
     }
 
+    /** @return BelongsTo<Player, $this> */
+    public function player(): BelongsTo
+    {
+        return $this->belongsTo(Player::class);
+    }
+
     /** @return BelongsTo<CompetitionRequirement, $this> */
     public function requirement(): BelongsTo
     {

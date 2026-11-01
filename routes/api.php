@@ -28,6 +28,7 @@ use App\Http\Controllers\Club\InventoryTransferController;
 use App\Http\Controllers\Club\MaintenanceRecordController;
 use App\Http\Controllers\Club\MatchController;
 use App\Http\Controllers\Club\MaterialController;
+use App\Http\Controllers\Club\NotificationController;
 use App\Http\Controllers\Club\OrderController;
 use App\Http\Controllers\Club\PlayerContactController;
 use App\Http\Controllers\Club\PlayerController;
@@ -167,6 +168,9 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::post('orders/{order}/approve', [OrderController::class, 'approve']);
     Route::post('orders/{order}/reject', [OrderController::class, 'reject']);
     Route::post('orders/{order}/deliveries', [OrderController::class, 'deliveries']);
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::patch('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->whereNumber('id');
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
 });
 
 // Documentación: Swagger UI y contrato OpenAPI. Fuera de local/staging (y de los tests) las

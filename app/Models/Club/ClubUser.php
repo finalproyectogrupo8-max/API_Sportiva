@@ -5,6 +5,7 @@ namespace App\Models\Club;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
@@ -40,6 +41,12 @@ class ClubUser extends Model
     public function coach(): HasOne
     {
         return $this->hasOne(Coach::class);
+    }
+
+    /** @return HasMany<Notification, $this> */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
     }
 
     public function isActive(): bool
