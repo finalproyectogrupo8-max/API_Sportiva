@@ -63,6 +63,30 @@ class PublicCallupController extends Controller
         }
     }
 
+    /**
+     * Respuesta desde el link del grupo: cada uno toca su nombre y elige "Voy" o "No puedo".
+     * Como una encuesta del grupo, no pide más que el link; el link personal sigue existiendo.
+     */
+    public function respondFromGroup(Request $request, string $token, int $callup): JsonResponse
+    {
+        $data = $request->validate([
+            'response' => ['required', 'in:going,not_going'],
+            'note' => ['nullable', 'string', 'max:255'],
+        ], ['response.in' => 'Elegí "Voy" o "No puedo".']);
+
+        $tenant = $this->connectClub($token);
+
+        try {
+            $match = $this->publishedMatch($token);
+            $row = $match->callups()->whereKey($callup)->firstOrFail();
+            $row->update(['response' => $data['response'], 'response_note' => $data['note'] ?? null, 'responded_at' => now()]);
+
+            return response()->json(['data' => $this->page($tenant, $match)]);
+        } finally {
+            $this->tenantDatabase->disconnect();
+        }
+    }
+
     /** El partido como evento de calendario (.ics) para "Agregar al calendario". Acepta el token público o el personal. */
     public function calendar(string $token): Response
     {
@@ -123,15 +147,17 @@ class PublicCallupController extends Controller
     }
 
     /**
-     * @return array{club: array{name: string, short_name: string|null, primary_color: string|null, logo_url: string|null}, match: array{category: string, competition: string|null, opponent: string, is_home: bool, match_date: string, meet_at: string|null, venue: string|null, maps_url: string|null, uniform: string|null, uniform_color: string|null, what_to_bring: string|null, status: string, updated: bool}, players: list<array{name: string, shirt_number: int|null}>}
+     * @return array{club: array{name: string, short_name: string|null, primary_color: string|null, logo_url: string|null}, match: array{category: string, competition: string|null, opponent: string, is_home: bool, match_date: string, meet_at: string|null, venue: string|null, maps_url: string|null, uniform: string|null, uniform_color: string|null, what_to_bring: string|null, status: string, updated: bool}, players: list<array{id: int, name: string, shirt_number: int|null, response: string}>}
      */
     private function page(Tenant $tenant, GameMatch $match): array
     {
         $players = $match->callups()->with('player')->get()
             ->sortBy(fn (MatchCallup $c) => [$c->shirt_number ?? 999, $c->player->last_name])
             ->map(fn (MatchCallup $c) => [
+                'id' => $c->id,
                 'name' => $c->player->first_name.' '.mb_substr($c->player->last_name, 0, 1).'.',
                 'shirt_number' => $c->shirt_number,
+                'response' => $c->response,
             ])->values()->all();
 
         return [
