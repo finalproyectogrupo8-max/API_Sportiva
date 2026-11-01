@@ -19,6 +19,7 @@ Cómo levantar la API Sportiva en tu máquina. **No hace falta instalar PHP, Com
 | --- | --- |
 | `backend` | Contenedor PHP 8.5 + Laravel 13. Sirve la API con `php artisan serve` en `http://127.0.0.1:8000` |
 | `mysql` | MySQL 8.4. Bases `sportiva_platform` (central), `sportiva_testing` (tests) y las de club (`club_*`). No se expone fuera de Docker |
+| `mailpit` | Captura los emails locales. SMTP en `mailpit:1025` y UI en `http://localhost:8025` |
 | `mysql-data` | Volumen de Docker con los datos de MySQL. Sobrevive a reinicios y rebuilds |
 | `.env` | Configuración local (la copia `setup.sh` desde `.env.example`). La leen Compose y Laravel |
 | `scripts/setup.sh` | Deja todo levantado y migrado. Es idempotente: se puede correr siempre que haya dudas |
@@ -326,6 +327,24 @@ Para ver qué está escuchando en cada puerto (PowerShell): `netstat -ano | find
 - El worker mantiene el código en memoria: después de cambiar un job, reinicialo con `docker compose restart queue`.
 - Para ver qué está procesando: `docker compose logs -f queue`.
 - Con `QUEUE_CONNECTION=sync` los jobs corren dentro del request (el club queda `active` al responder, pero el alta tarda varios segundos y el worker queda sin trabajo). Es lo que usan los tests.
+
+## Correo local (Mailpit)
+
+`docker compose up -d` levanta Mailpit junto con la API, la base y el worker. Laravel, dentro de Docker, usa SMTP en `mailpit:1025`; los mensajes capturados se consultan en [http://localhost:8025](http://localhost:8025). El servicio no entrega esos correos a destinatarios reales.
+
+La configuración local de `.env.example` usa `MAIL_MAILER=smtp`, `MAIL_HOST=mailpit` y `MAIL_PORT=1025`. Si ejecutás Laravel directamente en el host, cambiá `MAIL_HOST` a `127.0.0.1` y dejá el puerto `1025`.
+
+Para probar la configuración, con el worker levantado ejecutá:
+
+```bash
+docker compose exec backend php artisan mail:test tu@email.com
+```
+
+El correo queda encolado y aparece en Mailpit cuando lo procesa el servicio `queue`. Si no hay worker, podés enviarlo en el mismo proceso:
+
+```bash
+docker compose exec backend php artisan mail:test tu@email.com --sync
+```
 
 ## Resetear la base local (destruye datos)
 

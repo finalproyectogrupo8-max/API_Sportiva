@@ -24,6 +24,20 @@ Después:
    docker compose exec backend php artisan config:clear
    ```
 
+   El servicio `mailpit` también se levanta con `docker compose up -d`. La API en Docker usa `MAIL_HOST=mailpit` y `MAIL_PORT=1025`; los correos capturados se ven en [http://localhost:8025](http://localhost:8025). Si corrés Laravel directamente en el host, usá `MAIL_HOST=127.0.0.1` y `MAIL_PORT=1025`.
+
+   Para probarlo con el worker activo:
+
+   ```bash
+   docker compose exec backend php artisan mail:test tu@email.com
+   ```
+
+   Si no hay worker, agregá `--sync` para enviar en el momento:
+
+   ```bash
+   docker compose exec backend php artisan mail:test tu@email.com --sync
+   ```
+
 2. **Si ya tenías clubes creados**, aplicales las migraciones de club nuevas:
 
    ```bash
