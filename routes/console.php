@@ -12,3 +12,6 @@ Schedule::command('sanctum:prune-expired', ['--hours=24'])->daily();
 
 // TIZ-32: requisitos de habilitación vencidos, en todos los clubes.
 Schedule::command('club:expire-requirements')->dailyAt('03:00');
+
+// TIZ-27: alertas automáticas del recorrido del partido.
+Schedule::command('alerts:run')->dailyAt('06:00');
