@@ -46,19 +46,20 @@ class Coach extends Model
     }
 
     /**
-     * Con coaches.view en alcance "sus categorías": su propia ficha y los profes que comparten
-     * alguna de sus categorías (asignación vigente). Con alcance all no filtra.
+     * Con coaches.view en alcance sport u own: su propia ficha y los profes de sus deportes/categorías
+     * (asignación vigente). Con alcance all no filtra.
      *
      * @param  Builder<self>  $query
      */
     public function scopeVisibleTo(Builder $query, ClubAccess $access): void
     {
-        if (! $access->isOwnScope('coaches.view')) {
+        $categoryIds = $access->scopedCategoryIds('coaches.view');
+
+        if ($categoryIds === null) {
             return;
         }
 
         $clubUserId = $access->clubUser?->id;
-        $categoryIds = $access->ownCategoryIds();
 
         $query->where(fn (Builder $query) => $query
             ->when($clubUserId, fn (Builder $query) => $query->where('club_user_id', $clubUserId))

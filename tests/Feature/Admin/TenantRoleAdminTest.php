@@ -72,13 +72,13 @@ class TenantRoleAdminTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.name', 'Copia de Mantenimiento');
 
-        $this->getJson($this->url($tenant))->assertOk()->assertJsonCount(8, 'data');
+        $this->getJson($this->url($tenant))->assertOk()->assertJsonCount(9, 'data');
 
         $this->deleteJson($this->url($tenant, '/tesorero'))->assertNoContent();
         $this->getJson($this->url($tenant, '/tesorero'))->assertNotFound();
 
         // Solo en el club A.
-        $this->getJson($this->url($this->tenantB()))->assertOk()->assertJsonCount(6, 'data');
+        $this->getJson($this->url($this->tenantB()))->assertOk()->assertJsonCount(7, 'data');
     }
 
     public function test_admin_endpoints_keep_role_rules(): void

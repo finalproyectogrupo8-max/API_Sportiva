@@ -68,9 +68,13 @@ class TenantMembershipController extends Controller
 
             $auditLogger->recordCreated($membership);
 
-            // Si el rol no existe en el club, ValidationException revierte también la membresía.
+            // Si el rol o los deportes no existen en el club, ValidationException revierte también la membresía.
             $roles = $this->tenantDatabase->run($tenant, fn () => $this->roleSlugs(
-                $this->members->ensure($membership->user, $request->validated('roles'))
+                $this->members->ensure(
+                    $membership->user,
+                    $request->validated('roles'),
+                    sportIds: $request->has('sport_ids') ? $request->validated('sport_ids') : null,
+                )
             ));
             $auditLogger->recordMembershipRoles($membership, [], $roles);
 
@@ -105,14 +109,27 @@ class TenantMembershipController extends Controller
                 ));
             }
 
-            if (array_key_exists('roles', $validated)) {
-                [$from, $to] = $this->tenantDatabase->run($tenant, function () use ($membership, $validated) {
+            if (array_key_exists('roles', $validated) || array_key_exists('sport_ids', $validated)) {
+                $rolesToSet = $validated['roles'] ?? null;
+                $sportsToSet = array_key_exists('sport_ids', $validated) ? $validated['sport_ids'] : null;
+
+                [$from, $to] = $this->tenantDatabase->run($tenant, function () use ($membership, $rolesToSet, $sportsToSet) {
                     $before = ClubUser::query()->where('global_user_id', $membership->user_id)->with('roles')->first();
                     $from = $before ? $this->roleSlugs($before) : [];
 
-                    return [$from, $this->roleSlugs($this->members->ensure($membership->user, $validated['roles'], reactivate: false))];
+                    $after = $this->members->ensure(
+                        $membership->user,
+                        $rolesToSet,
+                        reactivate: false,
+                        sportIds: $sportsToSet,
+                    );
+
+                    return [$from, $this->roleSlugs($after)];
                 });
-                $auditLogger->recordMembershipRoles($membership, $from, $to);
+
+                if (array_key_exists('roles', $validated)) {
+                    $auditLogger->recordMembershipRoles($membership, $from, $to);
+                }
             }
 
             if (array_key_exists('is_active', $validated)) {
@@ -148,21 +165,33 @@ class TenantMembershipController extends Controller
      */
     private function loadClubRoles(Tenant $tenant, Collection $memberships): void
     {
-        $byUser = collect();
+        $rolesByUser = collect();
+        $sportsByUser = collect();
 
         if ($tenant->status === TenantStatus::Active->value && $memberships->isNotEmpty()) {
-            $byUser = $this->tenantDatabase->run($tenant, fn () => ClubUser::query()
-                ->whereIn('global_user_id', $memberships->pluck('user_id'))
-                ->with('roles')
-                ->get()
-                ->mapWithKeys(fn (ClubUser $clubUser) => [$clubUser->global_user_id => $clubUser->roles
+            [$rolesByUser, $sportsByUser] = $this->tenantDatabase->run($tenant, function () use ($memberships) {
+                $clubUsers = ClubUser::query()
+                    ->whereIn('global_user_id', $memberships->pluck('user_id'))
+                    ->with(['roles', 'sports'])
+                    ->get();
+
+                $roles = $clubUsers->mapWithKeys(fn (ClubUser $clubUser) => [$clubUser->global_user_id => $clubUser->roles
                     ->sortBy('name')
                     ->map(fn ($role) => ['slug' => $role->slug, 'name' => $role->name])
-                    ->values()]));
+                    ->values()]);
+
+                $sports = $clubUsers->mapWithKeys(fn (ClubUser $clubUser) => [$clubUser->global_user_id => $clubUser->sports
+                    ->sortBy('name')
+                    ->map(fn ($sport) => ['id' => (int) $sport->id, 'name' => (string) $sport->name])
+                    ->values()]);
+
+                return [$roles, $sports];
+            });
         }
 
         foreach ($memberships as $membership) {
-            $membership->setRelation('clubRoles', $byUser->get($membership->user_id, collect()));
+            $membership->setRelation('clubRoles', $rolesByUser->get($membership->user_id, collect()));
+            $membership->setRelation('clubSports', $sportsByUser->get($membership->user_id, collect()));
         }
     }
 }

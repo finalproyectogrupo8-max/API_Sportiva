@@ -33,11 +33,12 @@ class EligibilityController extends Controller
     {
         $this->authorizeClub('player_requirements.view');
         $access = $this->access();
+        $scoped = $access->scopedCategoryIds('player_requirements.view');
 
         $categories = Category::query()
             ->where('is_active', true)
             ->whereHas('competitions')
-            ->when($access->isOwnScope('player_requirements.view'), fn ($query) => $query->whereIn('id', $access->ownCategoryIds() ?: [0]))
+            ->when($scoped !== null, fn ($query) => $query->whereIn('id', $scoped ?: [0]))
             ->orderBy('name')
             ->get();
 

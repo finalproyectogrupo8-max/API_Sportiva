@@ -62,14 +62,16 @@ class Competition extends Model
     }
 
     /**
-     * Con alcance "sus categorías": solo las competencias que juega alguna de sus categorías.
+     * Con alcance sport u own: solo las competencias de sus deportes o que juega alguna de sus categorías.
      *
      * @param  Builder<self>  $query
      */
     public function scopeVisibleTo(Builder $query, ClubAccess $access): void
     {
-        if ($access->isOwnScope('competitions.view')) {
-            $query->whereHas('categories', fn (Builder $query) => $query->whereIn('categories.id', $access->ownCategoryIds() ?: [0]));
+        $categoryIds = $access->scopedCategoryIds('competitions.view');
+
+        if ($categoryIds !== null) {
+            $query->whereHas('categories', fn (Builder $query) => $query->whereIn('categories.id', $categoryIds ?: [0]));
         }
     }
 }

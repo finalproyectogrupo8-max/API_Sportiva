@@ -31,6 +31,12 @@ class ClubUser extends Model
             ->withPivot('created_at');
     }
 
+    public function sports(): BelongsToMany
+    {
+        return $this->belongsToMany(Sport::class, 'club_user_sports')
+            ->withTimestamps();
+    }
+
     public function coach(): HasOne
     {
         return $this->hasOne(Coach::class);

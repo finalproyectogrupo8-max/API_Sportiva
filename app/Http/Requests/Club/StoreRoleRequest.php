@@ -20,7 +20,7 @@ class StoreRoleRequest extends FormRequest
             'permissions' => ['required', 'array', 'min:1'],
             'permissions.*' => ['required', 'array:name,scope'],
             'permissions.*.name' => ['required', 'string', 'max:120', 'distinct'],
-            'permissions.*.scope' => ['required', 'string', 'in:all,own'],
+            'permissions.*.scope' => ['required', 'string', 'in:all,sport,own'],
         ];
     }
 

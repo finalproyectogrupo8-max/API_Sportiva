@@ -135,11 +135,28 @@ class ManageClubRoles
                 continue;
             }
 
-            // Sin escalada: no se da un permiso que no se tiene, ni "todo el club" teniendo solo "sus categorías".
+            if ($scope === Permission::SCOPE_SPORT && ! $this->catalog->isScopable($name)) {
+                $errors["permissions.{$index}.scope"] = "El permiso {$name} no admite \"sus deportes\".";
+
+                continue;
+            }
+
+            // Sin escalada: no se da un permiso que no se tiene, ni con alcance más amplio.
             if ($actor !== null) {
-                $own = $actor->scope($name);
-                if ($own === null || ($own === Permission::SCOPE_OWN && $scope === Permission::SCOPE_ALL)) {
-                    $errors["permissions.{$index}.name"] = "No podés dar el permiso {$name}".($own ? ' con alcance en todo el club' : '').'.';
+                $weights = [
+                    Permission::SCOPE_ALL => 3,
+                    Permission::SCOPE_SPORT => 2,
+                    Permission::SCOPE_OWN => 1,
+                ];
+
+                $actorScope = $actor->scope($name);
+                $actorWeight = $weights[$actorScope] ?? 0;
+                $targetWeight = $weights[$scope] ?? 0;
+
+                if ($actorScope === null) {
+                    $errors["permissions.{$index}.name"] = "No podés dar el permiso {$name}.";
+                } elseif ($actorWeight < $targetWeight) {
+                    $errors["permissions.{$index}.name"] = "No podés dar el permiso {$name}".($scope === Permission::SCOPE_ALL ? ' con alcance en todo el club' : ' con un alcance mayor al tuyo').'.';
                 }
             }
         }

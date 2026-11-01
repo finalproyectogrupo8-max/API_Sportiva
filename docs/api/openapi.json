@@ -15502,9 +15502,28 @@
                     },
                     "permission_scopes": {
                         "type": "object",
-                        "description": "Alcance de cada permiso: all (todo el club) u own (sus categor\u00edas).",
+                        "description": "Alcance de cada permiso: all (todo el club), sport (sus deportes) u own (sus categor\u00edas).",
                         "additionalProperties": {
                             "type": "string"
+                        }
+                    },
+                    "sports": {
+                        "type": "array",
+                        "description": "Deportes asignados al usuario en el club.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "name"
+                            ]
                         }
                     }
                 },
@@ -15513,7 +15532,8 @@
                     "tenant",
                     "profile",
                     "permissions",
-                    "permission_scopes"
+                    "permission_scopes",
+                    "sports"
                 ],
                 "title": "MeResource"
             },
@@ -16329,6 +16349,25 @@
                         "additionalProperties": {
                             "type": "string"
                         }
+                    },
+                    "sports": {
+                        "type": "array",
+                        "description": "Deportes asignados al usuario en el club.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "name"
+                            ]
+                        }
                     }
                 },
                 "required": [
@@ -16337,7 +16376,8 @@
                     "tenant",
                     "profile",
                     "permissions",
-                    "permission_scopes"
+                    "permission_scopes",
+                    "sports"
                 ],
                 "title": "SelectTenantResource"
             },
@@ -17378,6 +17418,7 @@
                                     "type": "string",
                                     "enum": [
                                         "all",
+                                        "sport",
                                         "own"
                                     ]
                                 }
@@ -17545,6 +17586,14 @@
                             "maxLength": 80
                         },
                         "minItems": 1,
+                        "uniqueItems": true
+                    },
+                    "sport_ids": {
+                        "type": "array",
+                        "description": "IDs de deportes del club (GET /api/sports o base del club).",
+                        "items": {
+                            "type": "integer"
+                        },
                         "uniqueItems": true
                     },
                     "is_active": {
@@ -17883,6 +17932,25 @@
                             },
                             "required": [
                                 "slug",
+                                "name"
+                            ]
+                        }
+                    },
+                    "sports": {
+                        "type": "array",
+                        "description": "Deportes asignados al miembro en el club (base del club).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
                                 "name"
                             ]
                         }
@@ -18661,6 +18729,7 @@
                                     "type": "string",
                                     "enum": [
                                         "all",
+                                        "sport",
                                         "own"
                                     ]
                                 }
@@ -18793,6 +18862,13 @@
                             "maxLength": 80
                         },
                         "minItems": 1,
+                        "uniqueItems": true
+                    },
+                    "sport_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
                         "uniqueItems": true
                     },
                     "is_active": {

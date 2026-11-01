@@ -14,12 +14,14 @@ class PermissionCatalogTest extends TestCase
         $roles = $catalog->standardRoles();
 
         $this->assertSame(
-            ['admin', 'coordinator', 'coach', 'physical_trainer', 'inventory_manager', 'maintenance_manager'],
+            ['admin', 'coordinator', 'sport_coordinator', 'coach', 'physical_trainer', 'inventory_manager', 'maintenance_manager'],
             array_keys($roles),
         );
         $this->assertSame($catalog->names(), array_keys($roles['admin']['permissions']));
+        $this->assertSame('sport', $roles['sport_coordinator']['permissions']['players.view']);
         $this->assertSame('own', $roles['coach']['permissions']['players.view']);
         $this->assertArrayNotHasKey('apparel_orders.approve', $roles['coordinator']['permissions']);
+        $this->assertArrayNotHasKey('apparel_orders.approve', $roles['sport_coordinator']['permissions']);
     }
 
     public function test_every_front_module_has_a_view_permission(): void
@@ -47,6 +49,16 @@ class PermissionCatalogTest extends TestCase
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('no admite alcance own');
+
+        (new PermissionCatalog)->standardRoles();
+    }
+
+    public function test_sport_scope_on_a_non_scopable_permission_is_rejected(): void
+    {
+        config(['club-permissions.roles.sport_coordinator.permissions' => ['sports.view:sport']]);
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('no admite alcance sport');
 
         (new PermissionCatalog)->standardRoles();
     }

@@ -4,6 +4,7 @@ namespace App\Club\Access;
 
 use App\Models\Club\ClubUser;
 use App\Models\Club\Role;
+use App\Models\Club\Sport;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
@@ -18,13 +19,15 @@ class ClubMembers
 {
     /**
      * Crea el club_user del usuario (o lo reactiva, con $reactivate). Si vienen roles, reemplaza
-     * los que tenía.
+     * los que tenía. Si vienen sportIds, sincroniza sus deportes.
      *
      * @param  list<string>|null  $roleSlugs
+     * @param  list<int>|null  $sportIds
      */
-    public function ensure(User $user, ?array $roleSlugs = null, bool $reactivate = true): ClubUser
+    public function ensure(User $user, ?array $roleSlugs = null, bool $reactivate = true, ?array $sportIds = null): ClubUser
     {
         $roleIds = $roleSlugs === null ? null : $this->roleIds($roleSlugs);
+        $validSportIds = $sportIds === null ? null : $this->validateSportIds($sportIds);
 
         $clubUser = ClubUser::query()->firstOrNew(['global_user_id' => $user->id]);
         $clubUser->display_name = $clubUser->exists ? $clubUser->display_name : $user->name;
@@ -35,6 +38,10 @@ class ClubMembers
 
         if ($roleIds !== null) {
             $this->syncRoles($clubUser, $roleIds);
+        }
+
+        if ($validSportIds !== null) {
+            $clubUser->sports()->sync($validSportIds);
         }
 
         return $clubUser;
@@ -129,5 +136,28 @@ class ClubMembers
         }
 
         return $roles->values()->map(fn ($id) => (int) $id)->all();
+    }
+
+    /**
+     * @param  list<int>  $sportIds
+     * @return list<int>
+     */
+    public function validateSportIds(array $sportIds): array
+    {
+        $sportIds = array_values(array_unique(array_map('intval', $sportIds)));
+        if ($sportIds === []) {
+            return [];
+        }
+
+        $existing = Sport::query()->whereIn('id', $sportIds)->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $unknown = array_diff($sportIds, $existing);
+
+        if ($unknown !== []) {
+            throw ValidationException::withMessages([
+                'sport_ids' => 'Estos deportes no existen en el club: '.implode(', ', $unknown).'.',
+            ]);
+        }
+
+        return $existing;
     }
 }

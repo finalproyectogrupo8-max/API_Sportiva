@@ -74,18 +74,20 @@ class Player extends Model
     }
 
     /**
-     * Con alcance "sus categorías" en el permiso dado: solo los jugadores con una asignación activa
-     * en alguna de las categorías del usuario. Con alcance all no filtra.
+     * Con alcance "sus deportes" (sport) o "sus categorías" (own) en el permiso dado: solo los jugadores con
+     * una asignación activa en alguna de las categorías alcanzables. Con alcance all no filtra.
      *
      * @param  Builder<self>  $query
      */
     public function scopeVisibleTo(Builder $query, ClubAccess $access, string $permission = 'players.view'): void
     {
-        if (! $access->isOwnScope($permission)) {
+        $scopedCategoryIds = $access->scopedCategoryIds($permission);
+
+        if ($scopedCategoryIds === null) {
             return;
         }
 
         $query->whereHas('activeMemberships', fn (Builder $query) => $query
-            ->whereIn('category_id', $access->ownCategoryIds() ?: [0]));
+            ->whereIn('category_id', $scopedCategoryIds ?: [0]));
     }
 }
