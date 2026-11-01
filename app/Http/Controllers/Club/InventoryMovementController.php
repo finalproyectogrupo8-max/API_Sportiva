@@ -8,12 +8,10 @@ use App\Http\Requests\Club\IndexInventoryMovementRequest;
 use App\Http\Requests\Club\StoreInventoryMovementRequest;
 use App\Http\Resources\Club\InventoryMovementResource;
 use App\Models\Club\ClubUser;
-use App\Models\Club\InventoryBalance;
 use App\Models\Club\InventoryMovement;
-use App\Support\ApiError;
+use App\Services\Club\InventoryMovementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 
 class InventoryMovementController extends Controller
 {
@@ -40,16 +38,11 @@ class InventoryMovementController extends Controller
         return InventoryMovementResource::collection($movements);
     }
 
-    public function store(StoreInventoryMovementRequest $request): JsonResponse
+    public function store(StoreInventoryMovementRequest $request, InventoryMovementService $service): JsonResponse
     {
         $this->authorizeClub('inventory.adjust');
 
         $data = $request->validated();
-        $materialId = (int) $data['material_id'];
-        $locationId = (int) $data['location_id'];
-        $movementType = $data['movement_type'];
-        $quantity = (float) $data['quantity'];
-
         $clubUserId = $request->user()->clubAccess()->clubUser?->id
             ?? ClubUser::where('global_user_id', $request->user()->id)->value('id');
 
@@ -62,59 +55,8 @@ class InventoryMovementController extends Controller
             $clubUserId = $clubUser->id;
         }
 
-        $movement = DB::connection('tenant')->transaction(function () use (
-            $materialId,
-            $locationId,
-            $movementType,
-            $quantity,
-            $data,
-            $clubUserId
-        ) {
-            $balance = InventoryBalance::where('material_id', $materialId)
-                ->where('location_id', $locationId)
-                ->lockForUpdate()
-                ->first();
-
-            $currentQuantity = $balance ? (float) $balance->quantity : 0.0;
-
-            $delta = match ($movementType) {
-                'in' => abs($quantity),
-                'out' => -abs($quantity),
-                'adjustment' => $quantity,
-            };
-
-            $newQuantity = $currentQuantity + $delta;
-
-            if ($newQuantity < 0) {
-                abort(ApiError::conflict('insufficient_stock'));
-            }
-
-            if ($balance) {
-                $balance->quantity = $newQuantity;
-                $balance->updated_at = now();
-                $balance->save();
-            } else {
-                InventoryBalance::create([
-                    'material_id' => $materialId,
-                    'location_id' => $locationId,
-                    'quantity' => $newQuantity,
-                    'updated_at' => now(),
-                ]);
-            }
-
-            $movementQuantity = ($movementType === 'adjustment') ? $quantity : abs($quantity);
-
-            return InventoryMovement::create([
-                'material_id' => $materialId,
-                'location_id' => $locationId,
-                'movement_type' => $movementType,
-                'quantity' => $movementQuantity,
-                'performed_by' => $clubUserId,
-                'reason' => $data['reason'] ?? null,
-                'reference' => $data['reference'] ?? null,
-                'created_at' => now(),
-            ]);
-        });
+        $data['performed_by'] = $clubUserId;
+        $movement = $service->recordMovement($data);
 
         return InventoryMovementResource::make($movement->load(['material', 'location']))
             ->response()
