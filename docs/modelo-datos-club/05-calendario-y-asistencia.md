@@ -47,9 +47,14 @@ erDiagram
 | `category_id` | BIGINT UNSIGNED | no | FK → `categories.id` | Categoría que juega |
 | `opponent` | VARCHAR(120) | no | | Rival |
 | `match_date` | DATETIME | no | | Fecha y hora (UTC) |
-| `venue` | VARCHAR(200) | sí | | Lugar |
+| `meet_at` | DATETIME | sí | `<= match_date` | Hora de presentación (TIZ-16) |
+| `venue_id` | BIGINT UNSIGNED | sí | FK → `venues.id` | Sede del club, de local (TIZ-39) |
+| `venue` | VARCHAR(200) | sí | | Lugar. Con sede, "Sede · dirección" (lo completa la API) |
+| `maps_url` | VARCHAR(500) | sí | | Link al mapa del lugar (TIZ-16). Lo arma la API con la sede o con la dirección si no viene |
 | `is_home` | BOOLEAN | no | | Local o visitante |
+| `uniform` | VARCHAR(10) | sí | | `home` (titular) / `away` (alternativa) (TIZ-16) |
 | `uniform_color` | VARCHAR(50) | sí | | |
+| `what_to_bring` | TEXT | sí | | Qué llevar, para el aviso de la convocatoria (TIZ-16) |
 | `our_score` | SMALLINT UNSIGNED | sí | | |
 | `opponent_score` | SMALLINT UNSIGNED | sí | | |
 | `status` | VARCHAR(20) | no | | `scheduled` / `played` / `postponed` / `cancelled` |
@@ -58,7 +63,27 @@ erDiagram
 | `deleted_at` | TIMESTAMP | sí | | *(convención ABM)* |
 
 - Índice: `(category_id, match_date)` para el fixture de una categoría.
-- El resultado se carga solo con `status = played`. Se valida en la aplicación.
+- El resultado se carga con `PATCH`: con los dos puntajes, el partido pasa a `played` salvo que se mande otro estado.
+- `competition_id` llega con TIZ-31, y `callup_published_at` y `public_token` con la convocatoria (TIZ-33).
+- En el código el modelo se llama `GameMatch`, porque `match` es palabra reservada de PHP.
+- Las horas se guardan en UTC. El front manda la hora en UTC: Laravel guarda la hora tal como llega, sin pasarla a su zona.
+
+## `venues`
+
+Sedes del club, donde juega de local: la cancha de la sede principal, un parque deportivo, etc. (TIZ-39).
+
+| Columna | Tipo | Null | Restricciones | Descripción |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | no | PK | |
+| `name` | VARCHAR(120) | no | | "Sede principal", "Parque deportivo" |
+| `address` | VARCHAR(255) | no | | Dirección, como la eligió el buscador del front |
+| `latitude`, `longitude` | DECIMAL(10,7) | sí | juntas o ninguna | Punto en el mapa |
+| `is_active` | BOOLEAN | no | default `true` | |
+| `notes` | TEXT | sí | | |
+| `created_at`, `updated_at`, `deleted_at` | TIMESTAMP | sí | | Baja lógica |
+
+- El link de Google Maps (`maps_url` del recurso) se arma por coordenadas, o por dirección si no las hay. No hace falta API key.
+- No se puede borrar una sede con partidos programados por jugarse en ella (409).
 
 ## `trainings`
 
@@ -95,3 +120,25 @@ erDiagram
 - `UNIQUE (player_id, training_id)` y `UNIQUE (player_id, match_id)`: un registro por jugador y evento. Tienen que ser **dos** índices: uno solo sobre las tres columnas no evitaría duplicados, porque MySQL no compara `NULL` en un índice único ([diferencia 7](README.md#diferencias-con-el-borrador-y-con-el-repo)).
 - Corregir una asistencia actualiza la fila (el `UNIQUE` lo obliga). El borrador no tiene `updated_at`; se propone agregarlo para saber cuándo se corrigió.
 - Que el jugador pertenezca a la categoría del evento se valida en la aplicación con `player_category_memberships`.
+
+## `match_callups`
+
+Convocados a un partido (TIZ-33).
+
+| Columna | Tipo | Null | Restricciones | Descripción |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | no | PK | |
+| `match_id` | BIGINT UNSIGNED | no | FK → `matches.id`, `ON DELETE CASCADE` | |
+| `player_id` | BIGINT UNSIGNED | no | FK → `players.id` | Solo jugadores del plantel y habilitados (TIZ-32) |
+| `shirt_number` | SMALLINT UNSIGNED | sí | | Sale del plantel si no se manda; no se repite en la convocatoria |
+| `response` | VARCHAR(20) | no | default `pending` | `pending` / `going` / `not_going` |
+| `response_note` | VARCHAR(255) | sí | | Motivo de "No puedo" |
+| `responded_at` | TIMESTAMP | sí | | |
+| `token` | VARCHAR(100) | no | UK | Link personal para confirmar: `<club>.<aleatorio>` |
+| `created_at`, `updated_at` | TIMESTAMP | sí | | |
+
+- `UNIQUE (match_id, player_id)`.
+- `matches` suma `callup_published_at`, `public_token` (UK, `<club>.<aleatorio>`, la página pública) y `updated_after_publish`: se marca si cambia la fecha, la hora, el lugar o la camiseta después de publicar.
+- Los tokens llevan el club adelante porque cada club tiene su base: la API sabe dónde buscar sin login.
+- Las páginas públicas (`/api/public/callups/...`) muestran solo nombre e inicial del apellido y número: nunca DNI, contactos ni documentos.
+- Los links apuntan al front (`FRONTEND_URL`): `/convocatoria/<public_token>` y `/convocatoria/responder/<token>`.

@@ -139,11 +139,11 @@ class PermissionCatalog
                 throw new LogicException("El rol [{$slug}] usa el permiso [{$name}], que no está en el catálogo.");
             }
 
-            if ($scope === Permission::SCOPE_OWN && ! $this->isScopable($name)) {
-                throw new LogicException("El permiso [{$name}] del rol [{$slug}] no admite alcance own.");
+            if (in_array($scope, [Permission::SCOPE_OWN, Permission::SCOPE_SPORT], true) && ! $this->isScopable($name)) {
+                throw new LogicException("El permiso [{$name}] del rol [{$slug}] no admite alcance {$scope}.");
             }
 
-            if (! in_array($scope, [Permission::SCOPE_ALL, Permission::SCOPE_OWN], true)) {
+            if (! in_array($scope, [Permission::SCOPE_ALL, Permission::SCOPE_SPORT, Permission::SCOPE_OWN], true)) {
                 throw new LogicException("Alcance [{$scope}] inválido en el rol [{$slug}].");
             }
 

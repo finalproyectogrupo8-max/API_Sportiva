@@ -26,6 +26,7 @@ class CoachController extends Controller
 
         $coaches = Coach::query()
             ->visibleTo($request->user()->clubAccess())
+            ->with('currentAssignments.category')
             ->when($filters['search'] ?? null, fn ($query, $search) => $query->where(function ($query) use ($search) {
                 $query->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%");
@@ -44,7 +45,7 @@ class CoachController extends Controller
 
         $coach = Coach::create($request->validated());
 
-        return CoachResource::make($coach)->response()->setStatusCode(201);
+        return CoachResource::make($coach->refresh())->response()->setStatusCode(201);
     }
 
     public function show(Coach $coach): CoachResource
@@ -52,7 +53,7 @@ class CoachController extends Controller
         Gate::authorize('view', $coach);
         $this->ensureVisible($coach);
 
-        return CoachResource::make($coach);
+        return CoachResource::make($coach->load('currentAssignments.category'));
     }
 
     public function update(UpdateCoachRequest $request, Coach $coach): CoachResource

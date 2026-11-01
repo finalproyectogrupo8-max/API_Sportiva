@@ -40,11 +40,13 @@ class RoleApiTest extends TestCase
         $this->withClubToken($this->adminToken())
             ->getJson('/api/roles')
             ->assertOk()
-            ->assertJsonCount(6, 'data')
+            ->assertJsonCount(7, 'data')
             ->assertJsonPath('data.0.slug', 'admin')
             ->assertJsonPath('data.0.is_system', true)
             ->assertJsonPath('data.0.users_count', 1)
-            ->assertJsonPath('data.2.slug', 'coach')
+            ->assertJsonPath('data.2.slug', 'sport_coordinator')
+            ->assertJsonPath('data.3.slug', 'coach')
+            ->assertJsonFragment(['name' => 'players.view', 'scope' => 'sport'])
             ->assertJsonFragment(['name' => 'players.view', 'scope' => 'own']);
     }
 
@@ -116,7 +118,7 @@ class RoleApiTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath('errors.name.0', 'Ya existe un rol con ese nombre en el club.');
 
-        $this->assertSame(6, $this->inTenant($this->tenantA(), fn () => Role::query()->count()));
+        $this->assertSame(7, $this->inTenant($this->tenantA(), fn () => Role::query()->count()));
     }
 
     public function test_requires_role_permissions(): void
@@ -239,11 +241,11 @@ class RoleApiTest extends TestCase
         $this->withClubToken($this->adminToken())->postJson('/api/roles', $this->payload())->assertCreated();
         $tokenB = $this->clubToken($this->tenantB(), roles: ['admin']);
 
-        $this->withClubToken($tokenB)->getJson('/api/roles')->assertOk()->assertJsonCount(6, 'data');
+        $this->withClubToken($tokenB)->getJson('/api/roles')->assertOk()->assertJsonCount(7, 'data');
         $this->withClubToken($tokenB)->getJson('/api/roles/profe_con_indumentaria')->assertNotFound();
         $this->withClubToken($tokenB)->deleteJson('/api/roles/profe_con_indumentaria')->assertNotFound();
 
-        $this->assertSame(7, $this->inTenant($this->tenantA(), fn () => Role::query()->count()));
+        $this->assertSame(8, $this->inTenant($this->tenantA(), fn () => Role::query()->count()));
     }
 
     public function test_sync_keeps_custom_roles(): void

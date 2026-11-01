@@ -55,6 +55,12 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
+    | URL pública del front (Next.js). Arma los links que se comparten por WhatsApp o mail, como la
+    | página de una convocatoria (TIZ-33).
+    */
+    'frontend_url' => rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
@@ -66,6 +72,10 @@ return [
     */
 
     'timezone' => 'UTC',
+
+    // Zona del club para los textos que leen las personas (mensajes de WhatsApp, calendario).
+    // La base guarda en UTC; esto solo cambia cómo se muestra la hora.
+    'club_timezone' => env('CLUB_TIMEZONE', 'America/Argentina/Buenos_Aires'),
 
     /*
     |--------------------------------------------------------------------------

@@ -5,6 +5,7 @@ namespace App\Models\Club;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
@@ -31,9 +32,21 @@ class ClubUser extends Model
             ->withPivot('created_at');
     }
 
+    public function sports(): BelongsToMany
+    {
+        return $this->belongsToMany(Sport::class, 'club_user_sports')
+            ->withTimestamps();
+    }
+
     public function coach(): HasOne
     {
         return $this->hasOne(Coach::class);
+    }
+
+    /** @return HasMany<Notification, $this> */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
     }
 
     public function isActive(): bool

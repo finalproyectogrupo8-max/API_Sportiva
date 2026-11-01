@@ -8,6 +8,7 @@ use App\Http\Requests\Club\StoreSportRequest;
 use App\Http\Requests\Club\UpdateSportRequest;
 use App\Http\Resources\Club\SportResource;
 use App\Models\Club\Sport;
+use App\Support\ApiError;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -40,7 +41,7 @@ class SportController extends Controller
 
         $sport = Sport::create($request->validated());
 
-        return SportResource::make($sport)->response()->setStatusCode(201);
+        return SportResource::make($sport->refresh())->response()->setStatusCode(201);
     }
 
     public function show(Sport $sport): SportResource
@@ -59,9 +60,14 @@ class SportController extends Controller
         return SportResource::make($sport->refresh());
     }
 
-    public function destroy(Sport $sport): Response
+    /** La baja desactiva el deporte (D12). Con categorías activas responde 409 (D11). */
+    public function destroy(Sport $sport): Response|JsonResponse
     {
         Gate::authorize('delete', $sport);
+
+        if ($sport->categories()->where('is_active', true)->exists()) {
+            return ApiError::conflict('resource_in_use');
+        }
 
         $sport->update(['is_active' => false]);
 

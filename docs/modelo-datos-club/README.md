@@ -1,6 +1,6 @@
 # Modelo de datos de la base de cada club
 
-> **Estado: esquema migrado, ABM en curso.** Las 32 tablas existen como migraciones en `database/migrations/tenant/` y se aplican a **cada** base `club_<slug>`. Los modelos, endpoints y permisos de cada módulo siguen pasando por su change de OpenSpec (`/opsx:propose`). Si un change necesita cambiar una tabla, lo hace con una migración nueva (nunca editando una mergeada) y actualiza el documento del módulo.
+> **Estado: esquema migrado, ABM en curso.** Las 40 tablas existen como migraciones en `database/migrations/tenant/` y se aplican a **cada** base `club_<slug>`. Los modelos, endpoints y permisos de cada módulo siguen pasando por su change de OpenSpec (`/opsx:propose`). Si un change necesita cambiar una tabla, lo hace con una migración nueva (nunca editando una mergeada) y actualiza el documento del módulo.
 
 Fuente: el borrador técnico *OLIM · Modelo relacional de bases de datos y autenticación multi-tenant* (PDF del equipo), adaptado a las convenciones de este repo. Las diferencias con el borrador están en [Diferencias con el borrador](#diferencias-con-el-borrador-y-con-el-repo).
 
@@ -16,12 +16,14 @@ Contexto general: [arquitectura multi-tenant](../arquitectura-multi-tenant.md) y
 | 2 | [Deportes, temporadas y planteles](02-deportes-y-planteles.md) | `sports`, `seasons`, `categories`, `players`, `player_category_memberships`, `coaches`, `category_coaches` |
 | 3 | [Pedidos e indumentaria](03-pedidos-e-indumentaria.md) | `orders`, `apparel_items`, `apparel_order_items`, `materials`, `material_order_items` |
 | 4 | [Depósitos e inventario](04-inventario.md) | `storage_locations`, `inventory_balances`, `inventory_movements` |
-| 5 | [Partidos, entrenamientos y asistencia](05-calendario-y-asistencia.md) | `matches`, `trainings`, `player_attendance` |
+| 5 | [Partidos, entrenamientos y asistencia](05-calendario-y-asistencia.md) | `matches`, `trainings`, `player_attendance`, `match_callups`, `venues` |
 | 6 | [Evaluaciones físicas](06-evaluaciones-fisicas.md) | `physical_evaluations`, `physical_measurements` |
 | 7 | [Instalaciones y mantenimiento](07-instalaciones-y-mantenimiento.md) | `facilities`, `facility_components`, `repair_requests`, `maintenance_records` |
 | 8 | [Auditoría, historial y notificaciones](08-auditoria-y-notificaciones.md) | `audit_logs`, `order_status_history`, `notifications` |
+| 9 | [Competencias y habilitación](09-competencias-y-habilitacion.md) | `competitions`, `category_competitions`, `competition_requirements`, `player_requirements` |
+| 10 | [Documentos](10-documentos.md) | `documents` |
 
-En total son 32 tablas, todas en la misma base del club.
+En total son 40 tablas, todas en la misma base del club: las 32 del borrador más `player_contacts` (TIZ-15), las 3 de competencias (TIZ-31), `documents` (TIZ-29), `player_requirements` (TIZ-32), `match_callups` (TIZ-33) y `venues` (TIZ-39).
 
 ## Decisiones de modelado
 

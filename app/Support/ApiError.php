@@ -17,6 +17,19 @@ class ApiError
         'role_is_system' => 'Los roles estándar no se editan ni se borran: duplicalo para crear uno propio.',
         'role_in_use' => 'El rol está asignado a usuarios del club: sacáselo antes de borrarlo.',
         'last_admin' => 'El club tiene que tener al menos un Administrador del club activo.',
+        'insufficient_stock' => 'Stock insuficiente para realizar la operación.',
+        'repair_already_resolved' => 'La reparación ya fue resuelta.',
+        'repair_not_assigned' => 'La reparación debe estar asignada para poder resolverse.',
+        'repair_cancelled' => 'La reparación está cancelada.',
+        'invalid_status_transition' => 'La entidad no se puede modificar en su estado actual.',
+        'order_not_draft' => 'Solo se pueden editar o eliminar pedidos en estado borrador.',
+        'order_not_submitted' => 'El pedido debe estar enviado para poder ser aprobado o rechazado.',
+        'order_already_approved' => 'El pedido ya fue aprobado.',
+        'order_already_delivered' => 'El pedido ya fue entregado completamente.',
+        'order_rejected' => 'El pedido fue rechazado y no admite más cambios.',
+        'invalid_order_transition' => 'Transición de estado no permitida para el pedido.',
+        'rejection_reason_required' => 'El motivo de rechazo es obligatorio.',
+        'exceeds_ordered_quantity' => 'La cantidad entregada supera la cantidad pedida.',
     ];
 
     public static function forbidden(string $code): JsonResponse
