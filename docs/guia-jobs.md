@@ -55,11 +55,11 @@ Cuando el endpoint dispara un job, responde **202 Accepted** (aceptado, en proce
 | Los tests usan `QUEUE_CONNECTION=sync` (en `phpunit.xml`) | ✅ EXISTE HOY |
 | Algún job (`app/Jobs/`) | ❌ No hay ninguno |
 | Apuntar un job a la base de su club (`TenantDatabase::run`, sección 7) | ✅ EXISTE HOY |
-| **Un worker** (`queue:work`) en `compose.yaml` | ❌ **No existe**: un job encolado hoy quedaría en la tabla para siempre |
+| **Un worker** (`queue:work`) en el servicio `queue` de `compose.yaml` | ✅ **Existe hoy**: procesa en local la cola `database` |
 | El scheduler (`schedule:work`) y alguna tarea programada | ❌ No existe |
 | `retry_after` de la cola | 90 s (en `config/queue.php`) |
 
-El worker y el scheduler se agregan en el change `platform-admin-and-provisioning` (sección 12).
+El scheduler sigue pendiente; el worker local ya está configurado en Compose (sección 12).
 
 ## 3. Las piezas: job, cola, worker, fallidos
 
@@ -67,7 +67,7 @@ El worker y el scheduler se agregan en el change `platform-admin-and-provisionin
 | --- | --- | --- |
 | **Job** | Una clase con el método `handle()`, que contiene lo que hay que hacer | `app/Jobs/...` |
 | **Cola** | La lista de jobs pendientes | La tabla `jobs` de la base central |
-| **Worker** | El proceso que corre `php artisan queue:work` todo el tiempo: toma un job, lo ejecuta, toma el siguiente | El servicio `queue` en Compose (🟡) y un worker en Laravel Cloud |
+| **Worker** | El proceso que corre `php artisan queue:work` todo el tiempo: toma un job, lo ejecuta, toma el siguiente | El servicio `queue` en Compose y el worker configurado en Laravel Cloud |
 | **Fallidos** | Los jobs que agotaron sus reintentos | La tabla `failed_jobs`, para revisarlos y reintentarlos |
 
 Cuando un job se encola, se guarda **serializado** en la tabla `jobs`: su clase y los datos del constructor. El worker lo lee, reconstruye el objeto y llama a `handle()`.
@@ -270,7 +270,7 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();          // limp
 Schedule::job(new RecalculateAllStats)->dailyAt('03:00')->onOneServer();  // un job, una vez por día
 ```
 
-- El scheduler necesita un proceso que corra `php artisan schedule:work`, o `schedule:run` cada minuto. Hoy **no existe** en local: se agrega junto con el worker (sección 12). En Laravel Cloud es un *toggle* (sección 12).
+- El scheduler necesita un proceso que corra `php artisan schedule:work`, o `schedule:run` cada minuto. Hoy **no existe** en local; en Laravel Cloud es un *toggle* (sección 12).
 - **En producción, la lista de tareas se toma en cada deploy:** un cambio en `routes/console.php` recién vale después del siguiente deploy.
 - **No programes tareas más seguido que el tiempo de *Scale to Zero*** del entorno. Si una tarea corre cada 5 minutos y la app se duerme a los 5 minutos de inactividad, nunca llega a dormirse, y eso cuesta.
 - `onOneServer()` evita que la tarea corra dos veces si hay más de un servidor.
@@ -285,24 +285,9 @@ php artisan schedule:test                 # ejecutar una a mano, para probarla
 
 ## 12. El worker en local y en producción
 
-🟡 **PLANIFICADO** (change `platform-admin-and-provisioning`).
+**Local:** el servicio `queue` de `compose.yaml` usa la misma imagen y código montado que `backend`. Ejecuta `php artisan queue:work --tries=3 --timeout=80 --sleep=1` con `QUEUE_CONNECTION=database`. El scheduler todavía no está configurado.
 
-**Local:** dos servicios más en `compose.yaml`, con la misma imagen y el mismo código montado que `backend`:
-
-```yaml
-# 🟡 ilustrativo
-  queue:
-    image: api-sportiva-dev:local
-    command: php artisan queue:work --tries=3 --timeout=60      # una sola cola (default), como en producción con Starter
-    volumes: [".:/var/www/html"]
-    depends_on: { mysql: { condition: service_healthy } }
-
-  scheduler:
-    image: api-sportiva-dev:local
-    command: php artisan schedule:work
-    volumes: [".:/var/www/html"]
-    depends_on: { mysql: { condition: service_healthy } }
-```
+Para levantarlo junto con el resto del entorno: `docker compose up -d`.
 
 | Situación | Qué hacer |
 | --- | --- |
@@ -417,7 +402,7 @@ $this->assertNull(config('database.connections.tenant.database'));   // al termi
 
 | Error | Qué pasa | Cómo evitarlo |
 | --- | --- | --- |
-| No hay worker corriendo | El job queda en la tabla `jobs` para siempre | `docker compose ps` tiene que mostrar el servicio `queue` (🟡 cuando exista) |
+| No hay worker corriendo | El job queda en la tabla `jobs` para siempre | `docker compose ps queue` tiene que mostrar el servicio `queue` activo; si no, ejecutá `docker compose up -d queue` |
 | Cambiaste el código y el worker no lo toma | Sigue corriendo la versión vieja | `docker compose restart queue` |
 | Pasarle un modelo de club al constructor | Al deserializar busca en la conexión `tenant` vacía: error o base equivocada | Pasá IDs y apuntá la conexión en `handle()` (sección 7) |
 | Despachar dentro de una transacción sin `afterCommit()` | El worker no encuentra los datos todavía | `->afterCommit()` |
