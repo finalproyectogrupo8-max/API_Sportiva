@@ -10,6 +10,400 @@
         }
     ],
     "paths": {
+        "/apparel-items": {
+            "get": {
+                "operationId": "apparel-items.index",
+                "tags": [
+                    "ApparelItem"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "name",
+                                "-name",
+                                "id",
+                                "-id",
+                                "created_at",
+                                "-created_at",
+                                null
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `ApparelItemResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ApparelItemResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "apparel-items.store",
+                "tags": [
+                    "ApparelItem"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreApparelItemRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ApparelItemResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApparelItemResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/apparel-items/{apparelItem}": {
+            "get": {
+                "operationId": "apparel-items.show",
+                "tags": [
+                    "ApparelItem"
+                ],
+                "parameters": [
+                    {
+                        "name": "apparelItem",
+                        "in": "path",
+                        "required": true,
+                        "description": "The apparel item ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ApparelItemResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApparelItemResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "apparel-items.update",
+                "tags": [
+                    "ApparelItem"
+                ],
+                "parameters": [
+                    {
+                        "name": "apparelItem",
+                        "in": "path",
+                        "required": true,
+                        "description": "The apparel item ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateApparelItemRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ApparelItemResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApparelItemResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "apparel-items.destroy",
+                "tags": [
+                    "ApparelItem"
+                ],
+                "parameters": [
+                    {
+                        "name": "apparelItem",
+                        "in": "path",
+                        "required": true,
+                        "description": "The apparel item ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/matches/{match}/attendance": {
             "get": {
                 "operationId": "attendance.showMatch",
@@ -6045,6 +6439,951 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/orders": {
+            "get": {
+                "operationId": "orders.index",
+                "tags": [
+                    "Order"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "apparel",
+                                "material",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "draft",
+                                "submitted",
+                                "pending",
+                                "approved",
+                                "preparing",
+                                "partially_delivered",
+                                "delivered",
+                                "rejected",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "requested_by",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "priority",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "low",
+                                "normal",
+                                "high",
+                                "urgent",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `OrderResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/OrderResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "category",
+                                                            "apparel_order_items",
+                                                            "material_order_items",
+                                                            "status_history"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "orders.store",
+                "tags": [
+                    "Order"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreOrderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`OrderResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/OrderResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category",
+                                                        "apparel_order_items",
+                                                        "material_order_items",
+                                                        "status_history"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/orders/{order}": {
+            "get": {
+                "operationId": "orders.show",
+                "tags": [
+                    "Order"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`OrderResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/OrderResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category",
+                                                        "apparel_order_items",
+                                                        "material_order_items",
+                                                        "status_history"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "orders.update",
+                "tags": [
+                    "Order"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateOrderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`OrderResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/OrderResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category",
+                                                        "apparel_order_items",
+                                                        "material_order_items",
+                                                        "status_history"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Solo se pueden editar o eliminar pedidos en estado borrador."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "order_not_draft"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "orders.destroy",
+                "tags": [
+                    "Order"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Solo se pueden editar o eliminar pedidos en estado borrador."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "order_not_draft"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/orders/{order}/submit": {
+            "post": {
+                "operationId": "order.submit",
+                "tags": [
+                    "Order"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "comment": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`OrderResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/OrderResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category",
+                                                        "apparel_order_items",
+                                                        "material_order_items",
+                                                        "status_history"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "El pedido debe tener al menos una l\u00ednea para enviarse."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "order_empty"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Solo se pueden editar o eliminar pedidos en estado borrador."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "order_not_draft"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/orders/{order}/approve": {
+            "post": {
+                "operationId": "order.approve",
+                "tags": [
+                    "Order"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "comment": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`OrderResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/OrderResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category",
+                                                        "apparel_order_items",
+                                                        "material_order_items",
+                                                        "status_history"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "El pedido debe estar enviado para poder ser aprobado o rechazado."
+                                                },
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "order_not_submitted"
+                                                }
+                                            },
+                                            "required": [
+                                                "message",
+                                                "code"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "El pedido ya fue aprobado."
+                                                },
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "order_already_approved"
+                                                }
+                                            },
+                                            "required": [
+                                                "message",
+                                                "code"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/orders/{order}/reject": {
+            "post": {
+                "operationId": "order.reject",
+                "tags": [
+                    "Order"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RejectOrderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`OrderResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/OrderResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category",
+                                                        "apparel_order_items",
+                                                        "material_order_items",
+                                                        "status_history"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Transici\u00f3n de estado no permitida para el pedido."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "invalid_order_transition"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/orders/{order}/deliveries": {
+            "post": {
+                "operationId": "order.deliveries",
+                "tags": [
+                    "Order"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeliverOrderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`OrderResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/OrderResource"
+                                                }
+                                            },
+                                            "required": [
+                                                "data"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -12647,6 +13986,110 @@
                 ],
                 "title": "App.Http.Resources.Admin.UserResource"
             },
+            "ApparelItemResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "is_active",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "ApparelItemResource"
+            },
+            "ApparelOrderItemResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "player_id": {
+                        "type": "integer"
+                    },
+                    "player": {
+                        "$ref": "#/components/schemas/PlayerResource"
+                    },
+                    "apparel_item_id": {
+                        "type": "integer"
+                    },
+                    "apparel_item": {
+                        "$ref": "#/components/schemas/ApparelItemResource"
+                    },
+                    "size": {
+                        "type": "string"
+                    },
+                    "shirt_number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "alias": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "quantity": {
+                        "type": "integer"
+                    },
+                    "delivered_quantity": {
+                        "type": "integer"
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "order_id",
+                    "player_id",
+                    "apparel_item_id",
+                    "size",
+                    "shirt_number",
+                    "alias",
+                    "quantity",
+                    "delivered_quantity",
+                    "notes"
+                ],
+                "title": "ApparelOrderItemResource"
+            },
             "AssignRepairRequestRequest": {
                 "type": "object",
                 "properties": {
@@ -13343,6 +14786,45 @@
                 ],
                 "title": "CopyCompetitionRequest"
             },
+            "DeliverOrderRequest": {
+                "type": "object",
+                "properties": {
+                    "location_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "comment": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "deliveries": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "quantity": {
+                                    "type": "number"
+                                },
+                                "delivered_quantity": {
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    }
+                },
+                "title": "DeliverOrderRequest"
+            },
             "DocumentResource": {
                 "type": "object",
                 "properties": {
@@ -13906,6 +15388,44 @@
                 ],
                 "title": "MatchResource"
             },
+            "MaterialOrderItemResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "material_id": {
+                        "type": "integer"
+                    },
+                    "material": {
+                        "$ref": "#/components/schemas/MaterialResource"
+                    },
+                    "quantity": {
+                        "type": "number"
+                    },
+                    "delivered_quantity": {
+                        "type": "number"
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "order_id",
+                    "material_id",
+                    "quantity",
+                    "delivered_quantity",
+                    "notes"
+                ],
+                "title": "MaterialOrderItemResource"
+            },
             "MaterialResource": {
                 "type": "object",
                 "properties": {
@@ -14066,6 +15586,174 @@
                     "status"
                 ],
                 "title": "MembershipResource"
+            },
+            "OrderResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "order_number": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "requested_by": {
+                        "type": "integer"
+                    },
+                    "category_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "category": {
+                        "$ref": "#/components/schemas/CategoryResource"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "approved_by": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "approved_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "delivered_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "apparel_order_items": {
+                        "type": "array",
+                        "items": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/components/schemas/ApparelOrderItemResource"
+                                },
+                                {
+                                    "type": "object",
+                                    "required": [
+                                        "player",
+                                        "apparel_item"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "material_order_items": {
+                        "type": "array",
+                        "items": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/components/schemas/MaterialOrderItemResource"
+                                },
+                                {
+                                    "type": "object",
+                                    "required": [
+                                        "material"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "status_history": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OrderStatusHistoryResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "order_number",
+                    "type",
+                    "requested_by",
+                    "category_id",
+                    "status",
+                    "priority",
+                    "description",
+                    "approved_by",
+                    "approved_at",
+                    "delivered_at",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "OrderResource"
+            },
+            "OrderStatusHistoryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "changed_by": {
+                        "type": "integer"
+                    },
+                    "old_status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "new_status": {
+                        "type": "string"
+                    },
+                    "comment": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "order_id",
+                    "changed_by",
+                    "old_status",
+                    "new_status",
+                    "comment",
+                    "created_at"
+                ],
+                "title": "OrderStatusHistoryResource"
             },
             "PermissionModuleResource": {
                 "type": "object",
@@ -14356,6 +16044,19 @@
                     "records"
                 ],
                 "title": "RecordAttendanceRequest"
+            },
+            "RejectOrderRequest": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "reason"
+                ],
+                "title": "RejectOrderRequest"
             },
             "RepairRequestResource": {
                 "type": "object",
@@ -14755,6 +16456,29 @@
                     "updated_at"
                 ],
                 "title": "StorageLocationResource"
+            },
+            "StoreApparelItemRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "title": "StoreApparelItemRequest"
             },
             "StoreCategoryCoachRequest": {
                 "type": "object",
@@ -15357,6 +17081,108 @@
                     "player_id"
                 ],
                 "title": "StoreMembershipRequest"
+            },
+            "StoreOrderRequest": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "apparel",
+                            "material"
+                        ]
+                    },
+                    "category_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": [
+                            "low",
+                            "normal",
+                            "high",
+                            "urgent"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "apparel_order_items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "player_id": {
+                                    "type": "integer"
+                                },
+                                "apparel_item_id": {
+                                    "type": "integer"
+                                },
+                                "size": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                },
+                                "shirt_number": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 999
+                                },
+                                "alias": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 50
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "notes": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            }
+                        }
+                    },
+                    "material_order_items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "material_id": {
+                                    "type": "integer"
+                                },
+                                "quantity": {
+                                    "type": "number"
+                                },
+                                "notes": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "type"
+                ],
+                "title": "StoreOrderRequest"
             },
             "StorePlayerContactRequest": {
                 "type": "object",
@@ -16301,6 +18127,26 @@
                 ],
                 "title": "TrainingResource"
             },
+            "UpdateApparelItemRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "title": "UpdateApparelItemRequest"
+            },
             "UpdateCategoryRequest": {
                 "type": "object",
                 "properties": {
@@ -16580,6 +18426,98 @@
                     "shirt_number"
                 ],
                 "title": "UpdateMembershipRequest"
+            },
+            "UpdateOrderRequest": {
+                "type": "object",
+                "properties": {
+                    "category_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": [
+                            "low",
+                            "normal",
+                            "high",
+                            "urgent"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "apparel_order_items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "player_id": {
+                                    "type": "integer"
+                                },
+                                "apparel_item_id": {
+                                    "type": "integer"
+                                },
+                                "size": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                },
+                                "shirt_number": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 999
+                                },
+                                "alias": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 50
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "notes": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            }
+                        }
+                    },
+                    "material_order_items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "material_id": {
+                                    "type": "integer"
+                                },
+                                "quantity": {
+                                    "type": "number"
+                                },
+                                "notes": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            }
+                        }
+                    }
+                },
+                "title": "UpdateOrderRequest"
             },
             "UpdatePlayerRequest": {
                 "type": "object",

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\TenantRoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserMembershipController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Club\ApparelItemController;
 use App\Http\Controllers\Club\AttendanceController;
 use App\Http\Controllers\Club\CalendarController;
 use App\Http\Controllers\Club\CallupController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\Club\InventoryTransferController;
 use App\Http\Controllers\Club\MaintenanceRecordController;
 use App\Http\Controllers\Club\MatchController;
 use App\Http\Controllers\Club\MaterialController;
+use App\Http\Controllers\Club\OrderController;
 use App\Http\Controllers\Club\PlayerContactController;
 use App\Http\Controllers\Club\PlayerController;
 use App\Http\Controllers\Club\RepairRequestController;
@@ -159,6 +161,12 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::post('repair-requests/{repair_request}/assign', [RepairRequestController::class, 'assign']);
     Route::post('repair-requests/{repair_request}/resolve', [RepairRequestController::class, 'resolve']);
     Route::apiResource('maintenance-records', MaintenanceRecordController::class);
+    Route::apiResource('apparel-items', ApparelItemController::class);
+    Route::apiResource('orders', OrderController::class);
+    Route::post('orders/{order}/submit', [OrderController::class, 'submit']);
+    Route::post('orders/{order}/approve', [OrderController::class, 'approve']);
+    Route::post('orders/{order}/reject', [OrderController::class, 'reject']);
+    Route::post('orders/{order}/deliveries', [OrderController::class, 'deliveries']);
 });
 
 // Documentación: Swagger UI y contrato OpenAPI. Fuera de local/staging (y de los tests) las
