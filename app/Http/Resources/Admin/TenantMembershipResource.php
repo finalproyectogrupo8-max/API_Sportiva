@@ -21,6 +21,12 @@ class TenantMembershipResource extends JsonResource
              * @var list<array{slug: string, name: string}>
              */
             'roles' => $this->whenLoaded('clubRoles', fn () => $this->clubRoles->values()->all()),
+            /**
+             * Deportes asignados al miembro en el club (base del club).
+             *
+             * @var list<array{id: int, name: string}>
+             */
+            'sports' => $this->whenLoaded('clubSports', fn () => $this->clubSports->values()->all()),
             'is_active' => $this->is_active,
             'user' => UserResource::make($this->whenLoaded('user')),
             'tenant' => TenantResource::make($this->whenLoaded('tenant')),

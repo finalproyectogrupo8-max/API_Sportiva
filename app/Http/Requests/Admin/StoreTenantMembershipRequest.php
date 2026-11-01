@@ -30,6 +30,9 @@ class StoreTenantMembershipRequest extends FormRequest
             // contra la base del club, en ClubMembers.
             'roles' => ['required', 'array', 'min:1'],
             'roles.*' => ['required', 'string', 'max:80', 'distinct'],
+            // IDs de deportes del club (GET /api/sports o base del club).
+            'sport_ids' => ['sometimes', 'array'],
+            'sport_ids.*' => ['integer', 'distinct'],
             'is_active' => ['prohibited'],
         ];
     }

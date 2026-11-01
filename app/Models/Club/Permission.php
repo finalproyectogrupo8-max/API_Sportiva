@@ -19,6 +19,8 @@ class Permission extends Model
 {
     public const SCOPE_ALL = 'all';
 
+    public const SCOPE_SPORT = 'sport';
+
     public const SCOPE_OWN = 'own';
 
     protected $connection = 'tenant';

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Club;
 
 use App\Models\Club\Order;
+use App\Models\Club\Permission;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -71,10 +72,17 @@ class UpdateOrderRequest extends FormRequest
                 $access = $this->user()->clubAccess();
                 $perm = $type === Order::TYPE_MATERIAL ? 'material_orders.update' : 'apparel_orders.update';
 
-                if ($access->isOwnScope($perm) || $access->isOwnScope('orders.update')) {
+                $scopedCategoryIds = null;
+                if ($access->has($perm) && $access->scope($perm) !== Permission::SCOPE_ALL) {
+                    $scopedCategoryIds = $access->scopedCategoryIds($perm);
+                } elseif ($access->has('orders.update') && $access->scope('orders.update') !== Permission::SCOPE_ALL) {
+                    $scopedCategoryIds = $access->scopedCategoryIds('orders.update');
+                }
+
+                if ($scopedCategoryIds !== null) {
                     if ($this->has('category_id')) {
                         $categoryId = $this->integer('category_id');
-                        if (! $categoryId || ! in_array($categoryId, $access->ownCategoryIds(), true)) {
+                        if (! $categoryId || ! in_array($categoryId, $scopedCategoryIds, true)) {
                             $validator->errors()->add('category_id', 'Solo podés asignar el pedido a tus categorías.');
                         }
                     }

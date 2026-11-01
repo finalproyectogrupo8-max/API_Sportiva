@@ -116,19 +116,27 @@ class Order extends Model
     }
 
     /**
-     * Alcance para usuarios con permiso "own" (profe solo ve pedidos de sus categorías o pedidos que él pidió).
+     * Alcance para usuarios con permiso reducido (sport u own).
      *
      * @param  Builder<static>  $query
      */
     public function scopeVisibleTo(Builder $query, ClubAccess $access, string $permission): void
     {
-        $perm = $permission;
-        if ($access->isOwnScope($perm) || $access->isOwnScope('orders.view') || $access->isOwnScope('apparel_orders.view')) {
-            $ownCategoryIds = $access->ownCategoryIds() ?: [0];
+        $scopedCategoryIds = null;
+
+        if ($access->has($permission) && $access->scope($permission) !== Permission::SCOPE_ALL) {
+            $scopedCategoryIds = $access->scopedCategoryIds($permission);
+        } elseif ($access->has('orders.view') && $access->scope('orders.view') !== Permission::SCOPE_ALL) {
+            $scopedCategoryIds = $access->scopedCategoryIds('orders.view');
+        } elseif ($access->has('apparel_orders.view') && $access->scope('apparel_orders.view') !== Permission::SCOPE_ALL) {
+            $scopedCategoryIds = $access->scopedCategoryIds('apparel_orders.view');
+        }
+
+        if ($scopedCategoryIds !== null) {
             $currentClubUserId = $access->clubUser?->id ?? 0;
 
-            $query->where(function (Builder $q) use ($ownCategoryIds, $currentClubUserId) {
-                $q->whereIn('category_id', $ownCategoryIds)
+            $query->where(function (Builder $q) use ($scopedCategoryIds, $currentClubUserId) {
+                $q->whereIn('category_id', $scopedCategoryIds ?: [0])
                     ->orWhere('requested_by', $currentClubUserId);
             });
         }

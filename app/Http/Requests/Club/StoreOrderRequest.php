@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Club;
 
 use App\Models\Club\Order;
+use App\Models\Club\Permission;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -71,11 +72,18 @@ class StoreOrderRequest extends FormRequest
                 $access = $this->user()->clubAccess();
                 $perm = $type === Order::TYPE_MATERIAL ? 'material_orders.create' : 'apparel_orders.create';
 
-                if ($access->isOwnScope($perm) || $access->isOwnScope('orders.create')) {
+                $scopedCategoryIds = null;
+                if ($access->has($perm) && $access->scope($perm) !== Permission::SCOPE_ALL) {
+                    $scopedCategoryIds = $access->scopedCategoryIds($perm);
+                } elseif ($access->has('orders.create') && $access->scope('orders.create') !== Permission::SCOPE_ALL) {
+                    $scopedCategoryIds = $access->scopedCategoryIds('orders.create');
+                }
+
+                if ($scopedCategoryIds !== null) {
                     $categoryId = $this->integer('category_id');
                     if (! $categoryId) {
                         $validator->errors()->add('category_id', 'Tenés que indicar una categoría para armar el pedido.');
-                    } elseif (! in_array($categoryId, $access->ownCategoryIds(), true)) {
+                    } elseif (! in_array($categoryId, $scopedCategoryIds, true)) {
                         $validator->errors()->add('category_id', 'Solo podés armar pedidos para tus categorías asignadas.');
                     }
                 }

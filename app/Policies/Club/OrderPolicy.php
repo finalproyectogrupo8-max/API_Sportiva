@@ -3,6 +3,7 @@
 namespace App\Policies\Club;
 
 use App\Models\Club\Order;
+use App\Models\Club\Permission;
 use App\Models\User;
 
 class OrderPolicy
@@ -25,24 +26,28 @@ class OrderPolicy
             || $user->hasClubPermission("material_orders.{$action}");
     }
 
-    private function isScoped(User $user, ?string $type, string $action): bool
+    private function scopedCategoryIds(User $user, ?string $type, string $action): ?array
     {
         $access = $user->clubAccess();
 
-        if ($access->isOwnScope("orders.{$action}")) {
-            return true;
+        $candidates = match ($type) {
+            Order::TYPE_MATERIAL => ["material_orders.{$action}", "orders.{$action}"],
+            Order::TYPE_APPAREL => ["apparel_orders.{$action}", "orders.{$action}"],
+            default => ["orders.{$action}", "apparel_orders.{$action}", "material_orders.{$action}"],
+        };
+
+        foreach ($candidates as $perm) {
+            if ($access->has($perm)) {
+                $scope = $access->scope($perm);
+                if ($scope === Permission::SCOPE_ALL) {
+                    return null;
+                }
+
+                return $access->scopedCategoryIds($perm);
+            }
         }
 
-        if ($type === Order::TYPE_MATERIAL) {
-            return $access->isOwnScope("material_orders.{$action}");
-        }
-
-        if ($type === Order::TYPE_APPAREL) {
-            return $access->isOwnScope("apparel_orders.{$action}");
-        }
-
-        return $access->isOwnScope("apparel_orders.{$action}")
-            || $access->isOwnScope("material_orders.{$action}");
+        return null;
     }
 
     public function viewAny(User $user): bool
@@ -56,12 +61,12 @@ class OrderPolicy
             return false;
         }
 
-        if ($this->isScoped($user, $order->type, 'view')) {
-            $access = $user->clubAccess();
-            $inOwnCategory = $order->category_id && in_array($order->category_id, $access->ownCategoryIds(), true);
+        $scopedCategoryIds = $this->scopedCategoryIds($user, $order->type, 'view');
+        if ($scopedCategoryIds !== null) {
+            $inScopedCategory = $order->category_id && in_array($order->category_id, $scopedCategoryIds, true);
             $isRequestedBySelf = $order->requested_by === $user->currentClubUser()?->id;
 
-            return $inOwnCategory || $isRequestedBySelf;
+            return $inScopedCategory || $isRequestedBySelf;
         }
 
         return true;
@@ -78,12 +83,12 @@ class OrderPolicy
             return false;
         }
 
-        if ($this->isScoped($user, $order->type, 'update')) {
-            $access = $user->clubAccess();
-            $inOwnCategory = $order->category_id && in_array($order->category_id, $access->ownCategoryIds(), true);
+        $scopedCategoryIds = $this->scopedCategoryIds($user, $order->type, 'update');
+        if ($scopedCategoryIds !== null) {
+            $inScopedCategory = $order->category_id && in_array($order->category_id, $scopedCategoryIds, true);
             $isRequestedBySelf = $order->requested_by === $user->currentClubUser()?->id;
 
-            return $inOwnCategory || $isRequestedBySelf;
+            return $inScopedCategory || $isRequestedBySelf;
         }
 
         return true;
@@ -95,12 +100,12 @@ class OrderPolicy
             return false;
         }
 
-        if ($this->isScoped($user, $order->type, 'delete')) {
-            $access = $user->clubAccess();
-            $inOwnCategory = $order->category_id && in_array($order->category_id, $access->ownCategoryIds(), true);
+        $scopedCategoryIds = $this->scopedCategoryIds($user, $order->type, 'delete');
+        if ($scopedCategoryIds !== null) {
+            $inScopedCategory = $order->category_id && in_array($order->category_id, $scopedCategoryIds, true);
             $isRequestedBySelf = $order->requested_by === $user->currentClubUser()?->id;
 
-            return $inOwnCategory || $isRequestedBySelf;
+            return $inScopedCategory || $isRequestedBySelf;
         }
 
         return true;

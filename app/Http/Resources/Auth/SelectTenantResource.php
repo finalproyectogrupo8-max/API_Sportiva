@@ -30,6 +30,12 @@ class SelectTenantResource extends JsonResource
             'permissions' => $this->access->permissionNames(),
             /** @var array<string, string> */
             'permission_scopes' => (object) $this->access->scopes(),
+            /**
+             * Deportes asignados al usuario en el club.
+             *
+             * @var list<array{id: int, name: string}>
+             */
+            'sports' => $this->access->assignedSports(),
         ];
     }
 }

@@ -70,7 +70,7 @@ class User extends Authenticatable
         return $this->clubAccess()->has($permission);
     }
 
-    /** all (todo el club), own (sus categorías) o null si no tiene el permiso. */
+    /** all (todo el club), sport (sus deportes), own (sus categorías) o null si no tiene el permiso. */
     public function clubPermissionScope(string $permission): ?string
     {
         return $this->clubAccess()->scope($permission);

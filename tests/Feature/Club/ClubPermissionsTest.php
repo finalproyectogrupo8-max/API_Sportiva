@@ -222,7 +222,7 @@ class ClubPermissionsTest extends TestCase
         $this->artisan('tenants:migrate', ['--tenant' => $tenant->slug])->assertSuccessful();
 
         $this->assertSame($first, $counts());
-        $this->assertSame(6, $first[0]);
+        $this->assertSame(7, $first[0]);
         $this->assertSame(1, $first[3]);
 
         // La membresía activa sin perfil (anterior a los roles) queda como Administrador del club.

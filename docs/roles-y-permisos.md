@@ -10,7 +10,7 @@ Este documento define **quién puede hacer qué dentro de un club**: el catálog
 - **Cada club arranca con roles estándar** (Administrador, Coordinador, Profe, Preparador físico, Utilero / Encargado, Mantenimiento). Son **fijos**: no se editan ni se borran.
 - **Los roles custom** se crean desde el panel con una **grilla de checks** (módulo × acción). Para partir de un estándar, se usa **Duplicar**.
 - **Un usuario puede tener varios roles** en el club, y los permisos **se suman**. Ejemplo: un profe que además se encarga de los pedidos de indumentaria tiene **Profe + Utilero**, o un rol custom "Profe con indumentaria".
-- **Alcance:** algunos permisos se dan sobre **todo el club** o solo sobre **sus categorías**. Por ejemplo, un profe ve los jugadores de las categorías que dirige, no los de todo el club.
+- **Alcance:** algunos permisos se dan sobre **todo el club** (`all`), sobre **sus deportes** (`sport`, TIZ-35) o solo sobre **sus categorías** (`own`). Por ejemplo, el coordinador de fútbol ve y gestiona todo lo de fútbol y nada de básquet; un profe ve solo las categorías que dirige; y el coordinador general ve todo el club.
 - **Quién gestiona los roles:** el **admin de plataforma** desde `/admin`, cuando prepara el club, y el **Administrador del club** desde "Equipo del club". Los dos usan las mismas acciones del backend.
 - **El admin de plataforma no es un rol de club.** Es `users.is_platform_admin` y solo ve `/admin`.
 
@@ -83,7 +83,8 @@ Se cargan en cada club al darlo de alta, con `is_system = true`. Todos se pueden
 | `slug` | Nombre | Para quién |
 |---|---|---|
 | `admin` | Administrador del club | Comisión directiva o gerente |
-| `coordinator` | Coordinador deportivo | Coordina categorías, profes y fixture |
+| `coordinator` | Coordinador deportivo | Coordina categorías, profes y fixture de todo el club |
+| `sport_coordinator` | Coordinador de deporte | Coordina sus deportes asignados: categorías, planteles, profes y partidos (TIZ-35) |
 | `coach` | Profe | Entrenador de una o más categorías |
 | `physical_trainer` | Preparador físico | Evaluaciones físicas de sus categorías |
 | `inventory_manager` | Utilero / Encargado | Materiales, indumentaria y entregas |
@@ -127,33 +128,37 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, — = nada.
 
 Notas:
 
+- **Coordinador de deporte (`sport_coordinator`):** tiene exactamente los mismos permisos que el Coordinador general (`coordinator`), pero con alcance **sus deportes** (`sport`, TIZ-35) en todos los permisos marcados como con alcance en el catálogo (`players.*`, `categories.manage_players`, `player_contacts.*`, `player_documents.view/upload`, `coaches.view`, `matches.*`, `trainings.*`, `attendance.*`, `callups.*`, `physical_evaluations.view`, `apparel_orders.view/create/update`, `material_orders.view/create/update`, `categories.view`, `competitions.view`, `player_requirements.view/update`, `announcements.*`).
 - **Aprobar pedidos** (`apparel_orders.approve`, `material_orders.approve`) queda solo para el Administrador. Si un club quiere que el coordinador apruebe, crea un rol custom.
 - `delete` en pedidos solo aplica a pedidos en `draft` (lo valida la Policy, no el permiso).
 
-## 4. Alcance: todo el club o sus categorías
+## 4. Alcance: todo el club, sus deportes o sus categorías
 
-Cada permiso asignado a un rol tiene un **alcance**: `all` (todo el club) o `own` (sus categorías). Se guarda en `role_permissions.scope`. Solo los recursos marcados "sí" en [§2](#2-catálogo-de-permisos) admiten `own`; en los demás, `scope` siempre es `all`.
+Cada permiso asignado a un rol tiene un **alcance**: `all` (todo el club), `sport` (sus deportes, TIZ-35) o `own` (sus categorías). Se guarda en `role_permissions.scope`. Los recursos marcados como con alcance en el catálogo admiten `sport` y `own`; en los demás, `scope` siempre es `all`.
 
-**Sus categorías** son las categorías donde el usuario tiene una asignación vigente como entrenador: `coaches.club_user_id = <club_user>` y `category_coaches` sin `end_date` o con `end_date` futura.
+- **Todo el club (`all`):** sin restricciones de deporte ni categoría.
+- **Sus deportes (`sport`):** limitado a los deportes asignados al usuario en `club_user_sports` (asignados desde la plataforma al dar de alta o editar la membresía). El usuario ve y gestiona las categorías, jugadores, profes, partidos, convocatorias, torneos y pedidos pertenecientes a esos deportes. Un usuario con alcance `sport` pero sin deportes asignados ve listas vacías y recibe 404 al buscar registros directos (nunca "todo").
+- **Sus categorías (`own`):** son las categorías donde el usuario tiene una asignación vigente como entrenador: `coaches.club_user_id = <club_user>` y `category_coaches` sin `end_date` o con `end_date` futura.
 
-| Recurso | Con alcance `own`, el usuario ve o modifica... |
+| Recurso | Con alcance `sport` o `own`, el usuario ve o modifica... |
 |---|---|
-| `players` | Los jugadores con membresía vigente en sus categorías |
-| `categories.manage_players` | Los planteles de sus categorías |
-| `player_contacts` | Los contactos de los jugadores de sus categorías |
-| `coaches` | Su propia ficha y los profes de sus categorías |
-| `categories.view` | Solo sus categorías: el profe de fútbol no ve las de básquet (TIZ-36) |
-| `competitions.view` | Las competencias que juega alguna de sus categorías (TIZ-31) |
-| `matches`, `trainings`, `attendance` | Los partidos y entrenamientos de sus categorías |
-| `physical_evaluations` | Las evaluaciones de los jugadores de sus categorías |
-| `apparel_orders`, `material_orders` | Los pedidos que pidió él (`requested_by`), para sus categorías |
-| `announcements` | Comunicados a jugadores, tutores y staff de sus categorías |
+| `players` | Los jugadores con membresía vigente en sus deportes / categorías |
+| `categories.manage_players` | Los planteles de sus deportes / categorías |
+| `player_contacts` | Los contactos de los jugadores de sus deportes / categorías |
+| `coaches` | Su propia ficha y los profes de sus deportes / categorías |
+| `categories.view` | Las categorías de sus deportes asignados o donde es profe |
+| `competitions.view` | Las competencias de sus deportes o que juega alguna de sus categorías |
+| `matches`, `trainings`, `attendance` | Los partidos y entrenamientos de sus deportes / categorías |
+| `physical_evaluations` | Las evaluaciones de los jugadores de sus deportes / categorías |
+| `apparel_orders`, `material_orders` | Los pedidos para sus deportes / categorías o pedidos pedidos por él (`requested_by`) |
+| `announcements` | Comunicados de sus deportes / categorías |
 
 Reglas:
 
-- **Varios roles:** los permisos se suman, y si dos roles dan el mismo permiso con distinto alcance, **gana `all`**.
-- **Sin categorías:** un usuario con alcance `own` y sin categorías asignadas ve listas vacías, no un error.
-- **En el backend:** `hasClubPermission('players.view')` responde si tiene el permiso (con cualquier alcance) y `clubPermissionScope('players.view')` devuelve `all`, `own` o `null`. Con `own`, el controlador aplica un scope de Eloquent (`->forCoach($clubUser)`); la Policy de `view`, `update` y `delete` chequea que el registro sea de sus categorías. Si no lo es, responde **404**, no 403, para no revelar que existe.
+- **Jerarquía y varios roles:** `all` (peso 3) > `sport` (peso 2) > `own` (peso 1). Si dos roles dan el mismo permiso con distinto alcance, **gana el más amplio** (por ejemplo, `sport` + `own` da `sport`; `sport` + `all` da `all`).
+- **Sin asignaciones:** un usuario con alcance `sport` sin deportes, o con `own` sin categorías, ve listas vacías, no un error 500 ni "todo".
+- **Selector de deportes en el front:** `GET /api/me` devuelve la lista de deportes asignados al usuario en `sports` (`[{id, name}]`) para alimentar el selector de deporte del front.
+- **En el backend:** `hasClubPermission('players.view')` responde si tiene el permiso (con cualquier alcance) y `clubPermissionScope('players.view')` devuelve `all`, `sport`, `own` o `null`. Con alcance reducido, el controlador y los modelos aplican `ClubAccess::scopedCategoryIds($permission)`; la comprobación responde **404**, no 403, para no revelar que el registro existe.
 
 ## 5. Roles custom
 

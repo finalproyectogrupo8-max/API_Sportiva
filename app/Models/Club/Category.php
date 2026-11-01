@@ -43,15 +43,17 @@ class Category extends Model
     }
 
     /**
-     * Con categories.view en alcance "sus categorías": solo las categorías con asignación vigente
-     * del usuario (el profe de fútbol no ve las de básquet). Con alcance all no filtra.
+     * Con categories.view en alcance sport u own: solo las categorías alcanzables
+     * (de sus deportes asignados o con asignación vigente como profe). Con alcance all no filtra.
      *
      * @param  Builder<self>  $query
      */
     public function scopeVisibleTo(Builder $query, ClubAccess $access): void
     {
-        if ($access->isOwnScope('categories.view')) {
-            $query->whereIn('id', $access->ownCategoryIds() ?: [0]);
+        $scopedCategoryIds = $access->scopedCategoryIds('categories.view');
+
+        if ($scopedCategoryIds !== null) {
+            $query->whereIn('id', $scopedCategoryIds ?: [0]);
         }
     }
 

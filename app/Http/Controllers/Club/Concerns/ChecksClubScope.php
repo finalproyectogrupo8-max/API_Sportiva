@@ -27,8 +27,9 @@ trait ChecksClubScope
     protected function ensureCategoryInScope(Category $category, string $permission): void
     {
         $access = $this->access();
+        $scoped = $access->scopedCategoryIds($permission);
 
-        abort_if($access->isOwnScope($permission) && ! in_array($category->id, $access->ownCategoryIds(), true), 404);
+        abort_if($scoped !== null && ! in_array($category->id, $scoped, true), 404);
     }
 
     protected function ensurePlayerVisible(Player $player, string $permission = 'players.view'): void
