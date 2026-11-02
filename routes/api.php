@@ -184,6 +184,8 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::post('orders/{order}/reject', [OrderController::class, 'reject']);
     Route::post('orders/{order}/deliveries', [OrderController::class, 'deliveries']);
     Route::get('club-users', [ClubUserController::class, 'index']);
+    Route::post('club-users', [ClubUserController::class, 'store']);
+    Route::patch('club-users/{clubUser}', [ClubUserController::class, 'update']);
     Route::post('physical-evaluations/session', [PhysicalEvaluationController::class, 'session']);
     Route::apiResource('physical-evaluations', PhysicalEvaluationController::class);
     Route::apiResource('season-objectives', SeasonObjectiveController::class);
