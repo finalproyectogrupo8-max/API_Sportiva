@@ -60,6 +60,7 @@ class AttendanceController extends Controller
 
         $players = Player::query()
             ->whereIn('id', $memberships->keys()->merge($recorded->keys())->unique())
+            ->with('photo')
             ->orderBy('last_name')->orderBy('first_name')
             ->get();
 
@@ -73,7 +74,7 @@ class AttendanceController extends Controller
     }
 
     /**
-     * @return array{player_id: int, player_name: string, shirt_number: int|null, status: string|null, notes: string|null}
+     * @return array{player_id: int, player_name: string, shirt_number: int|null, photo_document_id: int|null, status: string|null, notes: string|null}
      */
     private function row(Player $player, ?PlayerCategoryMembership $membership, ?PlayerAttendance $attendance): array
     {
@@ -81,6 +82,8 @@ class AttendanceController extends Controller
             'player_id' => $player->id,
             'player_name' => trim($player->first_name.' '.$player->last_name),
             'shirt_number' => $membership?->shirt_number,
+            /** Documento con la foto del jugador (se baja con `GET /documents/{id}/download`). */
+            'photo_document_id' => $player->photo?->id,
             /** `present`, `absent`, `excused`, `late` o null si todavía no se tomó. */
             'status' => $attendance?->status,
             'notes' => $attendance?->notes,

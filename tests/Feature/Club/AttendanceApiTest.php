@@ -5,6 +5,7 @@ namespace Tests\Feature\Club;
 use App\Models\Club\Category;
 use App\Models\Club\ClubUser;
 use App\Models\Club\Coach;
+use App\Models\Club\Document;
 use App\Models\Club\GameMatch;
 use App\Models\Club\Player;
 use App\Models\Club\PlayerAttendance;
@@ -74,6 +75,20 @@ class AttendanceApiTest extends TestCase
         $this->withClubToken($token)->putJson($url, $records)->assertOk()->assertJsonPath('data.1.status', 'excused');
 
         $this->assertSame(2, $this->inTenant($this->tenantA(), fn () => PlayerAttendance::query()->where('match_id', $d['match']->id)->count()));
+    }
+
+    public function test_roster_includes_the_player_photo(): void
+    {
+        [$token, $d] = $this->setUpClub();
+        $photoId = $this->inTenant($this->tenantA(), fn () => Document::create([
+            'documentable_type' => 'player', 'documentable_id' => $d['bea']->id, 'kind' => 'photo',
+            'original_name' => 'bea.jpg', 'disk' => 'local', 'path' => 'x/bea.jpg', 'mime' => 'image/jpeg', 'size' => 100,
+        ])->id);
+
+        $this->withClubToken($token)->getJson("/api/matches/{$d['match']->id}/attendance")
+            ->assertOk()
+            ->assertJsonPath('data.0.photo_document_id', null)
+            ->assertJsonPath('data.1.photo_document_id', $photoId);
     }
 
     public function test_only_players_of_the_squad_can_be_recorded(): void
