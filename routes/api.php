@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\NewsletterSubscriberController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\TenantController;
 use App\Http\Controllers\Admin\TenantMembershipController;
@@ -103,6 +104,7 @@ Route::middleware(['auth:sanctum', 'abilities:platform:admin', 'platform.admin']
             'update',
         ])->scopeBindings();
         Route::apiResource('tickets', AdminSupportTicketController::class)->only(['index', 'show', 'update']);
+        Route::get('newsletter-subscribers', [NewsletterSubscriberController::class, 'index']);
     });
 
 // Convocatoria (TIZ-33): lo que abren el jugador y su familia desde el link, sin login.
