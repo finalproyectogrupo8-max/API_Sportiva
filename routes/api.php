@@ -53,6 +53,8 @@ Route::post('tickets', [SupportTicketController::class, 'store'])->middleware('t
 Route::post('/newsletter', [NewsletterController::class, 'store']);
 
 Route::prefix('auth')->group(function () {
+    Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:password-reset');
+    Route::post('reset-password', [AuthController::class, 'resetPassword']);
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
 
     Route::middleware('auth:sanctum')->group(function () {
@@ -71,6 +73,7 @@ Route::middleware(['auth:sanctum', 'abilities:platform:admin', 'platform.admin']
     ->prefix('admin')
     ->group(function () {
         Route::post('tenants/{tenant}/retry', [TenantController::class, 'retry']);
+        Route::post('users/{user}/send-password-reset', [UserController::class, 'sendPasswordReset']);
         Route::apiResource('tenants', TenantController::class);
         Route::apiResource('users', UserController::class)->except(['destroy']);
         Route::get('tenants/{tenant}/permissions', [TenantRoleController::class, 'permissions']);

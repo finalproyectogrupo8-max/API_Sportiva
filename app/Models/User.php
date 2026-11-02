@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Club\Access\ClubAccess;
 use App\Models\Club\ClubUser;
+use App\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -39,6 +40,12 @@ class User extends Authenticatable
     public function tenantMemberships(): HasMany
     {
         return $this->hasMany(TenantMembership::class);
+    }
+
+    /** @param string $token */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     /**
