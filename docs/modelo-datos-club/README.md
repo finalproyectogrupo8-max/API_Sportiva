@@ -23,6 +23,7 @@ Contexto general: [arquitectura multi-tenant](../arquitectura-multi-tenant.md) y
 | 9 | [Competencias y habilitación](09-competencias-y-habilitacion.md) | `competitions`, `category_competitions`, `competition_requirements`, `player_requirements` |
 | 10 | [Documentos](10-documentos.md) | `documents` |
 | 11 | [Comunicados por mail](11-comunicados.md) | `announcements`, `announcement_recipients` |
+| 12 | [Proyecto y Análisis](12-proyecto-y-analisis.md) | `season_objectives`, `competition_standings` |
 
 En total son 42 tablas, todas en la misma base del club: las 32 del borrador más `player_contacts` (TIZ-15), las 3 de competencias (TIZ-31), `documents` (TIZ-29), `player_requirements` (TIZ-32), `match_callups` (TIZ-33), `venues` (TIZ-39) y las 2 de comunicados (TIZ-24).
 

@@ -10,6 +10,283 @@
         }
     ],
     "paths": {
+        "/analytics/categories": {
+            "get": {
+                "operationId": "analytics.categories",
+                "summary": "Una fila por categor\u00eda activa visible",
+                "tags": [
+                    "Analytics"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "category_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "category_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "players": {
+                                                        "type": "integer",
+                                                        "minimum": 0
+                                                    },
+                                                    "attendance": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "recorded": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            },
+                                                            "present": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            },
+                                                            "rate": {
+                                                                "type": [
+                                                                    "integer",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "recorded",
+                                                            "present",
+                                                            "rate"
+                                                        ]
+                                                    },
+                                                    "sessions": {
+                                                        "type": "integer",
+                                                        "minimum": 0
+                                                    },
+                                                    "results": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "played": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            },
+                                                            "won": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            },
+                                                            "drawn": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            },
+                                                            "lost": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            },
+                                                            "goals_for": {
+                                                                "type": "integer"
+                                                            },
+                                                            "goals_against": {
+                                                                "type": "integer"
+                                                            },
+                                                            "form": {
+                                                                "type": "array",
+                                                                "description": "Los \u00faltimos 5, del m\u00e1s viejo al m\u00e1s nuevo: `W`, `D` o `L`.",
+                                                                "items": {
+                                                                    "type": "string",
+                                                                    "enum": [
+                                                                        "W",
+                                                                        "D",
+                                                                        "L"
+                                                                    ]
+                                                                }
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "played",
+                                                            "won",
+                                                            "drawn",
+                                                            "lost",
+                                                            "goals_for",
+                                                            "goals_against",
+                                                            "form"
+                                                        ]
+                                                    },
+                                                    "evaluations": {
+                                                        "type": "integer",
+                                                        "minimum": 0
+                                                    }
+                                                },
+                                                "required": [
+                                                    "category_id",
+                                                    "category_name",
+                                                    "players",
+                                                    "attendance",
+                                                    "sessions",
+                                                    "results",
+                                                    "evaluations"
+                                                ]
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "from": {
+                                                    "type": "string"
+                                                },
+                                                "to": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "from",
+                                                "to"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/analytics/categories/{category}/players": {
+            "get": {
+                "operationId": "analytics.players",
+                "summary": "Una fila por jugador activo de la categor\u00eda: asistencia y evaluaciones",
+                "tags": [
+                    "Analytics"
+                ],
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "description": "The category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "player_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "player_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "attendance": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "recorded": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            },
+                                                            "present": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            },
+                                                            "rate": {
+                                                                "type": [
+                                                                    "integer",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "recorded",
+                                                            "present",
+                                                            "rate"
+                                                        ]
+                                                    },
+                                                    "by_status": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "absent_streak": {
+                                                        "type": "string",
+                                                        "description": "Faltas sin aviso seguidas en las \u00faltimas sesiones registradas."
+                                                    },
+                                                    "evaluations": {
+                                                        "type": "integer"
+                                                    },
+                                                    "last_evaluated_at": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "player_id",
+                                                    "player_name",
+                                                    "attendance",
+                                                    "by_status",
+                                                    "absent_streak",
+                                                    "evaluations",
+                                                    "last_evaluated_at"
+                                                ]
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "from": {
+                                                    "type": "string"
+                                                },
+                                                "to": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "from",
+                                                "to"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/announcements/preview-audience": {
             "post": {
                 "operationId": "announcement.previewAudience",
@@ -4187,6 +4464,228 @@
                                                     ]
                                                 }
                                             ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/competitions/{competition}/standings": {
+            "get": {
+                "operationId": "competitionStanding.index",
+                "summary": "`?category_id=` para una sola categor\u00eda; sin \u00e9l, todas las de la competencia",
+                "tags": [
+                    "CompetitionStanding"
+                ],
+                "parameters": [
+                    {
+                        "name": "competition",
+                        "in": "path",
+                        "required": true,
+                        "description": "The competition ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 0
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "category_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "position": {
+                                                        "type": "integer"
+                                                    },
+                                                    "team_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "is_own": {
+                                                        "type": "boolean",
+                                                        "description": "La fila del club."
+                                                    },
+                                                    "played": {
+                                                        "type": "integer"
+                                                    },
+                                                    "won": {
+                                                        "type": "integer"
+                                                    },
+                                                    "drawn": {
+                                                        "type": "integer"
+                                                    },
+                                                    "lost": {
+                                                        "type": "integer"
+                                                    },
+                                                    "goals_for": {
+                                                        "type": "integer"
+                                                    },
+                                                    "goals_against": {
+                                                        "type": "integer"
+                                                    },
+                                                    "points": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "category_id",
+                                                    "position",
+                                                    "team_name",
+                                                    "is_own",
+                                                    "played",
+                                                    "won",
+                                                    "drawn",
+                                                    "lost",
+                                                    "goals_for",
+                                                    "goals_against",
+                                                    "points"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "competitionStanding.update",
+                "tags": [
+                    "CompetitionStanding"
+                ],
+                "parameters": [
+                    {
+                        "name": "competition",
+                        "in": "path",
+                        "required": true,
+                        "description": "The competition ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCompetitionStandingsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "category_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "position": {
+                                                        "type": "integer"
+                                                    },
+                                                    "team_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "is_own": {
+                                                        "type": "boolean",
+                                                        "description": "La fila del club."
+                                                    },
+                                                    "played": {
+                                                        "type": "integer"
+                                                    },
+                                                    "won": {
+                                                        "type": "integer"
+                                                    },
+                                                    "drawn": {
+                                                        "type": "integer"
+                                                    },
+                                                    "lost": {
+                                                        "type": "integer"
+                                                    },
+                                                    "goals_for": {
+                                                        "type": "integer"
+                                                    },
+                                                    "goals_against": {
+                                                        "type": "integer"
+                                                    },
+                                                    "points": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "category_id",
+                                                    "position",
+                                                    "team_name",
+                                                    "is_own",
+                                                    "played",
+                                                    "won",
+                                                    "drawn",
+                                                    "lost",
+                                                    "goals_for",
+                                                    "goals_against",
+                                                    "points"
+                                                ]
+                                            }
                                         }
                                     },
                                     "required": [
@@ -8688,6 +9187,444 @@
                 }
             }
         },
+        "/physical-evaluations": {
+            "get": {
+                "operationId": "physical-evaluations.index",
+                "tags": [
+                    "PhysicalEvaluation"
+                ],
+                "parameters": [
+                    {
+                        "name": "player_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "metric_key",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 80
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "evaluated_at",
+                                "-evaluated_at"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `PhysicalEvaluationResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/PhysicalEvaluationResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "player_name",
+                                                            "category_name",
+                                                            "evaluator_name",
+                                                            "measurements"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "physical-evaluations.store",
+                "tags": [
+                    "PhysicalEvaluation"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePhysicalEvaluationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`PhysicalEvaluationResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/PhysicalEvaluationResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "player_name",
+                                                        "category_name",
+                                                        "evaluator_name",
+                                                        "measurements"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/physical-evaluations/{physicalEvaluation}": {
+            "get": {
+                "operationId": "physical-evaluations.show",
+                "tags": [
+                    "PhysicalEvaluation"
+                ],
+                "parameters": [
+                    {
+                        "name": "physicalEvaluation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The physical evaluation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PhysicalEvaluationResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/PhysicalEvaluationResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "player_name",
+                                                        "category_name",
+                                                        "evaluator_name",
+                                                        "measurements"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "physical-evaluations.update",
+                "tags": [
+                    "PhysicalEvaluation"
+                ],
+                "parameters": [
+                    {
+                        "name": "physicalEvaluation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The physical evaluation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePhysicalEvaluationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PhysicalEvaluationResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/PhysicalEvaluationResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "player_name",
+                                                        "category_name",
+                                                        "evaluator_name",
+                                                        "measurements"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "physical-evaluations.destroy",
+                "tags": [
+                    "PhysicalEvaluation"
+                ],
+                "parameters": [
+                    {
+                        "name": "physicalEvaluation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The physical evaluation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/players": {
             "get": {
                 "operationId": "players.index",
@@ -11690,6 +12627,262 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/season-objectives": {
+            "get": {
+                "operationId": "season-objectives.index",
+                "summary": "Por defecto, los de la temporada en curso. `?season_id=` para otra y `?category_id=` para una categor\u00eda",
+                "tags": [
+                    "SeasonObjective"
+                ],
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 0
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `SeasonObjectiveResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/SeasonObjectiveResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "category_name"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "season-objectives.store",
+                "tags": [
+                    "SeasonObjective"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreSeasonObjectiveRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`SeasonObjectiveResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/SeasonObjectiveResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category_name"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/season-objectives/{seasonObjective}": {
+            "get": {
+                "operationId": "season-objectives.show",
+                "tags": [
+                    "SeasonObjective"
+                ],
+                "parameters": [
+                    {
+                        "name": "seasonObjective",
+                        "in": "path",
+                        "required": true,
+                        "description": "The season objective ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SeasonObjectiveResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/SeasonObjectiveResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category_name"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "season-objectives.update",
+                "tags": [
+                    "SeasonObjective"
+                ],
+                "parameters": [
+                    {
+                        "name": "seasonObjective",
+                        "in": "path",
+                        "required": true,
+                        "description": "The season objective ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreSeasonObjectiveRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`SeasonObjectiveResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/SeasonObjectiveResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "category_name"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "season-objectives.destroy",
+                "tags": [
+                    "SeasonObjective"
+                ],
+                "parameters": [
+                    {
+                        "name": "seasonObjective",
+                        "in": "path",
+                        "required": true,
+                        "description": "The season objective ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -17386,6 +18579,117 @@
                 ],
                 "title": "PermissionModuleResource"
             },
+            "PhysicalEvaluationResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "player_id": {
+                        "type": "integer"
+                    },
+                    "player_name": {
+                        "type": "string"
+                    },
+                    "category_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "category_name": {
+                        "type": "string"
+                    },
+                    "evaluator_coach_id": {
+                        "type": "integer"
+                    },
+                    "evaluator_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "evaluated_at": {
+                        "type": "string"
+                    },
+                    "summary": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recommendations": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "measurements": {
+                        "type": "array",
+                        "description": "Una fila por prueba: `numeric_value` o `text_value`.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "metric_key": {
+                                    "type": "string"
+                                },
+                                "metric_name": {
+                                    "type": "string"
+                                },
+                                "numeric_value": {
+                                    "type": [
+                                        "number",
+                                        "null"
+                                    ]
+                                },
+                                "unit": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "text_value": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "notes": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "metric_key",
+                                "metric_name",
+                                "numeric_value",
+                                "unit",
+                                "text_value",
+                                "notes"
+                            ]
+                        }
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "player_id",
+                    "category_id",
+                    "evaluator_coach_id",
+                    "evaluated_at",
+                    "summary",
+                    "recommendations",
+                    "created_at"
+                ],
+                "title": "PhysicalEvaluationResource"
+            },
             "PlayerContactResource": {
                 "type": "object",
                 "properties": {
@@ -17914,6 +19218,84 @@
                     "description"
                 ],
                 "title": "ResolveRepairRequestRequest"
+            },
+            "SeasonObjectiveResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "season_id": {
+                        "type": "integer"
+                    },
+                    "category_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "category_name": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "target_value": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "current_value": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "unit": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "description": "Avance de 0 a 100; null si el objetivo no tiene meta num\u00e9rica."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "`pending`, `in_progress`, `achieved` o `missed`."
+                    },
+                    "due_date": {
+                        "type": "null"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "season_id",
+                    "category_id",
+                    "title",
+                    "description",
+                    "target_value",
+                    "current_value",
+                    "unit",
+                    "progress",
+                    "status",
+                    "due_date",
+                    "updated_at"
+                ],
+                "title": "SeasonObjectiveResource"
             },
             "SeasonResource": {
                 "type": "object",
@@ -18978,6 +20360,104 @@
                 ],
                 "title": "StoreOrderRequest"
             },
+            "StorePhysicalEvaluationRequest": {
+                "type": "object",
+                "description": "Alta o edici\u00f3n de una evaluaci\u00f3n f\u00edsica con sus mediciones (TIZ-20). En la edici\u00f3n, las mediciones reemplazan a las anteriores.",
+                "properties": {
+                    "player_id": {
+                        "type": "integer"
+                    },
+                    "category_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "evaluator_coach_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "evaluated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "summary": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    },
+                    "recommendations": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    },
+                    "measurements": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "metric_key": {
+                                    "type": "string",
+                                    "pattern": "^[a-z0-9_]+$",
+                                    "maxLength": 80
+                                },
+                                "metric_name": {
+                                    "type": "string",
+                                    "maxLength": 120
+                                },
+                                "numeric_value": {
+                                    "type": [
+                                        "number",
+                                        "null"
+                                    ],
+                                    "minimum": -9999999,
+                                    "maximum": 9999999
+                                },
+                                "unit": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 30
+                                },
+                                "text_value": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                },
+                                "notes": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            },
+                            "required": [
+                                "metric_key",
+                                "metric_name"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 30,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "player_id",
+                    "evaluated_at",
+                    "measurements"
+                ],
+                "title": "StorePhysicalEvaluationRequest"
+            },
             "StorePlayerContactRequest": {
                 "type": "object",
                 "properties": {
@@ -19204,6 +20684,75 @@
                     "permissions"
                 ],
                 "title": "StoreRoleRequest"
+            },
+            "StoreSeasonObjectiveRequest": {
+                "type": "object",
+                "properties": {
+                    "season_id": {
+                        "type": "integer"
+                    },
+                    "category_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    },
+                    "target_value": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 99999999
+                    },
+                    "current_value": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 99999999
+                    },
+                    "unit": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 30
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "in_progress",
+                            "achieved",
+                            "missed"
+                        ]
+                    },
+                    "due_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "season_id",
+                    "title"
+                ],
+                "title": "StoreSeasonObjectiveRequest"
             },
             "StoreSeasonRequest": {
                 "type": "object",
@@ -20203,6 +21752,76 @@
                     }
                 },
                 "title": "UpdateCoachRequest"
+            },
+            "UpdateCompetitionStandingsRequest": {
+                "type": "object",
+                "description": "Reemplaza la tabla de posiciones de una categor\u00eda en una competencia (TIZ-20). Las filas van en orden.",
+                "properties": {
+                    "category_id": {
+                        "type": "integer"
+                    },
+                    "rows": {
+                        "type": "array",
+                        "description": "Del primero al \u00faltimo. Una lista vac\u00eda borra la tabla.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "team_name": {
+                                    "type": "string",
+                                    "maxLength": 120
+                                },
+                                "is_own": {
+                                    "type": "boolean"
+                                },
+                                "played": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 999
+                                },
+                                "won": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 999
+                                },
+                                "drawn": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 999
+                                },
+                                "lost": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 999
+                                },
+                                "goals_for": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9999
+                                },
+                                "goals_against": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9999
+                                },
+                                "points": {
+                                    "type": "integer",
+                                    "minimum": -999,
+                                    "maximum": 9999
+                                }
+                            },
+                            "required": [
+                                "team_name"
+                            ]
+                        },
+                        "maxItems": 40,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "category_id",
+                    "rows"
+                ],
+                "title": "UpdateCompetitionStandingsRequest"
             },
             "UpdateFacilityComponentRequest": {
                 "type": "object",
