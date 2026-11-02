@@ -3782,7 +3782,7 @@
         "/club-users": {
             "get": {
                 "operationId": "clubUser.index",
-                "summary": "Personas activas del club, solo id y nombre: para elegir a qui\u00e9n asignar una reparaci\u00f3n\ny mostrar qui\u00e9n report\u00f3 o pidi\u00f3 algo. No expone mails ni roles",
+                "summary": "Sin par\u00e1metros: personas activas, solo id y nombre (para asignar reparaciones o comunicados).\nCon `?team=1` y `club_users.view`: el equipo completo con email, roles, deportes y estado",
                 "tags": [
                     "ClubUser"
                 ],
@@ -3792,29 +3792,48 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "display_name": {
-                                                        "type": "string"
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "additionalProperties": {}
                                                     }
-                                                },
-                                                "required": [
-                                                    "id",
-                                                    "display_name"
-                                                ]
-                                            }
+                                                }
+                                            },
+                                            "required": [
+                                                "data"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "display_name": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "display_name"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "data"
+                                            ]
                                         }
-                                    },
-                                    "required": [
-                                        "data"
                                     ]
                                 }
                             }
@@ -3844,6 +3863,120 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "clubUser.store",
+                "summary": "Suma a alguien al equipo. Si no tiene usuario en Sportiva, se crea y le llega un mail para elegir\nsu contrase\u00f1a. Si ya estaba y se le hab\u00eda quitado el acceso, se reactiva con los roles nuevos",
+                "tags": [
+                    "ClubUser"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreClubUserRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "invited": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "invited"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/club-users/{clubUser}": {
+            "patch": {
+                "operationId": "clubUser.update",
+                "tags": [
+                    "ClubUser"
+                ],
+                "parameters": [
+                    {
+                        "name": "clubUser",
+                        "in": "path",
+                        "required": true,
+                        "description": "The club user ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateClubUserRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -20031,6 +20164,48 @@
                 ],
                 "title": "StoreCategoryRequest"
             },
+            "StoreClubUserRequest": {
+                "type": "object",
+                "description": "Sumar a alguien al equipo del club por email, con uno o m\u00e1s roles (TIZ-34).",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Obligatorio si la persona todav\u00eda no tiene usuario en Sportiva.",
+                        "maxLength": 255
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 60
+                        },
+                        "minItems": 1,
+                        "maxItems": 10,
+                        "uniqueItems": true
+                    },
+                    "sport_ids": {
+                        "type": "array",
+                        "description": "Deportes del coordinador de deporte.",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "email",
+                    "roles"
+                ],
+                "title": "StoreClubUserRequest"
+            },
             "StoreCoachRequest": {
                 "type": "object",
                 "properties": {
@@ -22102,6 +22277,38 @@
                     }
                 },
                 "title": "UpdateClubRequest"
+            },
+            "UpdateClubUserRequest": {
+                "type": "object",
+                "description": "Cambiar los roles, los deportes o el estado de alguien del equipo (TIZ-34).",
+                "properties": {
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 60
+                        },
+                        "minItems": 1,
+                        "maxItems": 10,
+                        "uniqueItems": true
+                    },
+                    "sport_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "uniqueItems": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "`disabled` le quita el acceso al club; `active` se lo devuelve.",
+                        "enum": [
+                            "active",
+                            "disabled"
+                        ]
+                    }
+                },
+                "title": "UpdateClubUserRequest"
             },
             "UpdateCoachRequest": {
                 "type": "object",

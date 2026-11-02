@@ -186,6 +186,19 @@ Reglas:
 
 Los dos caminos llaman a las mismas Actions (`App\Club\Actions\Roles\...`). Cambian la ruta, el middleware y cómo se resuelve el club.
 
+### Equipo del club: endpoints (TIZ-34)
+
+| Método y ruta | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/club-users` | estar en el club | Personas activas, solo `id` y `display_name` (para asignar reparaciones o comunicados) |
+| `GET /api/club-users?team=1` | `club_users.view` | El equipo completo: email, roles, deportes, estado (`active` / `disabled`) e `is_self` |
+| `POST /api/club-users` | `club_users.invite` | `{email, name?, roles[], sport_ids?}`. Si la persona no tiene usuario, se crea (pide `name`) y le llega el mail para elegir contraseña; si ya existe, se le da acceso. Base central y del club en una sola operación |
+| `PATCH /api/club-users/{id}` | `club_users.update` (`club_users.disable` para quitar el acceso) | `roles[]`, `sport_ids[]` y `status`. Respeta el último administrador (409 `last_admin`) |
+
+**Sin escalada:** solo se asignan (o se tocan usuarios con) roles cuyos permisos el usuario actual tiene, con el mismo alcance o uno más amplio (`all` > `sport` > `own`). Si no, 403.
+
+**Invitación:** mientras no exista el mail propio de invitación (TIZ-23), la persona nueva recibe el mail de restablecer contraseña, que le sirve para elegir la suya.
+
 ## 7. Endpoints (a implementar en TIZ-11 y TIZ-12)
 
 Club actual (token con club, middleware `tenant.token`):
