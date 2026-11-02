@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\TenantRoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserMembershipController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\MeController;
 use App\Http\Controllers\Club\AnalyticsController;
 use App\Http\Controllers\Club\AnnouncementController;
 use App\Http\Controllers\Club\ApparelItemController;
@@ -73,6 +74,11 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('me/tenants', [AuthController::class, 'meTenants']);
     Route::get('me', [AuthController::class, 'me'])->middleware('tenant.token');
+    // Mi perfil (FRO-28): con cualquier token.
+    Route::patch('me', [MeController::class, 'update']);
+    Route::put('me/password', [MeController::class, 'password']);
+    Route::post('me/logout-all', [MeController::class, 'logoutAll']);
+    Route::get('me/clubs', [MeController::class, 'clubs']);
 });
 
 Route::middleware(['auth:sanctum', 'abilities:platform:admin', 'platform.admin'])
