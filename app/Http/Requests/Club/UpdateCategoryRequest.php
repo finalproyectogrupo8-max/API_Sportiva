@@ -33,6 +33,8 @@ class UpdateCategoryRequest extends FormRequest
             ],
             'min_age' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:32767'],
             'max_age' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:32767'],
+            // TIZ-40: `female`, `male` o `mixed`; opcional.
+            'branch' => ['sometimes', 'nullable', 'string', Rule::in(Category::BRANCHES)],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

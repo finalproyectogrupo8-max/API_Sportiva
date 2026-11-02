@@ -16,6 +16,8 @@ class PlayerResource extends JsonResource
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
             'birth_date' => $this->birth_date?->toDateString(),
+            /** `female`, `male` u `other`; null si no se cargó (TIZ-40). */
+            'gender' => $this->gender,
             /** Edad en años cumplidos, calculada con la fecha de nacimiento. */
             'age' => $this->birth_date ? (int) $this->birth_date->age : null,
             'document_number' => $this->document_number,

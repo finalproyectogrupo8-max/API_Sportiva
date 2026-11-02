@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers\Club;
 
+use App\Club\Squads\BranchRule;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Club\IndexCategoryRequest;
 use App\Http\Requests\Club\StoreCategoryRequest;
 use App\Http\Requests\Club\UpdateCategoryRequest;
 use App\Http\Resources\Club\CategoryResource;
 use App\Models\Club\Category;
+use App\Models\Club\PlayerCategoryMembership;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
 {
@@ -28,6 +31,7 @@ class CategoryController extends Controller
             ->visibleTo($request->user()->clubAccess())
             ->when($filters['sport_id'] ?? null, fn ($query, $sportId) => $query->where('sport_id', $sportId))
             ->when($filters['season_id'] ?? null, fn ($query, $seasonId) => $query->where('season_id', $seasonId))
+            ->when($filters['branch'] ?? null, fn ($query, $branch) => $query->where('branch', $branch))
             ->when(array_key_exists('is_active', $filters), fn ($query) => $query->where('is_active', $filters['is_active']))
             ->orderBy($column, $direction)
             ->orderBy('id')
@@ -58,8 +62,14 @@ class CategoryController extends Controller
     public function update(UpdateCategoryRequest $request, Category $category): CategoryResource
     {
         Gate::authorize('update', $category);
+        $data = $request->validated();
 
-        $category->update($request->validated());
+        // TIZ-40: no se puede pasar a una rama que contradiga el plantel activo.
+        if (array_key_exists('branch', $data) && $data['branch'] !== $category->branch) {
+            $this->ensureSquadFitsBranch($category, $data['branch']);
+        }
+
+        $category->update($data);
 
         return CategoryResource::make($category->refresh());
     }
@@ -71,5 +81,22 @@ class CategoryController extends Controller
         $category->update(['is_active' => false]);
 
         return response()->noContent();
+    }
+
+    private function ensureSquadFitsBranch(Category $category, ?string $branch): void
+    {
+        $opposite = PlayerCategoryMembership::query()
+            ->where('category_id', $category->id)
+            ->where('status', PlayerCategoryMembership::STATUS_ACTIVE)
+            ->with('player')
+            ->get()
+            ->first(fn (PlayerCategoryMembership $m) => BranchRule::conflicts($branch, $m->player?->gender));
+
+        if ($opposite) {
+            $name = trim($opposite->player->first_name.' '.$opposite->player->last_name);
+            throw ValidationException::withMessages([
+                'branch' => "{$category->name} no puede ser de rama ".BranchRule::label($branch).": {$name} está en el plantel.",
+            ]);
+        }
     }
 }

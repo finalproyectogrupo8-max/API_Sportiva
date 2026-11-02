@@ -23,6 +23,8 @@ class UpdatePlayerRequest extends FormRequest
             'registration_number' => ['sometimes', 'nullable', 'string', 'max:50'],
             'preferred_position' => ['sometimes', 'nullable', 'string', 'max:50'],
             'dominant_side' => ['sometimes', 'nullable', 'string', 'in:left,right,both'],
+            // TIZ-40: `female`, `male` u `other`; opcional.
+            'gender' => ['sometimes', 'nullable', 'string', Rule::in(Player::GENDERS)],
             'status' => ['sometimes', 'required', 'string', Rule::in(Player::STATUSES)],
             'notes' => ['sometimes', 'nullable', 'string', 'max:2000'],
         ];
