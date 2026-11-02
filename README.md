@@ -27,6 +27,7 @@ Detalles, comandos del día a día y troubleshooting: **[docs/desarrollo-local.m
 | --- | --- |
 | [docs/desarrollo-local.md](docs/desarrollo-local.md) | Setup, uso diario, reset de datos, troubleshooting |
 | [docs/actualizar-entorno.md](docs/actualizar-entorno.md) | Qué hacer después de un pull (API y front) y cómo resolver lo que no levanta |
+| [docs/mail-demo.md](docs/mail-demo.md) | Mails en desarrollo (Mailpit), en la demo (Gmail) y en producción (Resend) |
 | [docs/guia-jobs.md](docs/guia-jobs.md) | **Guía para devs:** jobs y colas (crear, despachar, reintentar, jobs de club, worker, tareas programadas y tests) |
 | [docs/guia-abm.md](docs/guia-abm.md) | **Guía para devs:** cómo armar un ABM (rutas, controller, Requests, Resources, listados, permisos, bajas, tests y checklist con comandos) |
 | [docs/guia-bases-de-datos.md](docs/guia-bases-de-datos.md) | **Guía para devs:** base central y de cada club, migraciones paso a paso, alta de clubes (job), panel de admin y comandos |
