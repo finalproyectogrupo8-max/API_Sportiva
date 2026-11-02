@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Club;
 
+use App\Club\Alerts\Channels\NotificationChannel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Club\DeliverOrderRequest;
 use App\Http\Requests\Club\IndexOrderRequest;
@@ -271,7 +272,7 @@ class OrderController extends Controller
             $order->approved_at = now();
             $order->recordStatusTransition($clubUserId, Order::STATUS_APPROVED, $request->input('comment'));
 
-            // TODO: Notificar al solicitante de la aprobación del pedido (implementación en tarea de notificaciones).
+            $this->notifyRequester($order, $clubUserId, 'order_approved', "Tu pedido {$order->order_number} fue aprobado", $this->orderLabel($order).' aprobado. Ya se puede preparar.');
         });
 
         return OrderResource::make($order->refresh()->load([
@@ -297,7 +298,7 @@ class OrderController extends Controller
         DB::connection('tenant')->transaction(function () use ($order, $clubUserId, $reason) {
             $order->recordStatusTransition($clubUserId, Order::STATUS_REJECTED, $reason);
 
-            // TODO: Notificar al solicitante del rechazo del pedido con el motivo (implementación en tarea de notificaciones).
+            $this->notifyRequester($order, $clubUserId, 'order_rejected', "Tu pedido {$order->order_number} fue rechazado", $reason ? "Motivo: {$reason}" : $this->orderLabel($order).' rechazado.');
         });
 
         return OrderResource::make($order->refresh()->load([
@@ -455,7 +456,13 @@ class OrderController extends Controller
             $comment = $request->input('comment') ?? ($isFullyDelivered ? 'Entrega completada' : 'Entrega parcial');
             $order->recordStatusTransition($clubUserId, $newStatus, $comment);
 
-            // TODO: Notificar al solicitante de la entrega (implementación en tarea de notificaciones).
+            $this->notifyRequester(
+                $order,
+                $clubUserId,
+                $isFullyDelivered ? 'order_delivered' : 'order_partially_delivered',
+                $isFullyDelivered ? "Tu pedido {$order->order_number} está entregado" : "Tu pedido {$order->order_number} tiene una entrega parcial",
+                $isFullyDelivered ? $this->orderLabel($order).' entregado completo.' : 'Se entregó una parte; el resto queda pendiente.',
+            );
 
             return null;
         });
@@ -471,5 +478,28 @@ class OrderController extends Controller
             'materialOrderItems.material',
             'statusHistory',
         ]));
+    }
+
+    /**
+     * Avisa al que pidió (campanita, FRO-26). No se avisa a sí mismo si él hizo el cambio.
+     */
+    private function notifyRequester(Order $order, ?int $actorClubUserId, string $type, string $title, string $body): void
+    {
+        if (! $order->requested_by || $order->requested_by === $actorClubUserId) {
+            return;
+        }
+
+        app(NotificationChannel::class)->send(
+            [(int) $order->requested_by],
+            $type,
+            $title,
+            $body,
+            ['order_id' => $order->id, 'order_type' => $order->type, 'status' => $order->status],
+        );
+    }
+
+    private function orderLabel(Order $order): string
+    {
+        return $order->type === 'apparel' ? 'Pedido de indumentaria' : 'Pedido de materiales';
     }
 }

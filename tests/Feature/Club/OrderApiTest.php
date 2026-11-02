@@ -246,6 +246,33 @@ class OrderApiTest extends TestCase
             ->assertJsonPath('code', 'order_not_draft');
     }
 
+    public function test_requester_is_notified_when_the_order_is_approved_or_rejected(): void
+    {
+        $requester = User::factory()->create();
+        $requesterToken = $this->clubToken($this->tenantA(), $requester, ['coach']);
+        [$approved, $rejected] = $this->inTenant($this->tenantA(), function () use ($requester) {
+            $clubUserId = ClubUser::query()->where('global_user_id', $requester->id)->sole()->id;
+
+            return [
+                Order::factory()->create(['status' => Order::STATUS_SUBMITTED, 'requested_by' => $clubUserId]),
+                Order::factory()->create(['status' => Order::STATUS_SUBMITTED, 'requested_by' => $clubUserId]),
+            ];
+        });
+        $admin = $this->token('admin');
+
+        $this->withClubToken($admin)->postJson("/api/orders/{$approved->id}/approve")->assertOk();
+        $this->withClubToken($admin)->postJson("/api/orders/{$rejected->id}/reject", ['reason' => 'Sin presupuesto'])->assertOk();
+
+        $this->withClubToken($requesterToken)->getJson('/api/notifications?unread=1')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.type', 'order_rejected')
+            ->assertJsonPath('data.0.body', 'Motivo: Sin presupuesto')
+            ->assertJsonPath('data.0.data.order_id', $rejected->id)
+            ->assertJsonPath('data.1.type', 'order_approved')
+            ->assertJsonPath('data.1.title', "Tu pedido {$approved->order_number} fue aprobado");
+    }
+
     public function test_cannot_approve_unsubmitted_order_returns_409(): void
     {
         $order = $this->inTenant($this->tenantA(), fn () => Order::factory()->create([
