@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Club;
 
+use App\Models\Club\Category;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -26,6 +27,8 @@ class StoreCategoryRequest extends FormRequest
             ],
             'min_age' => ['nullable', 'integer', 'min:0', 'max:32767'],
             'max_age' => ['nullable', 'integer', 'min:0', 'max:32767'],
+            // TIZ-40: `female`, `male` o `mixed`; opcional.
+            'branch' => ['nullable', 'string', Rule::in(Category::BRANCHES)],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

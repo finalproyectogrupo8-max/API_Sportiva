@@ -19,15 +19,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int $sport_id
  * @property int $season_id
  * @property string $name
+ * @property string|null $branch `female`, `male` o `mixed` (TIZ-40); null si no se cargó.
  * @property int|null $min_age
  * @property int|null $max_age
  * @property bool $is_active
  * @property CarbonImmutable $created_at
  * @property CarbonImmutable $updated_at
  */
-#[Fillable(['sport_id', 'season_id', 'name', 'min_age', 'max_age', 'is_active'])]
+#[Fillable(['sport_id', 'season_id', 'name', 'branch', 'min_age', 'max_age', 'is_active'])]
 class Category extends Model
 {
+    public const BRANCHES = ['female', 'male', 'mixed'];
+
     /** @use HasFactory<CategoryFactory> */
     use HasFactory;
 

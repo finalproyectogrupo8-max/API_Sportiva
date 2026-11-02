@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers\Club;
 
+use App\Club\Squads\BranchRule;
 use App\Http\Controllers\Club\Concerns\ChecksClubScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Club\IndexPlayerRequest;
 use App\Http\Requests\Club\StorePlayerRequest;
 use App\Http\Requests\Club\UpdatePlayerRequest;
 use App\Http\Resources\Club\PlayerResource;
+use App\Models\Club\Category;
 use App\Models\Club\Player;
 use App\Models\Club\PlayerCategoryMembership;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 /** ABM de jugadores (TIZ-15). Con alcance "sus categorías", el profe ve solo los de sus categorías. */
 class PlayerController extends Controller
@@ -41,6 +44,7 @@ class PlayerController extends Controller
                 'activeMemberships',
                 fn (Builder $query) => $query->where('category_id', $categoryId),
             ))
+            ->when($filters['gender'] ?? null, fn (Builder $query, string $gender) => $query->where('gender', $gender))
             ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
             ->orderBy($column, $direction)
             ->orderBy('id')
@@ -70,8 +74,20 @@ class PlayerController extends Controller
     {
         $this->authorizeClub('players.update');
         $this->ensurePlayerVisible($player, 'players.update');
+        $data = $request->validated();
 
-        $player->update($request->validated());
+        // TIZ-40: el género no puede contradecir la rama de sus categorías activas.
+        if (array_key_exists('gender', $data) && $data['gender'] !== $player->gender) {
+            $category = $player->activeMemberships()->with('category')->get()->pluck('category')
+                ->first(fn (?Category $c) => $c && BranchRule::conflicts($c->branch, $data['gender']));
+            if ($category) {
+                throw ValidationException::withMessages([
+                    'gender' => "No se puede cambiar el género: el jugador está en {$category->name}, de rama ".BranchRule::label($category->branch).'.',
+                ]);
+            }
+        }
+
+        $player->update($data);
 
         return PlayerResource::make($player->refresh()->load(['activeMemberships.category', 'photo']));
     }

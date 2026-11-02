@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Club;
 
+use App\Club\Squads\BranchRule;
 use App\Http\Controllers\Club\Concerns\ChecksClubScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Club\EndAssignmentRequest;
@@ -92,6 +93,14 @@ class CategoryMembershipController extends Controller
             }
 
             $this->ensureShirtNumberIsFree($category->id, $data['shirt_number'] ?? null);
+
+            // TIZ-40: no se suma a la rama opuesta. Sin dato, `mixed` u `other` no bloquean.
+            $player = Player::findOrFail($data['player_id']);
+            if (BranchRule::conflicts($category->branch, $player->gender)) {
+                throw ValidationException::withMessages([
+                    'player_id' => trim($player->first_name.' '.$player->last_name)." no puede sumarse a {$category->name}: la categoría es de rama ".BranchRule::label($category->branch).'.',
+                ]);
+            }
 
             $sameSport?->update(['status' => PlayerCategoryMembership::STATUS_ENDED, 'end_date' => $start]);
 
