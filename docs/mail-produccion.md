@@ -1,5 +1,7 @@
 # Correo en producción
 
+> Para desarrollo (Mailpit) o para una demo con mails reales desde Gmail, ver [mail-demo.md](mail-demo.md).
+
 La aplicación envía los Mailable de forma asíncrona. Este runbook cubre el transporte de salida con Resend, el dominio remitente y la verificación de una entrega en Laravel Cloud. No configures claves en el repositorio ni en archivos compartidos.
 
 ## Proveedor: Resend
