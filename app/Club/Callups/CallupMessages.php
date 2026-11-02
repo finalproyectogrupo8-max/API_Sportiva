@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Links y textos de la convocatoria (TIZ-33). Los links apuntan a páginas del front
- * (`app.frontend_url`). Los usa WhatsApp hoy y el mail cuando exista TIZ-21, así dicen lo mismo.
+ * (`app.frontend_url`). Los usan WhatsApp y el aviso por mail (TIZ-37), así dicen lo mismo.
  */
 class CallupMessages
 {
@@ -64,7 +64,22 @@ class CallupMessages
         return $digits !== '' ? 'https://wa.me/'.$digits.'?text='.rawurlencode($this->personalMessage($callup, $match)) : null;
     }
 
-    private function summary(GameMatch $match): string
+    /** Asunto del aviso por mail (TIZ-37): la categoría, el rival y el día, con el motivo adelante. */
+    public function mailSubject(GameMatch $match, Tenant $tenant, CallupNoticeMode $mode): string
+    {
+        $date = $match->match_date->copy()->setTimezone(config('app.club_timezone'))->locale('es');
+        $subject = "Convocatoria {$match->category->name} · ".($match->is_home ? 'vs ' : 'en cancha de ').$match->opponent
+            .' · '.$date->isoFormat('ddd D/M').' · '.($tenant->short_name ?: $tenant->name);
+
+        return match ($mode) {
+            CallupNoticeMode::Published => $subject,
+            CallupNoticeMode::Updated => 'Hubo cambios: '.$subject,
+            CallupNoticeMode::Reminder => 'Recordatorio: '.$subject,
+        };
+    }
+
+    /** Los datos del partido, una línea por dato: los mismos en WhatsApp y en el mail. */
+    public function summary(GameMatch $match): string
     {
         // Las horas se guardan en UTC: se muestran en la zona del club.
         $tz = config('app.club_timezone');

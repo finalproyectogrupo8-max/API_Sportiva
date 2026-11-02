@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-/** Armar, publicar y mostrar la convocatoria de un partido (TIZ-33). */
+/** Armar, publicar y mostrar la convocatoria de un partido (TIZ-33), con el aviso por mail (TIZ-37). */
 class CallupService
 {
     public function __construct(
@@ -37,6 +37,8 @@ class CallupService
             $c->responded_at?->toIso8601String(),
             $this->messages->personalUrl($c),
             $published ? $this->messages->whatsappUrl($c, $match) : null,
+            filled($c->player->contacts->firstWhere('is_primary', true)?->email),
+            $c->notified_at?->toIso8601String(),
         ))->all();
 
         $calledUp = $callups->pluck('player_id')->all();
@@ -118,17 +120,27 @@ class CallupService
         });
     }
 
-    public function publish(GameMatch $match, Tenant $tenant): void
+    /**
+     * Devuelve a quién hay que avisar por mail (TIZ-37): a todos con "Hubo cambios" si el partido cambió
+     * después de publicar, o solo a los que todavía no recibieron el aviso.
+     */
+    public function publish(GameMatch $match, Tenant $tenant): CallupNoticeMode
     {
         if (! $match->callups()->exists()) {
             throw ValidationException::withMessages(['players' => 'Convocá al menos un jugador antes de publicar.']);
         }
+
+        $mode = $match->callup_published_at !== null && $match->updated_after_publish
+            ? CallupNoticeMode::Updated
+            : CallupNoticeMode::Published;
 
         $match->forceFill([
             'callup_published_at' => now(),
             'public_token' => $match->public_token ?? $tenant->slug.'.'.Str::random(40),
             'updated_after_publish' => false,
         ])->save();
+
+        return $mode;
     }
 
     /** @return list<string> */

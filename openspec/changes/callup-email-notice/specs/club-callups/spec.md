@@ -53,10 +53,15 @@ La API SHALL exponer `POST /api/matches/{match}/callup/remind`, que reenvía el 
 - **WHEN** se pide el recordatorio de una convocatoria que no está publicada
 - **THEN** responde 422 y no se envía ningún mail
 
-#### Scenario: Sin permiso o fuera de alcance
+#### Scenario: Sin permiso
 
-- **WHEN** un usuario sin `callups.publish`, o un profe sobre un partido de una categoría que no es suya, pide el recordatorio
+- **WHEN** un usuario sin `callups.publish` pide el recordatorio
 - **THEN** responde 403 y no se envía ningún mail
+
+#### Scenario: Fuera de alcance
+
+- **WHEN** un profe pide el recordatorio de un partido de una categoría que no es suya
+- **THEN** responde 404, como el resto de los recursos fuera de alcance, y no se envía ningún mail
 
 ### Requirement: Estado del aviso en la convocatoria
 
