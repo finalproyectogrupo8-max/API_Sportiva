@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Club;
 use App\Http\Controllers\Club\Concerns\ChecksClubScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Club\IndexPhysicalEvaluationRequest;
+use App\Http\Requests\Club\StoreEvaluationSessionRequest;
 use App\Http\Requests\Club\StorePhysicalEvaluationRequest;
 use App\Http\Resources\Club\PhysicalEvaluationResource;
 use App\Models\Club\Category;
 use App\Models\Club\PhysicalEvaluation;
 use App\Models\Club\Player;
+use App\Models\Club\PlayerCategoryMembership;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -62,6 +65,57 @@ class PhysicalEvaluationController extends Controller
         });
 
         return PhysicalEvaluationResource::make($evaluation->load(self::RELATIONS))->response()->setStatusCode(201);
+    }
+
+    /**
+     * Prueba en vivo: la misma prueba a varios jugadores de una categoría, el mismo día. Si el jugador
+     * ya tiene una evaluación ese día en la categoría, la prueba se suma (o se corrige) ahí; si no,
+     * se crea la evaluación. Todo o nada.
+     */
+    public function session(StoreEvaluationSessionRequest $request): JsonResponse
+    {
+        $this->authorizeClub('physical_evaluations.create');
+        $data = $request->validated();
+        $category = Category::findOrFail($data['category_id']);
+        $this->ensureCategoryInScope($category, 'physical_evaluations.create');
+        $evaluatorId = $data['evaluator_coach_id'] ?? $this->currentCoachId();
+
+        $playerIds = array_column($data['results'], 'player_id');
+        $members = PlayerCategoryMembership::query()->where('category_id', $category->id)
+            ->where('status', PlayerCategoryMembership::STATUS_ACTIVE)
+            ->whereIn('player_id', $playerIds)->pluck('player_id')->all();
+        if ($outside = array_values(array_diff($playerIds, $members))) {
+            throw ValidationException::withMessages(['results' => 'Hay jugadores que no están en la categoría: '.implode(', ', $outside).'.']);
+        }
+
+        $day = CarbonImmutable::parse($data['evaluated_at'])->startOfDay();
+        $ids = DB::connection('tenant')->transaction(function () use ($data, $category, $evaluatorId, $day) {
+            return collect($data['results'])->map(function (array $result) use ($data, $category, $evaluatorId, $day) {
+                $evaluation = PhysicalEvaluation::query()
+                    ->where('player_id', $result['player_id'])
+                    ->where('category_id', $category->id)
+                    ->whereBetween('evaluated_at', [$day, $day->endOfDay()])
+                    ->first()
+                    ?? PhysicalEvaluation::create([
+                        'player_id' => $result['player_id'],
+                        'category_id' => $category->id,
+                        'evaluator_coach_id' => $evaluatorId,
+                        'evaluated_at' => $day,
+                    ]);
+
+                $evaluation->measurements()->updateOrCreate(['metric_key' => $data['metric_key']], [
+                    'metric_name' => $data['metric_name'],
+                    'unit' => $data['unit'] ?? null,
+                    'numeric_value' => $result['numeric_value'] ?? null,
+                    'text_value' => $result['text_value'] ?? null,
+                    'notes' => $result['notes'] ?? null,
+                ]);
+
+                return $evaluation->id;
+            })->all();
+        });
+
+        return response()->json(['data' => ['saved' => count($ids), 'evaluation_ids' => $ids]], 201);
     }
 
     public function show(PhysicalEvaluation $physicalEvaluation): PhysicalEvaluationResource

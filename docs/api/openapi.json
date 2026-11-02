@@ -162,6 +162,255 @@
                 }
             }
         },
+        "/analytics/categories/{category}": {
+            "get": {
+                "operationId": "analytics.category",
+                "summary": "Tablero de una categor\u00eda: totales, asistencia semana a semana, distribuci\u00f3n por estado y los\npartidos jugados uno por uno, para los gr\u00e1ficos del m\u00f3dulo An\u00e1lisis",
+                "tags": [
+                    "Analytics"
+                ],
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "description": "The category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "category_id": {
+                                                    "type": "integer"
+                                                },
+                                                "category_name": {
+                                                    "type": "string"
+                                                },
+                                                "players": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "attendance": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "recorded": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "present": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "rate": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "recorded",
+                                                        "present",
+                                                        "rate"
+                                                    ]
+                                                },
+                                                "sessions": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "by_status": {
+                                                    "type": "array",
+                                                    "description": "Registros de asistencia por estado: present, late, excused, absent.",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "weekly": {
+                                                    "type": "array",
+                                                    "description": "Una fila por semana (lunes) del per\u00edodo.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "week_start": {
+                                                                "type": "string"
+                                                            },
+                                                            "recorded": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            },
+                                                            "present": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            },
+                                                            "rate": {
+                                                                "type": [
+                                                                    "integer",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "week_start",
+                                                            "recorded",
+                                                            "present",
+                                                            "rate"
+                                                        ]
+                                                    }
+                                                },
+                                                "results": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "played": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "won": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "drawn": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "lost": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "goals_for": {
+                                                            "type": "integer"
+                                                        },
+                                                        "goals_against": {
+                                                            "type": "integer"
+                                                        },
+                                                        "form": {
+                                                            "type": "array",
+                                                            "description": "Los \u00faltimos 5, del m\u00e1s viejo al m\u00e1s nuevo: `W`, `D` o `L`.",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "W",
+                                                                    "D",
+                                                                    "L"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "played",
+                                                        "won",
+                                                        "drawn",
+                                                        "lost",
+                                                        "goals_for",
+                                                        "goals_against",
+                                                        "form"
+                                                    ]
+                                                },
+                                                "matches": {
+                                                    "type": "array",
+                                                    "description": "Partidos jugados del per\u00edodo, del m\u00e1s viejo al m\u00e1s nuevo.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "date": {
+                                                                "type": "string"
+                                                            },
+                                                            "opponent": {
+                                                                "type": "string"
+                                                            },
+                                                            "is_home": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "our_score": {
+                                                                "type": "integer"
+                                                            },
+                                                            "opponent_score": {
+                                                                "type": "integer"
+                                                            },
+                                                            "result": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "W",
+                                                                    "D",
+                                                                    "L"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "date",
+                                                            "opponent",
+                                                            "is_home",
+                                                            "our_score",
+                                                            "opponent_score",
+                                                            "result"
+                                                        ]
+                                                    }
+                                                },
+                                                "evaluations": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "category_id",
+                                                "category_name",
+                                                "players",
+                                                "attendance",
+                                                "sessions",
+                                                "by_status",
+                                                "weekly",
+                                                "results",
+                                                "matches",
+                                                "evaluations"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "from": {
+                                                    "type": "string"
+                                                },
+                                                "to": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "from",
+                                                "to"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/analytics/categories/{category}/players": {
             "get": {
                 "operationId": "analytics.players",
@@ -9177,6 +9426,66 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/physical-evaluations/session": {
+            "post": {
+                "operationId": "physicalEvaluation.session",
+                "summary": "Prueba en vivo: la misma prueba a varios jugadores de una categor\u00eda, el mismo d\u00eda. Si el jugador\nya tiene una evaluaci\u00f3n ese d\u00eda en la categor\u00eda, la prueba se suma (o se corrige) ah\u00ed; si no,\nse crea la evaluaci\u00f3n. Todo o nada",
+                "tags": [
+                    "PhysicalEvaluation"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreEvaluationSessionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "saved": {
+                                                    "type": "integer"
+                                                },
+                                                "evaluation_ids": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "integer"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "saved",
+                                                "evaluation_ids"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -19876,6 +20185,89 @@
                     "file"
                 ],
                 "title": "StoreDocumentRequest"
+            },
+            "StoreEvaluationSessionRequest": {
+                "type": "object",
+                "description": "Una prueba tomada a toda una categor\u00eda el mismo d\u00eda: un resultado por jugador.",
+                "properties": {
+                    "category_id": {
+                        "type": "integer"
+                    },
+                    "evaluated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "evaluator_coach_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "metric_key": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9_]+$",
+                        "maxLength": 80
+                    },
+                    "metric_name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "unit": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 30
+                    },
+                    "results": {
+                        "type": "array",
+                        "description": "Solo los jugadores que hicieron la prueba.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "player_id": {
+                                    "type": "integer"
+                                },
+                                "numeric_value": {
+                                    "type": [
+                                        "number",
+                                        "null"
+                                    ],
+                                    "minimum": -9999999,
+                                    "maximum": 9999999
+                                },
+                                "text_value": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                },
+                                "notes": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            },
+                            "required": [
+                                "player_id"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 80,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "category_id",
+                    "evaluated_at",
+                    "metric_key",
+                    "metric_name",
+                    "results"
+                ],
+                "title": "StoreEvaluationSessionRequest"
             },
             "StoreFacilityComponentRequest": {
                 "type": "object",
