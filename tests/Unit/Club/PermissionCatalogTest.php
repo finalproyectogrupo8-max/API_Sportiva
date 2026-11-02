@@ -20,8 +20,14 @@ class PermissionCatalogTest extends TestCase
         $this->assertSame($catalog->names(), array_keys($roles['admin']['permissions']));
         $this->assertSame('sport', $roles['sport_coordinator']['permissions']['players.view']);
         $this->assertSame('own', $roles['coach']['permissions']['players.view']);
-        $this->assertArrayNotHasKey('apparel_orders.approve', $roles['coordinator']['permissions']);
+        // TIZ-30: el coordinador aprueba indumentaria para todo el club; el de deporte no (approve no tiene alcance).
+        $this->assertSame('all', $roles['coordinator']['permissions']['apparel_orders.approve']);
         $this->assertArrayNotHasKey('apparel_orders.approve', $roles['sport_coordinator']['permissions']);
+        foreach ($roles as $slug => $role) {
+            if ($slug !== 'admin') {
+                $this->assertArrayNotHasKey('material_orders.approve', $role['permissions'], "{$slug} no aprueba materiales");
+            }
+        }
     }
 
     public function test_every_front_module_has_a_view_permission(): void
