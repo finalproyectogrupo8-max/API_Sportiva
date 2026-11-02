@@ -92,6 +92,42 @@ class AuditLogger
         ]);
     }
 
+    public function recordPasswordResetRequested(?User $subject): void
+    {
+        AuditLog::query()->create([
+            'actor_id' => $this->request->user()?->getKey(),
+            'action' => 'auth.password_reset_requested',
+            'subject_type' => $subject ? 'user' : 'auth',
+            'subject_id' => $subject?->getKey() ?? 0,
+            'changes' => null,
+            'ip' => $this->request->ip(),
+        ]);
+    }
+
+    public function recordPasswordResetCompleted(User $subject): void
+    {
+        AuditLog::query()->create([
+            'actor_id' => $this->request->user()?->getKey(),
+            'action' => 'user.password_reset_completed',
+            'subject_type' => 'user',
+            'subject_id' => $subject->getKey(),
+            'changes' => null,
+            'ip' => $this->request->ip(),
+        ]);
+    }
+
+    public function recordPasswordResetRequestedByAdmin(User $subject): void
+    {
+        AuditLog::query()->create([
+            'actor_id' => $this->request->user()?->getKey(),
+            'action' => 'user.password_reset_requested_by_admin',
+            'subject_type' => 'user',
+            'subject_id' => $subject->getKey(),
+            'changes' => null,
+            'ip' => $this->request->ip(),
+        ]);
+    }
+
     public function recordDeleted(Model $subject): void
     {
         $type = $this->subjectType($subject);

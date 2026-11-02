@@ -61,6 +61,12 @@ return [
     'frontend_url' => rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/'),
 
     /*
+    | URL de recuperación del frontend. FRONT_URL es opcional; se conserva
+    | FRONTEND_URL como fallback para los entornos ya configurados.
+    */
+    'front_url' => rtrim((string) (env('FRONT_URL') ?: env('FRONTEND_URL', 'http://localhost:3000')), '/'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
