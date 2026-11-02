@@ -14,6 +14,7 @@ use App\Http\Controllers\Club\ApparelItemController;
 use App\Http\Controllers\Club\AttendanceController;
 use App\Http\Controllers\Club\CalendarController;
 use App\Http\Controllers\Club\CallupController;
+use App\Http\Controllers\Club\CategoryCalendarController;
 use App\Http\Controllers\Club\CategoryCoachController;
 use App\Http\Controllers\Club\CategoryController;
 use App\Http\Controllers\Club\CategoryMembershipController;
@@ -48,6 +49,7 @@ use App\Http\Controllers\Club\TrainingController;
 use App\Http\Controllers\Club\VenueController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\PublicCalendarController;
 use App\Http\Controllers\PublicCallupController;
 use App\Http\Controllers\SupportTicketController;
 use Dedoc\Scramble\Scramble;
@@ -113,6 +115,9 @@ Route::middleware('throttle:60,1')->prefix('public/callups')->group(function () 
     Route::post('{token}/players/{callup}', [PublicCallupController::class, 'respondFromGroup'])->whereNumber('callup');
     Route::get('{token}', [PublicCallupController::class, 'show']);
 });
+
+// Calendario suscribible de una categoría (FRO-32), sin login.
+Route::get('public/calendar/{token}.ics', [PublicCalendarController::class, 'show'])->where('token', '[A-Za-z0-9_.-]+')->middleware('throttle:60,1');
 
 // Escudo de un club activo: se muestra antes de entrar (selector, panel). No es un dato sensible.
 Route::get('public/clubs/{slug}/logo', [ClubLogoController::class, 'show'])->middleware('throttle:120,1');
@@ -190,6 +195,8 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::post('orders/{order}/reject', [OrderController::class, 'reject']);
     Route::post('orders/{order}/deliveries', [OrderController::class, 'deliveries']);
     Route::get('club-users', [ClubUserController::class, 'index']);
+    Route::get('categories/{category}/calendar-link', [CategoryCalendarController::class, 'show']);
+    Route::post('categories/{category}/calendar-link', [CategoryCalendarController::class, 'store']);
     Route::post('club-users', [ClubUserController::class, 'store']);
     Route::patch('club-users/{clubUser}', [ClubUserController::class, 'update']);
     Route::post('physical-evaluations/session', [PhysicalEvaluationController::class, 'session']);
