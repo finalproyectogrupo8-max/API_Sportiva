@@ -27,8 +27,8 @@ Ninguna. Las specs de acceso (`club-access-control`, que todavía no está archi
 ## Impact
 
 - **Código:** `config/club-permissions.php` (una línea en `coordinator`).
-- **Tests:** `tests/Unit/Club/PermissionCatalogTest.php`. Hoy afirma que el coordinador **no** tiene `apparel_orders.approve`: pasa a afirmar que sí lo tiene, que `sport_coordinator` no, y que nadie salvo el admin tiene `material_orders.approve`.
+- **Tests:** `tests/Unit/Club/PermissionCatalogTest.php` (hoy afirma que el coordinador **no** tiene `apparel_orders.approve`: pasa a afirmar que sí, que `sport_coordinator` no, y que nadie salvo el admin tiene `material_orders.approve`) y un test en `OrderApiTest` que aprueba pedidos reales de los dos tipos.
 - **Docs:** `docs/roles-y-permisos.md`.
 - **API:** sin endpoints nuevos ni cambios de contrato. `GET /api/me` y `GET /api/roles` devuelven el permiso nuevo para el coordinador. `openapi.json` no cambia.
-- **Sin efecto visible todavía:** no hay endpoint de pedidos (`apparel_orders` llega con TIZ-18). El permiso queda listo para cuando exista. El criterio del ticket ("el coordinador puede aprobar un pedido de indumentaria y no uno de materiales") se verifica a nivel de catálogo y de `GET /api/me`, no con una aprobación real.
+- **Efecto real con la API de pedidos (TIZ-18, ya en `main`):** `POST /api/orders/{order}/approve` autoriza con `apparel_orders.approve` o `material_orders.approve` según el tipo del pedido (`OrderPolicy`). Con este cambio, el coordinador aprueba pedidos de indumentaria y recibe 403 en los de materiales.
 - **Coordinación:** TIZ-35 (Tiziano) también toca `config/club-permissions.php`. El cambio es de una línea, así que se resuelve fácil si hay conflicto de merge.
