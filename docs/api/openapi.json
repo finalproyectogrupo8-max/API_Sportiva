@@ -446,6 +446,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -461,6 +465,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
@@ -533,6 +538,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -548,6 +557,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
@@ -615,6 +625,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -630,6 +644,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
@@ -702,6 +717,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -717,6 +736,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
@@ -2467,6 +2487,75 @@
                 }
             }
         },
+        "/club-users": {
+            "get": {
+                "operationId": "clubUser.index",
+                "summary": "Personas activas del club, solo id y nombre: para elegir a qui\u00e9n asignar una reparaci\u00f3n\ny mostrar qui\u00e9n report\u00f3 o pidi\u00f3 algo. No expone mails ni roles",
+                "tags": [
+                    "ClubUser"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "display_name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "display_name"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/coaches": {
             "get": {
                 "operationId": "coaches.index",
@@ -3973,7 +4062,17 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/FacilityResource"
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/FacilityResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "components"
+                                                        ]
+                                                    }
+                                                ]
                                             }
                                         },
                                         "links": {
@@ -9439,7 +9538,8 @@
                                                         "type": "object",
                                                         "required": [
                                                             "facility",
-                                                            "component"
+                                                            "component",
+                                                            "maintenance_record"
                                                         ]
                                                     }
                                                 ]
