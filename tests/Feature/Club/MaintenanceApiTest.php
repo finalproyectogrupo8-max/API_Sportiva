@@ -102,6 +102,43 @@ class MaintenanceApiTest extends TestCase
         });
     }
 
+    public function test_assignee_and_reporter_are_notified_and_club_users_are_listed(): void
+    {
+        $tech = User::factory()->create();
+        $techToken = $this->clubToken($this->tenantA(), $tech, ['maintenance_manager']);
+        $reporter = User::factory()->create();
+        $reporterToken = $this->clubToken($this->tenantA(), $reporter, ['coach']);
+        [$facility, $techId] = $this->inTenant($this->tenantA(), fn () => [
+            Facility::factory()->create(['name' => 'Cancha 2']),
+            ClubUser::query()->where('global_user_id', $tech->id)->sole()->id,
+        ]);
+
+        // El listado de personas solo trae id y nombre.
+        $this->withClubToken($reporterToken)->getJson('/api/club-users')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $techId])
+            ->assertJsonMissingPath('data.0.global_user_id');
+
+        $id = $this->withClubToken($reporterToken)->postJson('/api/repair-requests', [
+            'facility_id' => $facility->id, 'title' => 'Red rota', 'description' => 'La red del arco norte está cortada.',
+        ])->assertCreated()->json('data.id');
+
+        $admin = $this->token('admin');
+        $this->withClubToken($admin)->postJson("/api/repair-requests/{$id}/assign", ['assigned_to' => $techId])->assertOk();
+        $this->withClubToken($techToken)->getJson('/api/notifications?unread=1')
+            ->assertJsonPath('data.0.type', 'repair_assigned')
+            ->assertJsonPath('data.0.title', 'Te asignaron una reparación: Red rota')
+            ->assertJsonPath('data.0.data.repair_request_id', $id);
+
+        $this->withClubToken($techToken)->postJson("/api/repair-requests/{$id}/resolve", ['description' => 'Se cambió la red.'])->assertOk();
+        $this->withClubToken($reporterToken)->getJson('/api/notifications?unread=1')
+            ->assertJsonPath('data.0.type', 'repair_resolved')
+            ->assertJsonPath('data.0.body', 'Se cambió la red.');
+
+        // El listado de instalaciones trae sus componentes.
+        $this->withClubToken($admin)->getJson('/api/facilities')->assertOk()->assertJsonPath('data.0.components', []);
+    }
+
     public function test_resolve_unassigned_request_fails_with_409(): void
     {
         $repairRequest = $this->inTenant($this->tenantA(), fn () => RepairRequest::factory()->create([
