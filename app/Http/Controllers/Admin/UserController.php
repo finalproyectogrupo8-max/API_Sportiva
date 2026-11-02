@@ -14,6 +14,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 class UserController extends Controller
 {
@@ -65,6 +66,21 @@ class UserController extends Controller
         Gate::authorize('view', $user);
 
         return UserResource::make($user);
+    }
+
+    public function sendPasswordReset(User $user, AuditLogger $auditLogger): JsonResponse
+    {
+        Gate::authorize('view', $user);
+
+        if ($user->is_active) {
+            $token = Password::broker()->createToken($user);
+            $user->sendPasswordResetNotification($token);
+            $auditLogger->recordPasswordResetRequestedByAdmin($user);
+        }
+
+        return response()->json([
+            'message' => 'Si el usuario está activo, recibirá un enlace para restablecer su contraseña.',
+        ], 202);
     }
 
     public function update(

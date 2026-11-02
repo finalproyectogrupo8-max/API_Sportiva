@@ -6,10 +6,13 @@ use App\Club\Alerts\Channels\DatabaseNotificationChannel;
 use App\Club\Alerts\Channels\NotificationChannel;
 use App\Models\Club\Player;
 use App\Models\PersonalAccessToken;
+use App\Support\PasswordResetUrl;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Server;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -38,9 +41,15 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap(['player' => Player::class]);
 
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+        ResetPassword::createUrlUsing(
+            fn (CanResetPassword $user, string $token): string => PasswordResetUrl::make($user, $token)
+        );
 
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)
             ->by(strtolower((string) $request->input('email')).'|'.$request->ip()));
+
+        RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(3)
+            ->by(strtolower(trim((string) $request->input('email'))).'|'.$request->ip()));
 
         // Por email + IP: los formularios de la landing llegan desde el servidor de Next,
         // así que la IP sola sería la misma para todos los visitantes.

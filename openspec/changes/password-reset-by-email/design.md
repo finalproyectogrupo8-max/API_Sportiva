@@ -52,7 +52,7 @@ La ruta se agrega en el grupo admin existente con el parámetro `{user}` y bindi
 
 ### Restablecimiento, evento y revocación
 
-El callback de `Password::reset` actualiza la contraseña, rota `remember_token`, revoca `$user->tokens()->delete()` y registra el evento de restablecimiento sin valores secretos. El broker conserva la validación y consumo de token y dispara `PasswordReset`. Los estados de token inválido, vencido o usado se convierten en 422 JSON; el éxito es 204.
+El callback de `Password::reset` actualiza la contraseña, rota `remember_token`, revoca `$user->tokens()->delete()` y registra el evento de restablecimiento sin valores secretos. El broker conserva la validación y consumo de token; después de confirmar el reset, el controlador emite `PasswordReset` explícitamente, ya que Laravel 13 no lo emite desde el broker. Los estados de token inválido, vencido o usado se convierten en 422 JSON; el éxito es 204.
 
 **Alternativa considerada:** revocar solo el token usado o cambiar la contraseña fuera del broker. Se descarta porque dejaría sesiones vigentes o evitaría la validación centralizada del token.
 
