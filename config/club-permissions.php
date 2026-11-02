@@ -165,7 +165,8 @@ return [
                 'physical_evaluations.view',
                 'project.view', 'project.update',
                 'apparel_items.view',
-                'apparel_orders.view', 'apparel_orders.create', 'apparel_orders.update',
+                // TIZ-30: el coordinador aprueba la indumentaria (materiales sigue siendo del admin).
+                'apparel_orders.view', 'apparel_orders.create', 'apparel_orders.update', 'apparel_orders.approve',
                 'materials.view', 'storage_locations.view', 'inventory.view',
                 'material_orders.view', 'material_orders.create', 'material_orders.update',
                 'facilities.view', 'repairs.view', 'repairs.create', 'maintenance.view',

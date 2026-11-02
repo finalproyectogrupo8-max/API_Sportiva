@@ -113,7 +113,7 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, — = nada.
 | `physical_evaluations` | ✓ ver | ver (s) | ver, crear, editar, eliminar (s) | — | — |
 | `project` | ✓ ver, editar | ver | ver | — | — |
 | `apparel_items` | ✓ ver | ver | — | ✓ ver, crear, editar, eliminar | — |
-| `apparel_orders` | ✓ ver, crear, editar | ver, crear, editar (s) | — | ✓ ver, crear, editar, entregar | — |
+| `apparel_orders` | ✓ ver, crear, editar, aprobar | ver, crear, editar (s) | — | ✓ ver, crear, editar, entregar | — |
 | `materials`, `storage_locations` | ✓ ver | — | — | ✓ ver, crear, editar, eliminar | — |
 | `inventory` | ✓ ver | — | — | ✓ ver, ajustar, transferir | — |
 | `material_orders` | ✓ ver, crear, editar | ver, crear, editar (s) | ver, crear, editar (s) | ✓ ver, crear, editar, entregar | — |
@@ -128,8 +128,8 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, — = nada.
 
 Notas:
 
-- **Coordinador de deporte (`sport_coordinator`):** tiene exactamente los mismos permisos que el Coordinador general (`coordinator`), pero con alcance **sus deportes** (`sport`, TIZ-35) en todos los permisos marcados como con alcance en el catálogo (`players.*`, `categories.manage_players`, `player_contacts.*`, `player_documents.view/upload`, `coaches.view`, `matches.*`, `trainings.*`, `attendance.*`, `callups.*`, `physical_evaluations.view`, `apparel_orders.view/create/update`, `material_orders.view/create/update`, `categories.view`, `competitions.view`, `player_requirements.view/update`, `announcements.*`).
-- **Aprobar pedidos** (`apparel_orders.approve`, `material_orders.approve`) queda solo para el Administrador. Si un club quiere que el coordinador apruebe, crea un rol custom.
+- **Coordinador de deporte (`sport_coordinator`):** tiene exactamente los mismos permisos que el Coordinador general (`coordinator`), pero con alcance **sus deportes** (`sport`, TIZ-35) en todos los permisos marcados como con alcance en el catálogo (`players.*`, `categories.manage_players`, `player_contacts.*`, `player_documents.view/upload`, `coaches.view`, `matches.*`, `trainings.*`, `attendance.*`, `callups.*`, `physical_evaluations.view`, `apparel_orders.view/create/update`, `material_orders.view/create/update`, `categories.view`, `competitions.view`, `player_requirements.view/update`, `announcements.*`). La excepción es `apparel_orders.approve`: no lo recibe, porque `approve` no tiene alcance y le permitiría aprobar pedidos de deportes que no son suyos (TIZ-30).
+- **Aprobar pedidos:** la indumentaria (`apparel_orders.approve`) la aprueban el Administrador y el Coordinador general, para que los pedidos no se traben si la directiva entra poco (TIZ-30). Los materiales (`material_orders.approve`) siguen siendo solo del Administrador; si un club quiere que otro rol los apruebe, crea un rol custom.
 - `delete` en pedidos solo aplica a pedidos en `draft` (lo valida la Policy, no el permiso).
 
 ## 4. Alcance: todo el club, sus deportes o sus categorías
