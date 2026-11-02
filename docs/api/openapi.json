@@ -9436,6 +9436,66 @@
                 }
             }
         },
+        "/physical-evaluations/session": {
+            "post": {
+                "operationId": "physicalEvaluation.session",
+                "summary": "Prueba en vivo: la misma prueba a varios jugadores de una categor\u00eda, el mismo d\u00eda. Si el jugador\nya tiene una evaluaci\u00f3n ese d\u00eda en la categor\u00eda, la prueba se suma (o se corrige) ah\u00ed; si no,\nse crea la evaluaci\u00f3n. Todo o nada",
+                "tags": [
+                    "PhysicalEvaluation"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreEvaluationSessionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "saved": {
+                                                    "type": "integer"
+                                                },
+                                                "evaluation_ids": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "integer"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "saved",
+                                                "evaluation_ids"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/physical-evaluations": {
             "get": {
                 "operationId": "physical-evaluations.index",
@@ -20125,6 +20185,89 @@
                     "file"
                 ],
                 "title": "StoreDocumentRequest"
+            },
+            "StoreEvaluationSessionRequest": {
+                "type": "object",
+                "description": "Una prueba tomada a toda una categor\u00eda el mismo d\u00eda: un resultado por jugador.",
+                "properties": {
+                    "category_id": {
+                        "type": "integer"
+                    },
+                    "evaluated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "evaluator_coach_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "metric_key": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9_]+$",
+                        "maxLength": 80
+                    },
+                    "metric_name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "unit": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 30
+                    },
+                    "results": {
+                        "type": "array",
+                        "description": "Solo los jugadores que hicieron la prueba.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "player_id": {
+                                    "type": "integer"
+                                },
+                                "numeric_value": {
+                                    "type": [
+                                        "number",
+                                        "null"
+                                    ],
+                                    "minimum": -9999999,
+                                    "maximum": 9999999
+                                },
+                                "text_value": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                },
+                                "notes": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            },
+                            "required": [
+                                "player_id"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 80,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "category_id",
+                    "evaluated_at",
+                    "metric_key",
+                    "metric_name",
+                    "results"
+                ],
+                "title": "StoreEvaluationSessionRequest"
             },
             "StoreFacilityComponentRequest": {
                 "type": "object",

@@ -129,6 +129,47 @@ class AnalysisProjectApiTest extends TestCase
         $this->withClubToken($token)->deleteJson("/api/physical-evaluations/{$other}")->assertNotFound();
     }
 
+    public function test_a_live_test_saves_one_result_per_player_and_merges_the_same_day(): void
+    {
+        $c = $this->club();
+        $token = $this->coachToken($c['marta'], 'physical_trainer');
+        $today = now()->toDateString();
+        $session = fn (array $results, array $overrides = []) => [
+            'category_id' => $c['u15']->id,
+            'evaluated_at' => $today,
+            'metric_key' => 'salto_vertical',
+            'metric_name' => 'Salto vertical',
+            'unit' => 'cm',
+            'results' => $results,
+            ...$overrides,
+        ];
+
+        // Ana ya tenía una evaluación hoy con otra prueba: el salto se suma ahí.
+        $existing = $this->withClubToken($token)->postJson('/api/physical-evaluations', $this->evaluation($c['ana']->id, ['evaluated_at' => $today]))->assertCreated()->json('data.id');
+
+        $this->withClubToken($token)->postJson('/api/physical-evaluations/session', $session([
+            ['player_id' => $c['ana']->id, 'numeric_value' => 41.5],
+            ['player_id' => $c['beto']->id, 'numeric_value' => 38],
+        ]))->assertCreated()->assertJsonPath('data.saved', 2)->assertJsonPath('data.evaluation_ids.0', $existing);
+
+        $this->withClubToken($token)->getJson("/api/physical-evaluations/{$existing}")->assertOk()->assertJsonCount(3, 'data.measurements');
+
+        // Corregir un resultado del mismo día no duplica nada.
+        $this->withClubToken($token)->postJson('/api/physical-evaluations/session', $session([['player_id' => $c['beto']->id, 'numeric_value' => 39]]))->assertCreated();
+        $beto = $this->withClubToken($token)->getJson("/api/physical-evaluations?player_id={$c['beto']->id}&metric_key=salto_vertical")->assertOk()->assertJsonCount(1, 'data');
+        $this->assertEquals(39, collect($beto->json('data.0.measurements'))->firstWhere('metric_key', 'salto_vertical')['numeric_value']);
+
+        // Jugadores de otra categoría o categorías fuera del alcance.
+        $this->withClubToken($token)->postJson('/api/physical-evaluations/session', $session([['player_id' => $c['carla']->id, 'numeric_value' => 30]]))
+            ->assertUnprocessable()->assertJsonValidationErrors('results');
+        $this->withClubToken($token)->postJson('/api/physical-evaluations/session', $session([['player_id' => $c['carla']->id, 'numeric_value' => 30]], ['category_id' => $c['u17']->id]))
+            ->assertNotFound();
+        $this->withClubToken($token)->postJson('/api/physical-evaluations/session', $session([['player_id' => $c['ana']->id]]))
+            ->assertUnprocessable()->assertJsonValidationErrors('results.0.numeric_value');
+        $this->withClubToken($this->coachToken($c['marta']))->postJson('/api/physical-evaluations/session', $session([['player_id' => $c['ana']->id, 'numeric_value' => 40]]))
+            ->assertForbidden();
+    }
+
     public function test_season_objectives(): void
     {
         $c = $this->club();
