@@ -78,7 +78,7 @@ Con la cola `sync` (tests), `NotifyCallup` corre adentro del request. Hoy, al sa
 
 ### 7. Rate limit del proveedor
 
-Resend limita los pedidos por segundo. `SendCallupNotice` usa el middleware `RateLimited('mail')`. El limiter `mail` se define en `AppServiceProvider` con `Limit::perSecond(2)`, y el job lo libera para más tarde en lugar de fallar. Parámetros del job: `$tries = 3`, `$backoff = [10, 60]`, `$timeout = 30`.
+Resend limita los pedidos por segundo. `SendCallupNotice` usa el middleware `RateLimited('mail')`. El limiter `mail` se define en `AppServiceProvider` con `Limit::perSecond(2)`, y el job lo libera para más tarde en lugar de fallar. Parámetros del job: `retryUntil()` de 1 hora y `$maxExceptions = 3` (no `$tries`: cada vez que el límite lo devuelve a la cola cuenta como intento), `$backoff = [10, 60]` y `$timeout = 30`.
 
 ### 8. Contrato de la convocatoria
 

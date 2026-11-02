@@ -10,6 +10,760 @@
         }
     ],
     "paths": {
+        "/announcements/preview-audience": {
+            "post": {
+                "operationId": "announcement.previewAudience",
+                "summary": "Cu\u00e1ntas direcciones recibir\u00edan el mail, cu\u00e1ntos quedan afuera sin email y una muestra. No env\u00eda nada",
+                "tags": [
+                    "Announcement"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PreviewAnnouncementAudienceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "recipients_count": {
+                                                    "type": "integer",
+                                                    "description": "Direcciones distintas que recibir\u00edan el mail."
+                                                },
+                                                "without_email_count": {
+                                                    "type": "integer",
+                                                    "description": "Personas incluidas que no tienen email."
+                                                },
+                                                "without_email": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                },
+                                                "sample": {
+                                                    "type": "object",
+                                                    "description": "Hasta 10 nombres de destinatarios.",
+                                                    "additionalProperties": {}
+                                                }
+                                            },
+                                            "required": [
+                                                "recipients_count",
+                                                "without_email_count",
+                                                "without_email",
+                                                "sample"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/announcements/{announcement}/send": {
+            "post": {
+                "operationId": "announcement.send",
+                "summary": "Congela los destinatarios y encola un mail por direcci\u00f3n. Responde 202: el env\u00edo sigue en la cola",
+                "tags": [
+                    "Announcement"
+                ],
+                "parameters": [
+                    {
+                        "name": "announcement",
+                        "in": "path",
+                        "required": true,
+                        "description": "The announcement ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "`AnnouncementResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AnnouncementResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "No se puede completar la operaci\u00f3n."
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "announcement_not_draft"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/announcements/{announcement}/recipients": {
+            "get": {
+                "operationId": "announcement.recipients",
+                "tags": [
+                    "Announcement"
+                ],
+                "parameters": [
+                    {
+                        "name": "announcement",
+                        "in": "path",
+                        "required": true,
+                        "description": "The announcement ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "sent",
+                                "failed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `AnnouncementRecipientResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AnnouncementRecipientResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/announcements": {
+            "get": {
+                "operationId": "announcements.index",
+                "tags": [
+                    "Announcement"
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "sending",
+                                "sent"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `AnnouncementResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AnnouncementResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "announcements.store",
+                "tags": [
+                    "Announcement"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreAnnouncementRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`AnnouncementResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AnnouncementResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/announcements/{announcement}": {
+            "get": {
+                "operationId": "announcements.show",
+                "tags": [
+                    "Announcement"
+                ],
+                "parameters": [
+                    {
+                        "name": "announcement",
+                        "in": "path",
+                        "required": true,
+                        "description": "The announcement ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AnnouncementResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AnnouncementResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "announcements.update",
+                "tags": [
+                    "Announcement"
+                ],
+                "parameters": [
+                    {
+                        "name": "announcement",
+                        "in": "path",
+                        "required": true,
+                        "description": "The announcement ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAnnouncementRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AnnouncementResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AnnouncementResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "No se puede completar la operaci\u00f3n."
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "announcement_not_draft"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "announcements.destroy",
+                "tags": [
+                    "Announcement"
+                ],
+                "parameters": [
+                    {
+                        "name": "announcement",
+                        "in": "path",
+                        "required": true,
+                        "description": "The announcement ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "No se puede completar la operaci\u00f3n."
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "announcement_not_draft"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/apparel-items": {
             "get": {
                 "operationId": "apparel-items.index",
@@ -14549,6 +15303,117 @@
     },
     "components": {
         "schemas": {
+            "AnnouncementRecipientResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "`pending`, `sent` o `failed`."
+                    },
+                    "error": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Error del proveedor, si fall\u00f3."
+                    },
+                    "sent_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "email",
+                    "name",
+                    "status",
+                    "error",
+                    "sent_at"
+                ],
+                "title": "AnnouncementRecipientResource"
+            },
+            "AnnouncementResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string",
+                        "description": "Markdown."
+                    },
+                    "audience": {
+                        "type": "object",
+                        "description": "`categories`, `players`, `role_slugs` y `club_user_ids`, como se mandaron.",
+                        "additionalProperties": {}
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "`draft`, `sending` o `sent`."
+                    },
+                    "created_by": {
+                        "type": "integer"
+                    },
+                    "sent_by": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "sent_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recipients_count": {
+                        "type": "integer",
+                        "description": "Direcciones distintas a las que se envi\u00f3."
+                    },
+                    "sent_count": {
+                        "type": "integer"
+                    },
+                    "failed_count": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "subject",
+                    "body",
+                    "audience",
+                    "status",
+                    "created_by",
+                    "sent_by",
+                    "sent_at",
+                    "recipients_count",
+                    "sent_count",
+                    "failed_count",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "AnnouncementResource"
+            },
             "App.Http.Resources.Admin.UserResource": {
                 "type": "object",
                 "properties": {
@@ -16712,6 +17577,80 @@
                 ],
                 "title": "PlayerResource"
             },
+            "PreviewAnnouncementAudienceRequest": {
+                "type": "object",
+                "properties": {
+                    "audience": {
+                        "type": "object",
+                        "properties": {
+                            "categories": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "category_id": {
+                                            "type": "integer"
+                                        },
+                                        "players": {
+                                            "type": "boolean"
+                                        },
+                                        "tutors": {
+                                            "type": "boolean"
+                                        },
+                                        "coaches": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "category_id"
+                                    ]
+                                },
+                                "maxItems": 50,
+                                "uniqueItems": true
+                            },
+                            "players": {
+                                "type": "object",
+                                "properties": {
+                                    "player_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "maxItems": 200,
+                                        "uniqueItems": true
+                                    },
+                                    "players": {
+                                        "type": "boolean"
+                                    },
+                                    "tutors": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "role_slugs": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "maxItems": 20,
+                                "uniqueItems": true
+                            },
+                            "club_user_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "maxItems": 200,
+                                "uniqueItems": true
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "audience"
+                ],
+                "title": "PreviewAnnouncementAudienceRequest"
+            },
             "RecordAttendanceRequest": {
                 "type": "object",
                 "description": "Asistencia de un evento en un solo request (la pantalla m\u00f3vil la manda entera).",
@@ -17213,6 +18152,91 @@
                     "updated_at"
                 ],
                 "title": "StorageLocationResource"
+            },
+            "StoreAnnouncementRequest": {
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "body": {
+                        "type": "string",
+                        "description": "Markdown. El HTML se muestra como texto en el mail.",
+                        "maxLength": 10000
+                    },
+                    "audience": {
+                        "type": "object",
+                        "properties": {
+                            "categories": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "category_id": {
+                                            "type": "integer"
+                                        },
+                                        "players": {
+                                            "type": "boolean"
+                                        },
+                                        "tutors": {
+                                            "type": "boolean"
+                                        },
+                                        "coaches": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "category_id"
+                                    ]
+                                },
+                                "maxItems": 50,
+                                "uniqueItems": true
+                            },
+                            "players": {
+                                "type": "object",
+                                "properties": {
+                                    "player_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "maxItems": 200,
+                                        "uniqueItems": true
+                                    },
+                                    "players": {
+                                        "type": "boolean"
+                                    },
+                                    "tutors": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "role_slugs": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "maxItems": 20,
+                                "uniqueItems": true
+                            },
+                            "club_user_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "maxItems": 200,
+                                "uniqueItems": true
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "subject",
+                    "body",
+                    "audience"
+                ],
+                "title": "StoreAnnouncementRequest"
             },
             "StoreApparelItemRequest": {
                 "type": "object",
@@ -18937,6 +19961,88 @@
                     "notes"
                 ],
                 "title": "TrainingResource"
+            },
+            "UpdateAnnouncementRequest": {
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "body": {
+                        "type": "string",
+                        "maxLength": 10000
+                    },
+                    "audience": {
+                        "type": "object",
+                        "properties": {
+                            "categories": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "category_id": {
+                                            "type": "integer"
+                                        },
+                                        "players": {
+                                            "type": "boolean"
+                                        },
+                                        "tutors": {
+                                            "type": "boolean"
+                                        },
+                                        "coaches": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "category_id"
+                                    ]
+                                },
+                                "maxItems": 50,
+                                "uniqueItems": true
+                            },
+                            "players": {
+                                "type": "object",
+                                "properties": {
+                                    "player_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "maxItems": 200,
+                                        "uniqueItems": true
+                                    },
+                                    "players": {
+                                        "type": "boolean"
+                                    },
+                                    "tutors": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "role_slugs": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "maxItems": 20,
+                                "uniqueItems": true
+                            },
+                            "club_user_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "maxItems": 200,
+                                "uniqueItems": true
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "audience"
+                ],
+                "title": "UpdateAnnouncementRequest"
             },
             "UpdateApparelItemRequest": {
                 "type": "object",

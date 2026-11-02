@@ -89,7 +89,7 @@ class TenantProvisioningTest extends TestCase
 
         $this->assertSame(TenantStatus::Active->value, $tenant->status);
 
-        // Verificar que la base física existe y tiene exactamente las 32 tablas de la carpeta tenant/
+        // Verificar que la base física existe y tiene exactamente las tablas de la carpeta tenant/
         $tenantDatabase = app(TenantDatabase::class);
         $tables = $tenantDatabase->run($tenant, function () {
             $connection = DB::connection(TenantDatabase::CONNECTION);
@@ -102,11 +102,12 @@ class TenantProvisioningTest extends TestCase
                 ->all();
         });
 
-        // Contar cuántas migraciones crean tablas en database/migrations/tenant (las create_*)
+        // Contar las tablas que crean las migraciones de database/migrations/tenant
+        // (una migración puede crear más de una, por eso se cuentan los Schema::create).
         $migrationFiles = glob(base_path('database/migrations/tenant/*.php')) ?: [];
-        $expectedTableMigrations = count(array_filter(
-            $migrationFiles,
-            fn ($file) => str_contains(basename($file), '_create_')
+        $expectedTableMigrations = array_sum(array_map(
+            fn ($file) => substr_count((string) file_get_contents($file), 'Schema::create('),
+            $migrationFiles
         ));
 
         $this->assertSame($expectedTableMigrations, count($tables));
