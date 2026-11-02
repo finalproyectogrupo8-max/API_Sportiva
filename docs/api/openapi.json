@@ -446,6 +446,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -461,6 +465,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
@@ -533,6 +538,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -548,6 +557,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
@@ -615,6 +625,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -630,6 +644,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
@@ -702,6 +717,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -717,6 +736,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
