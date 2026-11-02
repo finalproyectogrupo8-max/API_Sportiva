@@ -16,6 +16,8 @@ class CategoryResource extends JsonResource
             'sport_id' => $this->sport_id,
             'season_id' => $this->season_id,
             'name' => $this->name,
+            /** `female`, `male` o `mixed`; null si no se cargó (TIZ-40). */
+            'branch' => $this->branch,
             'min_age' => $this->min_age,
             'max_age' => $this->max_age,
             'is_active' => $this->is_active,

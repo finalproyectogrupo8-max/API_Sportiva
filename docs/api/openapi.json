@@ -2149,6 +2149,18 @@
                         }
                     },
                     {
+                        "name": "branch",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "female",
+                                "male",
+                                "mixed"
+                            ]
+                        }
+                    },
+                    {
                         "name": "is_active",
                         "in": "query",
                         "schema": {
@@ -8698,6 +8710,18 @@
                         "description": "Jugadores con una asignaci\u00f3n activa en esa categor\u00eda.",
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "gender",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "female",
+                                "male",
+                                "other"
+                            ]
                         }
                     },
                     {
@@ -15846,6 +15870,13 @@
                     "name": {
                         "type": "string"
                     },
+                    "branch": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "`female`, `male` o `mixed`; null si no se carg\u00f3 (TIZ-40)."
+                    },
                     "min_age": {
                         "type": [
                             "integer",
@@ -15873,6 +15904,7 @@
                     "sport_id",
                     "season_id",
                     "name",
+                    "branch",
                     "min_age",
                     "max_age",
                     "is_active",
@@ -17456,6 +17488,13 @@
                             "null"
                         ]
                     },
+                    "gender": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "`female`, `male` u `other`; null si no se carg\u00f3 (TIZ-40)."
+                    },
                     "age": {
                         "type": [
                             "integer",
@@ -17525,6 +17564,7 @@
                     "first_name",
                     "last_name",
                     "birth_date",
+                    "gender",
                     "age",
                     "document_number",
                     "registration_number",
@@ -18276,6 +18316,19 @@
                         "minimum": 0,
                         "maximum": 32767
                     },
+                    "branch": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "TIZ-40: `female`, `male` o `mixed`; opcional.",
+                        "enum": [
+                            "female",
+                            "male",
+                            "mixed",
+                            null
+                        ]
+                    },
                     "is_active": {
                         "type": "boolean"
                     }
@@ -19014,6 +19067,19 @@
                             "left",
                             "right",
                             "both",
+                            null
+                        ]
+                    },
+                    "gender": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "TIZ-40: `female`, `male` u `other`; opcional.",
+                        "enum": [
+                            "female",
+                            "male",
+                            "other",
                             null
                         ]
                     },
@@ -20027,6 +20093,19 @@
                         "minimum": 0,
                         "maximum": 32767
                     },
+                    "branch": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "TIZ-40: `female`, `male` o `mixed`; opcional.",
+                        "enum": [
+                            "female",
+                            "male",
+                            "mixed",
+                            null
+                        ]
+                    },
                     "is_active": {
                         "type": "boolean"
                     }
@@ -20415,6 +20494,19 @@
                             "left",
                             "right",
                             "both",
+                            null
+                        ]
+                    },
+                    "gender": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "TIZ-40: `female`, `male` u `other`; opcional.",
+                        "enum": [
+                            "female",
+                            "male",
+                            "other",
                             null
                         ]
                     },

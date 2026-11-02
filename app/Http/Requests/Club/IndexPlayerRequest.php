@@ -20,6 +20,7 @@ class IndexPlayerRequest extends FormRequest
             'search' => ['sometimes', 'string', 'max:100'],
             // Jugadores con una asignación activa en esa categoría.
             'category_id' => ['sometimes', 'integer'],
+            'gender' => ['sometimes', 'string', Rule::in(Player::GENDERS)],
             'status' => ['sometimes', 'string', Rule::in(Player::STATUSES)],
             'sort' => ['sometimes', 'string', 'in:last_name,-last_name,first_name,-first_name,birth_date,-birth_date,created_at,-created_at'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],

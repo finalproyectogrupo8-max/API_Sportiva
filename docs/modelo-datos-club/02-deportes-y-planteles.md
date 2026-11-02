@@ -97,12 +97,14 @@ erDiagram
 | `sport_id` | BIGINT UNSIGNED | no | FK → `sports.id` | |
 | `season_id` | BIGINT UNSIGNED | no | FK → `seasons.id` | |
 | `name` | VARCHAR(80) | no | | U21, Primera, Pre-mini |
+| `branch` | VARCHAR(10) | sí | | Rama: `female` / `male` / `mixed` (TIZ-40). Filtro `branch` en el listado |
 | `min_age` | SMALLINT | sí | | Edad mínima orientativa |
 | `max_age` | SMALLINT | sí | | Edad máxima orientativa |
 | `is_active` | BOOLEAN | no | default `true` | |
 | `created_at`, `updated_at` | TIMESTAMP | sí | | |
 
 - `UNIQUE (sport_id, season_id, name)`: no se repite una categoría en el mismo deporte y temporada.
+- **Rama y plantel (TIZ-40):** un jugador de género `male` no se suma a una categoría `female`, ni al revés (422). Una categoría `mixed` o sin rama, o un jugador sin género o con `other`, no bloquean. Tampoco se puede cambiar la rama de una categoría ni el género de un jugador si eso contradice una asignación activa.
 - Cada temporada nueva crea categorías nuevas, así que el historial de partidos y planteles de la temporada anterior queda intacto.
 
 ## `players`
@@ -115,6 +117,7 @@ Contiene **datos personales**, muchas veces de menores.
 | `first_name` | VARCHAR(100) | no | | |
 | `last_name` | VARCHAR(100) | no | | |
 | `birth_date` | DATE | sí | | Obligatoria en el alta por API (define los requisitos "solo menores", TIZ-32). La columna sigue nullable por los datos previos |
+| `gender` | VARCHAR(10) | sí | | `female` / `male` / `other` (TIZ-40). Opcional. Filtro `gender` en el listado |
 | `document_number` | VARCHAR(30) | sí | | Solo si el club lo necesita (pendiente de definir) |
 | `registration_number` | VARCHAR(50) | sí | | Ficha o pase federativo |
 | `preferred_position` | VARCHAR(50) | sí | | |

@@ -24,6 +24,8 @@ class StorePlayerRequest extends FormRequest
             'registration_number' => ['nullable', 'string', 'max:50'],
             'preferred_position' => ['nullable', 'string', 'max:50'],
             'dominant_side' => ['nullable', 'string', 'in:left,right,both'],
+            // TIZ-40: `female`, `male` u `other`; opcional.
+            'gender' => ['nullable', 'string', Rule::in(Player::GENDERS)],
             'status' => ['sometimes', 'string', Rule::in(Player::STATUSES)],
             // Nada médico: eso va en los requisitos y documentos.
             'notes' => ['nullable', 'string', 'max:2000'],

@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $first_name
  * @property string $last_name
  * @property CarbonImmutable|null $birth_date
+ * @property string|null $gender `female`, `male` u `other` (TIZ-40); null si no se cargó.
  * @property string|null $document_number
  * @property string|null $registration_number
  * @property string|null $preferred_position
@@ -28,13 +29,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $status
  * @property string|null $notes
  */
-#[Fillable(['first_name', 'last_name', 'birth_date', 'document_number', 'registration_number', 'preferred_position', 'dominant_side', 'status', 'notes'])]
+#[Fillable(['first_name', 'last_name', 'birth_date', 'gender', 'document_number', 'registration_number', 'preferred_position', 'dominant_side', 'status', 'notes'])]
 class Player extends Model
 {
     /** @use HasFactory<PlayerFactory> */
     use HasFactory, SoftDeletes;
 
     public const STATUSES = ['active', 'inactive', 'transferred'];
+
+    public const GENDERS = ['female', 'male', 'other'];
 
     protected $connection = 'tenant';
 
