@@ -230,6 +230,14 @@ class AnalysisProjectApiTest extends TestCase
         $this->assertSame(['played' => 2, 'won' => 1, 'drawn' => 0, 'lost' => 1, 'goals_for' => 120, 'goals_against' => 115, 'form' => ['W', 'L']], $u15['results']);
         $this->assertSame(1, $u15['evaluations']);
 
+        $detail = $this->withClubToken($admin)->getJson("/api/analytics/categories/{$c['u15']->id}")->assertOk()->json('data');
+        $this->assertSame(['present' => 2, 'late' => 1, 'excused' => 1, 'absent' => 2], $detail['by_status']);
+        $this->assertSame(6, array_sum(array_column($detail['weekly'], 'recorded')));
+        $this->assertGreaterThanOrEqual(13, count($detail['weekly']));
+        $this->assertSame(['W', 'L'], array_column($detail['matches'], 'result'));
+        $this->assertSame(70, $detail['matches'][0]['our_score']);
+        $this->assertSame(['recorded' => 6, 'present' => 3, 'rate' => 50], $detail['attendance']);
+
         $players = $this->withClubToken($admin)->getJson("/api/analytics/categories/{$c['u15']->id}/players")->assertOk()->json('data');
         $this->assertSame('Ana Test', $players[0]['player_name']);
         $this->assertSame(100, $players[0]['attendance']['rate']);
@@ -242,6 +250,7 @@ class AnalysisProjectApiTest extends TestCase
         $coach = $this->coachToken($c['marta']);
         $this->withClubToken($coach)->getJson('/api/analytics/categories')->assertOk()->assertJsonCount(1, 'data');
         $this->withClubToken($coach)->getJson("/api/analytics/categories/{$c['u17']->id}/players")->assertNotFound();
+        $this->withClubToken($coach)->getJson("/api/analytics/categories/{$c['u17']->id}")->assertNotFound();
         // El profe ve las evaluaciones pero no las carga.
         $this->withClubToken($coach)->postJson('/api/physical-evaluations', $this->evaluation($c['ana']->id))->assertForbidden();
     }

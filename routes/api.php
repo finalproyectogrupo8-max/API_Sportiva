@@ -187,6 +187,7 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::apiResource('physical-evaluations', PhysicalEvaluationController::class);
     Route::apiResource('season-objectives', SeasonObjectiveController::class);
     Route::get('analytics/categories', [AnalyticsController::class, 'categories']);
+    Route::get('analytics/categories/{category}', [AnalyticsController::class, 'category']);
     Route::get('analytics/categories/{category}/players', [AnalyticsController::class, 'players']);
     Route::get('competitions/{competition}/standings', [CompetitionStandingController::class, 'index']);
     Route::put('competitions/{competition}/standings', [CompetitionStandingController::class, 'update']);

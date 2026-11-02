@@ -65,6 +65,62 @@ class AnalyticsController extends Controller
         return response()->json(['data' => $rows->values(), 'meta' => ['from' => $from->toDateString(), 'to' => $to->toDateString()]]);
     }
 
+    /**
+     * Tablero de una categoría: totales, asistencia semana a semana, distribución por estado y los
+     * partidos jugados uno por uno, para los gráficos del módulo Análisis.
+     */
+    public function category(Request $request, Category $category): JsonResponse
+    {
+        $this->authorizeClub('physical_evaluations.view');
+        $this->ensureCategoryInScope($category, 'physical_evaluations.view');
+        [$from, $to] = $this->period($request);
+
+        $attendance = $this->attendance($category->id, $from, $to)->get();
+        $matches = GameMatch::query()
+            ->where('category_id', $category->id)
+            ->where('status', 'played')
+            ->whereBetween('match_date', [$from, $to])
+            ->whereNotNull('our_score')->whereNotNull('opponent_score')
+            ->orderBy('match_date')
+            ->get(['id', 'our_score', 'opponent_score', 'match_date', 'opponent', 'is_home']);
+
+        // Semanas de lunes a domingo, todas las del período (las sin registros van con rate null).
+        $weeks = [];
+        for ($week = $from->startOfWeek(); $week <= $to; $week = $week->addWeek()) {
+            $weeks[$week->toDateString()] = collect();
+        }
+        foreach ($attendance as $row) {
+            $key = CarbonImmutable::parse($row->starts_at)->startOfWeek()->toDateString();
+            if (isset($weeks[$key])) {
+                $weeks[$key]->push($row);
+            }
+        }
+
+        return response()->json(['data' => [
+            'category_id' => $category->id,
+            'category_name' => $category->name,
+            'players' => PlayerCategoryMembership::query()->where('category_id', $category->id)->where('status', PlayerCategoryMembership::STATUS_ACTIVE)->count(),
+            'attendance' => $this->rate($attendance),
+            'sessions' => $attendance->map(fn ($r) => $r->training_id ? "t{$r->training_id}" : "m{$r->match_id}")->unique()->count(),
+            /** Registros de asistencia por estado: present, late, excused, absent. */
+            'by_status' => collect(['present', 'late', 'excused', 'absent'])->mapWithKeys(fn ($s) => [$s => $attendance->where('status', $s)->count()]),
+            /** Una fila por semana (lunes) del período. */
+            'weekly' => collect($weeks)->map(fn (Collection $rows, string $week) => ['week_start' => $week, ...$this->rate($rows)])->values(),
+            'results' => $this->results($matches),
+            /** Partidos jugados del período, del más viejo al más nuevo. */
+            'matches' => $matches->map(fn (GameMatch $m) => [
+                'id' => $m->id,
+                'date' => CarbonImmutable::parse($m->match_date)->toIso8601String(),
+                'opponent' => $m->opponent,
+                'is_home' => (bool) $m->is_home,
+                'our_score' => (int) $m->our_score,
+                'opponent_score' => (int) $m->opponent_score,
+                'result' => $m->our_score > $m->opponent_score ? 'W' : ($m->our_score === $m->opponent_score ? 'D' : 'L'),
+            ])->values(),
+            'evaluations' => PhysicalEvaluation::query()->where('category_id', $category->id)->whereBetween('evaluated_at', [$from, $to])->count(),
+        ], 'meta' => ['from' => $from->toDateString(), 'to' => $to->toDateString()]]);
+    }
+
     /** Una fila por jugador activo de la categoría: asistencia y evaluaciones. */
     public function players(Request $request, Category $category): JsonResponse
     {
