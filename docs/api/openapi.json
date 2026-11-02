@@ -2341,6 +2341,73 @@
                         "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
+            },
+            "patch": {
+                "operationId": "me.update",
+                "tags": [
+                    "Me"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    }
+                                },
+                                "required": [
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "email"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
             }
         },
         "/calendar": {
@@ -8266,6 +8333,169 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/me/password": {
+            "put": {
+                "operationId": "me.password",
+                "summary": "Cambia la contrase\u00f1a con la actual. Cierra las dem\u00e1s sesiones: la actual sigue abierta",
+                "tags": [
+                    "Me"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 12,
+                                        "maxLength": 255
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "minLength": 12,
+                                        "maxLength": 255
+                                    }
+                                },
+                                "required": [
+                                    "current_password",
+                                    "password",
+                                    "password_confirmation"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "closed_sessions": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "closed_sessions"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/me/logout-all": {
+            "post": {
+                "operationId": "me.logoutAll",
+                "summary": "Cierra la sesi\u00f3n en todos los dem\u00e1s dispositivos",
+                "tags": [
+                    "Me"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "closed_sessions": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "closed_sessions"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/me/clubs": {
+            "get": {
+                "operationId": "me.clubs",
+                "summary": "Clubes activos del usuario con sus roles en cada uno",
+                "tags": [
+                    "Me"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "roles": {
+                                                        "type": "array",
+                                                        "description": "Nombres de los roles en el club.",
+                                                        "items": {
+                                                            "type": "string"
+                                                        },
+                                                        "minItems": 0,
+                                                        "maxItems": 0
+                                                    }
+                                                },
+                                                "required": [
+                                                    "roles"
+                                                ],
+                                                "additionalProperties": {}
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
