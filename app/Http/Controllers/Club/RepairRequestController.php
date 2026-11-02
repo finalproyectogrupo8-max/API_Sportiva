@@ -31,7 +31,7 @@ class RepairRequestController extends Controller
         $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
 
         $requests = RepairRequest::query()
-            ->with(['facility', 'component'])
+            ->with(['facility', 'component', 'maintenanceRecord'])
             ->when($filters['facility_id'] ?? null, fn ($q, $id) => $q->where('facility_id', $id))
             ->when($filters['component_id'] ?? null, fn ($q, $id) => $q->where('component_id', $id))
             ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))

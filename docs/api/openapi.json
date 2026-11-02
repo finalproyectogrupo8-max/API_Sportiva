@@ -9492,7 +9492,8 @@
                                                         "type": "object",
                                                         "required": [
                                                             "facility",
-                                                            "component"
+                                                            "component",
+                                                            "maintenance_record"
                                                         ]
                                                     }
                                                 ]
