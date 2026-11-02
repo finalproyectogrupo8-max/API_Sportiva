@@ -49,7 +49,7 @@ class NewsletterSubscriberController extends Controller
                 'email' => $n->email,
                 'subscribed_at' => $n->created_at?->toIso8601String(),
             ])->values(),
-            'meta' => ['total' => $page->total(), 'current_page' => $page->currentPage(), 'last_page' => $page->lastPage()],
+            'meta' => ['total' => $page->total(), 'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'from' => $page->firstItem(), 'to' => $page->lastItem()],
         ]);
     }
 }

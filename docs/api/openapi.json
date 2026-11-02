@@ -8637,12 +8637,26 @@
                                                 },
                                                 "last_page": {
                                                     "type": "integer"
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ]
                                                 }
                                             },
                                             "required": [
                                                 "total",
                                                 "current_page",
-                                                "last_page"
+                                                "last_page",
+                                                "from",
+                                                "to"
                                             ]
                                         }
                                     },
