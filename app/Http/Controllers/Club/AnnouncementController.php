@@ -131,7 +131,13 @@ class AnnouncementController extends Controller
         }
 
         $tenant = $request->attributes->get('tenant');
-        DB::connection('tenant')->transaction(function () use ($announcement, $recipients, $tenant) {
+        $started = DB::connection('tenant')->transaction(function () use ($announcement, $recipients, $tenant) {
+            // Bloquea la fila: si llegan dos "Enviar" a la vez, el segundo ve que ya no es borrador.
+            $locked = Announcement::query()->lockForUpdate()->find($announcement->id);
+            if (! $locked || $locked->status !== Announcement::DRAFT) {
+                return false;
+            }
+
             foreach ($recipients as $recipient) {
                 AnnouncementRecipient::create([...$recipient, 'announcement_id' => $announcement->id, 'status' => AnnouncementRecipient::PENDING]);
             }
@@ -144,7 +150,13 @@ class AnnouncementController extends Controller
             ]);
 
             DispatchAnnouncement::dispatch($tenant->id, $announcement->id)->afterCommit();
+
+            return true;
         });
+
+        if (! $started) {
+            return ApiError::conflict('announcement_not_draft');
+        }
 
         return AnnouncementResource::make($announcement->refresh())->response()->setStatusCode(202);
     }

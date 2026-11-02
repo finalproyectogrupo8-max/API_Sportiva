@@ -9,6 +9,7 @@ use App\Models\Club\ClubUser;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Tenancy\TenantDatabase;
+use DateTimeInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\RateLimited;
@@ -25,11 +26,19 @@ class DeliverAnnouncementEmail implements ShouldQueue
 {
     use Queueable;
 
-    public int $tries = 3;
+    // El límite de envío (RateLimited) devuelve el job a la cola y eso cuenta como intento: con
+    // `tries` fijo, en un envío grande los jobs se daban por fallidos sin haber mandado nada.
+    // Se reintenta hasta una hora y se corta a los 3 errores reales.
+    public int $maxExceptions = 3;
 
     public array $backoff = [10, 60];
 
     public int $timeout = 30;
+
+    public function retryUntil(): DateTimeInterface
+    {
+        return now()->addHour();
+    }
 
     public function __construct(public int $tenantId, public int $recipientId) {}
 

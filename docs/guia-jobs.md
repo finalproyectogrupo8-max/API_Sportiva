@@ -127,6 +127,8 @@ class ProvisionTenant implements ShouldQueue        // ShouldQueue = va a la col
 | `ShouldBeUnique` | Interfaz que evita encolar dos veces el mismo job (por ejemplo, dos altas del mismo club). Se define con `uniqueId()` |
 | `middleware()` | Middlewares de job: `WithoutOverlapping` (no correr dos a la vez para el mismo recurso), `RateLimited` y `ThrottlesExceptions` |
 
+**Ojo con `RateLimited`:** cuando el límite devuelve el job a la cola, eso cuenta como un intento. Un job limitado no usa `$tries`: usa `retryUntil()` (hasta cuándo reintentar) y `$maxExceptions` (cuántos errores reales tolera). Si no, en un envío grande los jobs se dan por fallidos sin haberse ejecutado. Ejemplo: `DeliverAnnouncementEmail` y `SendCallupNotice`.
+
 ## 6. Las reglas de oro
 
 1. **Idempotente.** Un job puede ejecutarse **más de una vez**: por un reintento, o porque un worker se cortó a mitad de camino. Correrlo dos veces tiene que dejar el mismo resultado que correrlo una. Por ejemplo, `CREATE DATABASE IF NOT EXISTS`, `updateOrCreate` en lugar de `create`, o verificar el estado antes de actuar.

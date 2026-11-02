@@ -85,7 +85,7 @@ Para el listado, si `announcements.view` tiene alcance limitado, se filtra por `
 3. `DeliverAnnouncementEmail` corre dentro de `TenantDatabase::run`:
    - si la fila no está en `pending`, termina;
    - si lo está, manda con `sendNow` y la pasa a `sent`;
-   - usa `RateLimited('mail')`, `$tries = 3`, `$backoff = [10, 60]` y `$timeout = 30`;
+   - usa `RateLimited('mail')`, `retryUntil()` de 1 hora y `$maxExceptions = 3` (no `$tries`: cada vez que el límite lo devuelve a la cola cuenta como intento), `$backoff = [10, 60]` y `$timeout = 30`;
    - en `failed()` deja la fila en `failed`, con el error truncado y sin la dirección en el log.
 4. Después de cada fila terminada, se actualizan los contadores. Si no quedan `pending`, el comunicado pasa a `sent` con un `update ... where status = 'sending'` atómico, así solo un job lo cierra.
 
