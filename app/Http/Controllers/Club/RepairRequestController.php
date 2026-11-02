@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Club;
 
+use App\Club\Alerts\Channels\NotificationChannel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Club\AssignRepairRequestRequest;
 use App\Http\Requests\Club\IndexRepairRequestRequest;
@@ -133,6 +134,15 @@ class RepairRequestController extends Controller
             'status' => 'assigned',
         ]);
 
+        $this->notify(
+            (int) $repairRequest->assigned_to,
+            $request->user()->currentClubUser()?->id,
+            'repair_assigned',
+            "Te asignaron una reparación: {$repairRequest->title}",
+            $repairRequest->facility?->name ? "En {$repairRequest->facility->name}." : 'Revisá el detalle en Canchas.',
+            $repairRequest,
+        );
+
         return RepairRequestResource::make($repairRequest->refresh()->load(['facility', 'component']));
     }
 
@@ -179,6 +189,31 @@ class RepairRequestController extends Controller
             ]);
         });
 
+        $this->notify(
+            (int) $repairRequest->reported_by,
+            $request->user()->currentClubUser()?->id,
+            'repair_resolved',
+            "Se resolvió: {$repairRequest->title}",
+            $data['description'],
+            $repairRequest,
+        );
+
         return RepairRequestResource::make($repairRequest->refresh()->load(['facility', 'component', 'maintenanceRecord']));
+    }
+
+    /** Aviso en la campanita (FRO-26). No se avisa a sí mismo quien hace el cambio. */
+    private function notify(int $recipient, ?int $actor, string $type, string $title, string $body, RepairRequest $repairRequest): void
+    {
+        if ($recipient === 0 || $recipient === $actor) {
+            return;
+        }
+
+        app(NotificationChannel::class)->send(
+            [$recipient],
+            $type,
+            $title,
+            mb_substr($body, 0, 255),
+            ['repair_request_id' => $repairRequest->id, 'facility_id' => $repairRequest->facility_id],
+        );
     }
 }

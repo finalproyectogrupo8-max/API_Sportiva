@@ -25,6 +25,7 @@ class FacilityController extends Controller
         $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
 
         $facilities = Facility::query()
+            ->with('components')
             ->when($filters['search'] ?? null, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
