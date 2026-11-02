@@ -16,6 +16,7 @@ use App\Http\Controllers\Club\CategoryController;
 use App\Http\Controllers\Club\CategoryMembershipController;
 use App\Http\Controllers\Club\ClubController;
 use App\Http\Controllers\Club\ClubLogoController;
+use App\Http\Controllers\Club\ClubUserController;
 use App\Http\Controllers\Club\CoachController;
 use App\Http\Controllers\Club\CompetitionController;
 use App\Http\Controllers\Club\DocumentController;
@@ -148,6 +149,7 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::get('matches/{match}/callup', [CallupController::class, 'show']);
     Route::put('matches/{match}/callup', [CallupController::class, 'update']);
     Route::post('matches/{match}/callup/publish', [CallupController::class, 'publish']);
+    Route::post('matches/{match}/callup/remind', [CallupController::class, 'remind']);
     Route::post('club/logo', [ClubLogoController::class, 'store']);
     Route::delete('club/logo', [ClubLogoController::class, 'destroy']);
     Route::get('permissions', [RoleController::class, 'permissions']);
@@ -171,6 +173,7 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::post('orders/{order}/approve', [OrderController::class, 'approve']);
     Route::post('orders/{order}/reject', [OrderController::class, 'reject']);
     Route::post('orders/{order}/deliveries', [OrderController::class, 'deliveries']);
+    Route::get('club-users', [ClubUserController::class, 'index']);
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::patch('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->whereNumber('id');
     Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead']);

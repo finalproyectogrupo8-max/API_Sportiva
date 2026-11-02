@@ -446,6 +446,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -461,6 +465,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
@@ -533,6 +538,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -548,6 +557,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
@@ -615,6 +625,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -630,6 +644,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
@@ -702,6 +717,10 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "photo_document_id": {
+                                                        "type": "integer",
+                                                        "description": "Documento con la foto del jugador (se baja con `GET /documents/{id}/download`)."
+                                                    },
                                                     "status": {
                                                         "type": "string",
                                                         "description": "`present`, `absent`, `excused`, `late` o null si todav\u00eda no se tom\u00f3."
@@ -717,6 +736,7 @@
                                                     "player_id",
                                                     "player_name",
                                                     "shirt_number",
+                                                    "photo_document_id",
                                                     "status",
                                                     "notes"
                                                 ]
@@ -1264,7 +1284,53 @@
         "/matches/{match}/callup/publish": {
             "post": {
                 "operationId": "callup.publish",
-                "summary": "Publica (o vuelve a publicar despu\u00e9s de un cambio). Genera la p\u00e1gina p\u00fablica y los mensajes",
+                "summary": "Publica (o vuelve a publicar despu\u00e9s de un cambio). Genera la p\u00e1gina p\u00fablica y los mensajes, y\nencola el aviso por mail a los contactos principales (TIZ-37)",
+                "tags": [
+                    "Callup"
+                ],
+                "parameters": [
+                    {
+                        "name": "match",
+                        "in": "path",
+                        "required": true,
+                        "description": "The match ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CallupSheetResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CallupSheetResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/matches/{match}/callup/remind": {
+            "post": {
+                "operationId": "callup.remind",
+                "summary": "Reenv\u00eda el aviso por mail solo a los convocados que siguen sin responder (TIZ-37)",
                 "tags": [
                     "Callup"
                 ],
@@ -2414,6 +2480,75 @@
                 "responses": {
                     "204": {
                         "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/club-users": {
+            "get": {
+                "operationId": "clubUser.index",
+                "summary": "Personas activas del club, solo id y nombre: para elegir a qui\u00e9n asignar una reparaci\u00f3n\ny mostrar qui\u00e9n report\u00f3 o pidi\u00f3 algo. No expone mails ni roles",
+                "tags": [
+                    "ClubUser"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "display_name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "display_name"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -3927,7 +4062,17 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/FacilityResource"
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/FacilityResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "components"
+                                                        ]
+                                                    }
+                                                ]
                                             }
                                         },
                                         "links": {
@@ -9393,7 +9538,8 @@
                                                         "type": "object",
                                                         "required": [
                                                             "facility",
-                                                            "component"
+                                                            "component",
+                                                            "maintenance_record"
                                                         ]
                                                     }
                                                 ]
@@ -14633,6 +14779,17 @@
                             "null"
                         ],
                         "description": "WhatsApp al contacto principal con el mensaje armado; null si no tiene tel\u00e9fono."
+                    },
+                    "has_email": {
+                        "type": "boolean",
+                        "description": "El contacto principal tiene email: recibe el aviso por mail (TIZ-37). Si no, hay que avisarle por otro medio."
+                    },
+                    "notified_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "\u00daltimo aviso por mail enviado (ISO 8601); null si nunca se le mand\u00f3."
                     }
                 },
                 "required": [
@@ -14643,7 +14800,9 @@
                     "response_note",
                     "responded_at",
                     "personal_url",
-                    "whatsapp_url"
+                    "whatsapp_url",
+                    "has_email",
+                    "notified_at"
                 ],
                 "title": "CallupRowResource"
             },

@@ -56,6 +56,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('tickets', fn (Request $request) => Limit::perHour(5)
             ->by(strtolower((string) $request->input('email')).'|'.$request->ip()));
 
+        // Envíos de mail desde jobs (TIZ-37): Resend limita los pedidos por segundo. El job que
+        // supera el límite vuelve a la cola y sale después.
+        RateLimiter::for('mail', fn () => Limit::perSecond(2));
+
         // Server relativo: el contrato no depende de APP_URL (el export es igual en cualquier
         // máquina) y "Try it out" siempre llama al mismo origen que la página de docs.
         Scramble::configure()->withDocumentTransformers(function (OpenApi $openApi): void {

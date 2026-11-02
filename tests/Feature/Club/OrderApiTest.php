@@ -246,6 +246,33 @@ class OrderApiTest extends TestCase
             ->assertJsonPath('code', 'order_not_draft');
     }
 
+    public function test_requester_is_notified_when_the_order_is_approved_or_rejected(): void
+    {
+        $requester = User::factory()->create();
+        $requesterToken = $this->clubToken($this->tenantA(), $requester, ['coach']);
+        [$approved, $rejected] = $this->inTenant($this->tenantA(), function () use ($requester) {
+            $clubUserId = ClubUser::query()->where('global_user_id', $requester->id)->sole()->id;
+
+            return [
+                Order::factory()->create(['status' => Order::STATUS_SUBMITTED, 'requested_by' => $clubUserId]),
+                Order::factory()->create(['status' => Order::STATUS_SUBMITTED, 'requested_by' => $clubUserId]),
+            ];
+        });
+        $admin = $this->token('admin');
+
+        $this->withClubToken($admin)->postJson("/api/orders/{$approved->id}/approve")->assertOk();
+        $this->withClubToken($admin)->postJson("/api/orders/{$rejected->id}/reject", ['reason' => 'Sin presupuesto'])->assertOk();
+
+        $this->withClubToken($requesterToken)->getJson('/api/notifications?unread=1')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.type', 'order_rejected')
+            ->assertJsonPath('data.0.body', 'Motivo: Sin presupuesto')
+            ->assertJsonPath('data.0.data.order_id', $rejected->id)
+            ->assertJsonPath('data.1.type', 'order_approved')
+            ->assertJsonPath('data.1.title', "Tu pedido {$approved->order_number} fue aprobado");
+    }
+
     public function test_cannot_approve_unsubmitted_order_returns_409(): void
     {
         $order = $this->inTenant($this->tenantA(), fn () => Order::factory()->create([
@@ -275,6 +302,24 @@ class OrderApiTest extends TestCase
         $this->withClubToken($coachToken)->postJson("/api/orders/{$order->id}/deliveries", [])
             ->assertForbidden()
             ->assertJsonPath('code', 'forbidden');
+    }
+
+    public function test_coordinator_approves_apparel_orders_but_not_material_orders(): void
+    {
+        [$apparel, $material] = $this->inTenant($this->tenantA(), fn () => [
+            Order::factory()->create(['type' => Order::TYPE_APPAREL, 'status' => Order::STATUS_SUBMITTED]),
+            Order::factory()->create(['type' => Order::TYPE_MATERIAL, 'status' => Order::STATUS_SUBMITTED]),
+        ]);
+
+        // TIZ-30: la indumentaria la aprueba el coordinador, para que no se trabe si la directiva entra poco.
+        $this->withClubToken($this->token('coordinator'))->postJson("/api/orders/{$apparel->id}/approve")
+            ->assertOk()
+            ->assertJsonPath('data.status', Order::STATUS_APPROVED);
+
+        // Los materiales siguen siendo del administrador.
+        $this->withClubToken($this->token('coordinator'))->postJson("/api/orders/{$material->id}/approve")
+            ->assertForbidden();
+        $this->assertSame(Order::STATUS_SUBMITTED, $this->inTenant($this->tenantA(), fn () => $material->fresh()->status));
     }
 
     public function test_coach_scoped_permission_only_sees_and_creates_orders_for_own_categories(): void

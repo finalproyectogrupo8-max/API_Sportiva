@@ -18,8 +18,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $response_note
  * @property CarbonImmutable|null $responded_at
  * @property string $token
+ * @property CarbonImmutable|null $notified_at Último aviso por mail al contacto principal (TIZ-37).
  */
-#[Fillable(['match_id', 'player_id', 'shirt_number', 'response', 'response_note', 'responded_at', 'token'])]
+#[Fillable(['match_id', 'player_id', 'shirt_number', 'response', 'response_note', 'responded_at', 'token', 'notified_at'])]
 class MatchCallup extends Model
 {
     public const PENDING = 'pending';
@@ -32,7 +33,7 @@ class MatchCallup extends Model
 
     protected function casts(): array
     {
-        return ['shirt_number' => 'integer', 'responded_at' => 'immutable_datetime'];
+        return ['shirt_number' => 'integer', 'responded_at' => 'immutable_datetime', 'notified_at' => 'immutable_datetime'];
     }
 
     /** @return BelongsTo<Player, $this> */
