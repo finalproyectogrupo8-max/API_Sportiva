@@ -33,8 +33,9 @@ class TenantDatabase
     }
 
     /**
-     * Ejecuta el callback con la conexión apuntando a la base del club, y la deja sin base al
-     * terminar, también si el callback lanza una excepción. Es lo que usan los jobs y los tests.
+     * Ejecuta el callback con la conexión apuntando a la base del club y, al terminar (también si el
+     * callback lanza una excepción), la vuelve a la base que tenía antes: sin base en el worker, o la
+     * del request si un job de club corre en el mismo proceso (cola sync). Es lo que usan los jobs y los tests.
      *
      * @template TReturn
      *
@@ -43,12 +44,13 @@ class TenantDatabase
      */
     public function run(Tenant $tenant, callable $callback): mixed
     {
+        $previous = config('database.connections.'.self::CONNECTION.'.database');
         $this->connect($tenant);
 
         try {
             return $callback();
         } finally {
-            $this->disconnect();
+            $this->point($previous);
         }
     }
 

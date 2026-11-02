@@ -1284,7 +1284,53 @@
         "/matches/{match}/callup/publish": {
             "post": {
                 "operationId": "callup.publish",
-                "summary": "Publica (o vuelve a publicar despu\u00e9s de un cambio). Genera la p\u00e1gina p\u00fablica y los mensajes",
+                "summary": "Publica (o vuelve a publicar despu\u00e9s de un cambio). Genera la p\u00e1gina p\u00fablica y los mensajes, y\nencola el aviso por mail a los contactos principales (TIZ-37)",
+                "tags": [
+                    "Callup"
+                ],
+                "parameters": [
+                    {
+                        "name": "match",
+                        "in": "path",
+                        "required": true,
+                        "description": "The match ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CallupSheetResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CallupSheetResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/matches/{match}/callup/remind": {
+            "post": {
+                "operationId": "callup.remind",
+                "summary": "Reenv\u00eda el aviso por mail solo a los convocados que siguen sin responder (TIZ-37)",
                 "tags": [
                     "Callup"
                 ],
@@ -14733,6 +14779,17 @@
                             "null"
                         ],
                         "description": "WhatsApp al contacto principal con el mensaje armado; null si no tiene tel\u00e9fono."
+                    },
+                    "has_email": {
+                        "type": "boolean",
+                        "description": "El contacto principal tiene email: recibe el aviso por mail (TIZ-37). Si no, hay que avisarle por otro medio."
+                    },
+                    "notified_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "\u00daltimo aviso por mail enviado (ISO 8601); null si nunca se le mand\u00f3."
                     }
                 },
                 "required": [
@@ -14743,7 +14800,9 @@
                     "response_note",
                     "responded_at",
                     "personal_url",
-                    "whatsapp_url"
+                    "whatsapp_url",
+                    "has_email",
+                    "notified_at"
                 ],
                 "title": "CallupRowResource"
             },
