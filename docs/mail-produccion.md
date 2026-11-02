@@ -23,6 +23,10 @@ Al conectar Resend como recurso en Laravel Cloud, revisá que el entorno tenga l
 
 Los Mailable implementan `ShouldQueue` y usan la conexión predeterminada. Confirmá en Laravel Cloud que haya un worker o una managed queue activa para esa misma conexión; de lo contrario, los mensajes van a quedar pendientes. Este cambio no crea ni modifica infraestructura de colas ni agrega el SDK de AWS. Revisá la [guía de jobs](./guia-jobs.md#producción-laravel-cloud) antes de cambiar la conexión o el modo de procesamiento.
 
+## Volumen de envío
+
+Los comunicados (TIZ-24) pueden mandar cientos de mails de una vez. Los jobs respetan el límite `mail` (2 por segundo), pero el plan del proveedor puede tener además un tope diario o mensual. Revisá el tope del plan de Resend antes de habilitar comunicados en producción: los mails que lo superen quedan en `failed`, con el error del proveedor en el historial del comunicado.
+
 ## Verificar el dominio remitente
 
 1. Agregá el dominio de envío en Resend y copiá los registros DNS que muestra el panel para ese dominio.

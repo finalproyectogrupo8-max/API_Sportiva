@@ -8,8 +8,9 @@
   - los profes (`coaches.email`);
   - el staff, a través de `club_users.global_user_id`, con el email en `users` de la base central.
   - El jugador no tiene un campo de email propio.
-- **Mail:** `BaseMailable` (`ShouldQueue`) y la plantilla Markdown con la marca. El parser Markdown de Laravel ya escapa el HTML (`html_input: escape`) y bloquea los links inseguros (`allow_unsafe_links: false`).
-- **TIZ-37** (change `callup-email-notice`, todavía sin implementar) agrega el limiter `mail`, el patrón de jobs "uno reparte, otro manda" y `TenantDatabase::run` anidable. Este change los reutiliza.
+- **Mail:** `BaseMailable` (`ShouldQueue`) y la plantilla Markdown con la marca. El parser Markdown de los mails de Laravel bloquea los links inseguros (`allow_unsafe_links: false`), pero **no** escapa el HTML por defecto: deja pasar `<script>` u otro HTML del cuerpo.
+- **TIZ-37** (change `callup-email-notice`, ya en `main`) agrega el limiter `mail`, el patrón de jobs "uno reparte, otro manda" y `TenantDatabase::run` anidable. Este change los reutiliza.
+- **Elegir personas del club:** `GET /api/club-users` (Facundo, FRO-19) ya lista las personas activas del club con `id` y `display_name`. El front lo usa para armar `club_user_ids` de la audiencia; este change no necesita otro endpoint para eso.
 - **Convención de alcance:** fuera de alcance, las rutas con un recurso responden 404 (`ChecksClubScope`). Las referencias dentro del body no son rutas, así que responden 403, como pide el ticket.
 
 ## Goals / Non-Goals
@@ -97,7 +98,7 @@ Para el listado, si `announcements.view` tiene alcance limitado, se filtra por `
 - **Asunto:** `[<club>] <subject>`.
 - **`Reply-To`:** el email del usuario que lo envió (`sent_by` → `users.email`).
 - **Vista** `resources/views/mail/announcement.blade.php`: saludo con el nombre del destinatario, el cuerpo y un pie: "Recibís este mail porque estás registrado en <club>. Si no querés recibir más comunicados, pedíselo al club."
-- **Cuerpo:** se renderiza con el parser Markdown de Laravel, que escapa el HTML y bloquea los links `javascript:`. El test lo verifica.
+- **Cuerpo:** la vista lo imprime con `{{ $body }}`, así Blade escapa el HTML antes de que se convierta el Markdown del mail. El formato Markdown funciona, el HTML se ve como texto y los links `javascript:` los bloquea el parser. El test lo verifica.
 
 ### 7. Endpoints
 

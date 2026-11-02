@@ -35,5 +35,6 @@ Ninguna.
 - **API:** endpoints nuevos bajo `/api/announcements`. Hay que regenerar `docs/api/openapi.json`.
 - **Código:** modelos, Form Requests, Resources, controller, un resolvedor de audiencia, dos jobs de club (`app/Jobs/Club/`), un Mailable y su vista Markdown.
 - **Permisos:** sin cambios en el catálogo. Se usan `announcements.view` y `announcements.send`, que ya existen.
-- **Depende de TIZ-37** (change `callup-email-notice`). Reutiliza tres piezas que TIZ-37 agrega: el limiter `mail`, el patrón de jobs "uno reparte, otro manda" y el cambio en `TenantDatabase::run`. **Se implementa después de que TIZ-37 esté mergeado.**
+- **Usa TIZ-37** (change `callup-email-notice`, ya en `main`): el limiter `mail`, el patrón de jobs "uno reparte, otro manda" y `TenantDatabase::run` anidable.
+- **Usa `GET /api/club-users`** (FRO-19, ya en `main`) para que el front elija usuarios del club sueltos.
 - **Front (fuera de este change):** el módulo "Comunicados" (FRO-23).
