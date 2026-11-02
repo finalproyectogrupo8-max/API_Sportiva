@@ -135,6 +135,7 @@ Convocados a un partido (TIZ-33).
 | `response_note` | VARCHAR(255) | sí | | Motivo de "No puedo" |
 | `responded_at` | TIMESTAMP | sí | | |
 | `token` | VARCHAR(100) | no | UK | Link personal para confirmar: `<club>.<aleatorio>` |
+| `notified_at` | TIMESTAMP | sí | | Último aviso por mail al contacto principal (TIZ-37) |
 | `created_at`, `updated_at` | TIMESTAMP | sí | | |
 
 - `UNIQUE (match_id, player_id)`.
@@ -142,3 +143,17 @@ Convocados a un partido (TIZ-33).
 - Los tokens llevan el club adelante porque cada club tiene su base: la API sabe dónde buscar sin login.
 - Las páginas públicas (`/api/public/callups/...`) muestran solo nombre e inicial del apellido y número: nunca DNI, contactos ni documentos.
 - Los links apuntan al front (`FRONTEND_URL`): `/convocatoria/<public_token>` y `/convocatoria/responder/<token>`.
+
+### Aviso por mail (TIZ-37)
+
+Además de WhatsApp, la convocatoria avisa por mail al contacto principal de cada convocado que tenga email. El texto es el mismo que el de WhatsApp (`CallupMessages`).
+
+| Cuándo | A quién | Asunto |
+|---|---|---|
+| `POST /api/matches/{match}/callup/publish`, primera vez o sin cambios en el partido | Los convocados con `notified_at` null (por ejemplo, los que se sumaron) | "Convocatoria …" |
+| `publish` con `updated_after_publish` | Todos los convocados | "Hubo cambios: convocatoria …" |
+| `POST /api/matches/{match}/callup/remind` (`callups.publish`; 422 si no está publicada) | Los que siguen en `pending` | "Recordatorio: convocatoria …" |
+
+- **Un mail por dirección:** si el mismo email (sin distinguir mayúsculas ni espacios) es el contacto principal de varios convocados, recibe un solo mail con un botón "Confirmar" por cada uno.
+- **En la cola:** `NotifyCallup` reparte por dirección y `SendCallupNotice` manda un mail y marca `notified_at`. Reciben solo IDs, y un reintento no repite el mail ([guía de jobs](../guia-jobs.md)). Sin worker, los mails no salen.
+- **En la convocatoria:** cada convocado devuelve `has_email` (su contacto principal tiene email) y `notified_at`, para que el profe sepa a quién avisar por WhatsApp.

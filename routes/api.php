@@ -149,6 +149,7 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::get('matches/{match}/callup', [CallupController::class, 'show']);
     Route::put('matches/{match}/callup', [CallupController::class, 'update']);
     Route::post('matches/{match}/callup/publish', [CallupController::class, 'publish']);
+    Route::post('matches/{match}/callup/remind', [CallupController::class, 'remind']);
     Route::post('club/logo', [ClubLogoController::class, 'store']);
     Route::delete('club/logo', [ClubLogoController::class, 'destroy']);
     Route::get('permissions', [RoleController::class, 'permissions']);

@@ -29,7 +29,7 @@
 ### 1. Dos jobs: uno reparte y otro manda
 
 - `App\Jobs\Club\NotifyCallup(tenantId, matchId, mode, requestedAt)` corre dentro de `TenantDatabase::run`. Elige a qué convocados avisar según el `mode`, agrupa por email normalizado (`mb_strtolower(trim())`) y despacha un `SendCallupNotice` por dirección.
-- `App\Jobs\Club\SendCallupNotice(tenantId, matchId, callupIds, mode, requestedAt)` vuelve a leer los convocados y el email del contacto, manda **un** mail con `Mail::to(...)->sendNow(...)` y marca `notified_at = now()` en esos convocados.
+- `App\Jobs\Club\SendCallupNotice(tenantId, matchId, callupIds, mode, requestedAt)` vuelve a leer los convocados y el email del contacto, manda **un** mail con `Mail::to(...)->sendNow(...)` y marca `notified_at = requestedAt` en esos convocados.
 
 **Por qué:** con 60 convocados, mandar todo en un solo job puede pasar los 90 s de los workers Flex de Laravel Cloud. Cada reintento, además, reenviaría los mails que ya salieron. Encolar el Mailable armado (`Mail::queue`) dejaría emails y nombres de menores en texto plano en la tabla `jobs`, y la guía lo prohíbe.
 
@@ -52,6 +52,7 @@ Un grupo (una dirección) se manda con el modo del job, aunque mezcle convocados
 - Migración de tenant: `match_callups.notified_at` (timestamp nullable).
 - `requestedAt` es el momento en que se pidió el aviso (lo fija quien despacha) y viaja en los dos jobs.
 - `SendCallupNotice` descarta los convocados con `notified_at >= requestedAt`: ya se les mandó **este** aviso. Si no queda ninguno, termina sin mandar.
+- `notified_at` guarda el `requestedAt` del aviso, no la hora del envío: las dos columnas tienen precisión de segundos, y con la hora del envío un aviso pedido en el mismo segundo que el anterior se descartaría. Así, un reintento del mismo aviso da igual y se descarta, uno pedido después es mayor y sale, y dos pedidos en el mismo segundo cuentan como el mismo aviso.
 - Marca `notified_at` **después** de `sendNow`. Si el proceso se corta entre el envío y la marca, el reintento manda otra vez. Esa ventana es mínima y es aceptable: la entrega de la cola es "al menos una vez" igual.
 - `NotifyCallup` es idempotente porque solo reparte: si se ejecuta dos veces, los `SendCallupNotice` repetidos descartan lo que ya se mandó.
 

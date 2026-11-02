@@ -23,6 +23,10 @@ class CallupRowResource extends JsonResource
             'personal_url' => $this->personal_url,
             /** WhatsApp al contacto principal con el mensaje armado; null si no tiene teléfono. */
             'whatsapp_url' => $this->whatsapp_url,
+            /** El contacto principal tiene email: recibe el aviso por mail (TIZ-37). Si no, hay que avisarle por otro medio. */
+            'has_email' => $this->has_email,
+            /** Último aviso por mail enviado (ISO 8601); null si nunca se le mandó. */
+            'notified_at' => $this->notified_at,
         ];
     }
 }

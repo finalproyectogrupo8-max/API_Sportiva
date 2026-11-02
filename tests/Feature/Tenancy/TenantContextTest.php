@@ -136,6 +136,40 @@ class TenantContextTest extends TestCase
         $this->assertNull($this->tenantConnectionDatabase());
     }
 
+    public function test_a_nested_run_returns_to_the_previous_club_database(): void
+    {
+        $this->inTenant($this->tenantB(), fn () => TestItem::create(['name' => 'de B']));
+
+        $this->inTenant($this->tenantA(), function () {
+            TestItem::create(['name' => 'de A']);
+            $databaseA = $this->tenantConnectionDatabase();
+
+            // Un job de club que corre en el mismo proceso (cola sync) dentro de un request de A.
+            $this->assertSame(['de B'], $this->inTenant($this->tenantB(), fn () => TestItem::pluck('name')->all()));
+
+            $this->assertSame($databaseA, $this->tenantConnectionDatabase());
+            $this->assertSame(['de A'], TestItem::pluck('name')->all());
+        });
+
+        $this->assertNull($this->tenantConnectionDatabase());
+    }
+
+    public function test_run_returns_to_the_previous_database_also_when_the_callback_fails(): void
+    {
+        $this->inTenant($this->tenantA(), function () {
+            $databaseA = $this->tenantConnectionDatabase();
+
+            try {
+                $this->inTenant($this->tenantB(), fn () => throw new \RuntimeException('falla'));
+            } catch (\RuntimeException) {
+            }
+
+            $this->assertSame($databaseA, $this->tenantConnectionDatabase());
+        });
+
+        $this->assertNull($this->tenantConnectionDatabase());
+    }
+
     public function test_each_test_starts_with_empty_club_tables_first(): void
     {
         $this->assertSame(0, $this->inTenant($this->tenantA(), fn () => TestItem::count()));
