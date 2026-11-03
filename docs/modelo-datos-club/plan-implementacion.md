@@ -11,15 +11,15 @@ Paso a paso para quien implemente los ABM de la base del club, sea un dev o un a
 No supongas el estado: verificalo, porque este documento puede quedar atrás del código.
 
 1. **¿Qué está aprobado?** Un change está **aprobado** cuando el PR de su propuesta está mergeado en `main` (la misma convención que `platform-auth`, PR #10). Si su carpeta en `openspec/changes/` existe solo en una rama sin mergear, todavía está en revisión: no lo apliques.
-2. **¿Qué está implementado?** `openspec list --json` muestra los changes en curso y las tareas completadas. Los que pasaron por `openspec/changes/archive/` ya están terminados.
+2. **¿Qué está implementado?** `openspec list --json` muestra los changes en curso y sus tareas. Un change archivado debe tener las tareas verificadas antes de cerrarse; ante una duda, contrastá los archivos y tests con el código actual.
 3. **¿Qué existe en el código?** Los comandos de verificación de la [sección 2](#2-qué-tiene-que-existir-antes) (C1–C6).
 4. **Qué hacer, según lo que encontraste:**
 
 | Situación | Qué hacer |
 |---|---|
-| `tenant-connection` no está mergeado | Esperar el merge. Mientras tanto, se puede escribir la propuesta de `club-access-control` (paso 1) |
-| C1–C4 existen y `club-access-control` no está propuesto | `/opsx:propose club-access-control` |
-| C1–C6 existen | Seguir con la siguiente ola de la [sección 4](#4-orden-de-implementación-olas) que no tenga change |
+| Falta C1–C4 | Esperar la infraestructura de tenant; no implementar ABM de club |
+| C1–C4 existen, pero falta C5 o C6 | Resolver primero identidad y permisos de club |
+| C1–C6 existen | Seguir con la primera ola pendiente de la [sección 4](#4-orden-de-implementación-olas) |
 | Algo de este documento contradice al código | Gana el código. Avisá y corregí el documento en el mismo PR |
 
 Documentos que hay que leer antes, en este orden:
@@ -34,11 +34,11 @@ Documentos que hay que leer antes, en este orden:
 
 | Trabajo | Responsable | Change de OpenSpec |
 |---|---|---|
-| Login, selección de club, tokens atados al club | Hecho (mergeado) | `platform-auth` (le quedan tareas del ABM de clubes) |
-| Conexión `tenant`, cambio de base por request y en jobs, servicio `TenantDatabase` (crear, migrar y conectar bases de club), permisos de MySQL local para `club_%`, soporte de tests multi-club | Hecho | [`tenant-connection`](../../openspec/changes/tenant-connection/proposal.md) (implementado) |
-| Módulo 1 (`club_users`, roles y permisos) y la resolución de permisos (`hasClubPermission`, `permissions[]` en `/me`) | **Dev de ABM** (ver [D10](#3-decisiones-que-hay-que-cerrar-antes-de-migrar)) | `club-access-control` ✅ |
-| ABM de los módulos 2 a 8 | **Dev de ABM** | Uno por ola (sección 4). Ola 1 (deportes, temporadas, categorías y profes): `club-catalog-crud` ✅ (TIZ-14) |
-| Alta de clubes y usuarios, panel de admin, `ProvisionTenant`, `tenants:create`, `tenants:migrate`, conexión `provisioning`, worker de la cola, permisos de MySQL en Laravel Cloud | **Tiziano** | `platform-admin-and-provisioning`. Usa `TenantDatabase` de `tenant-connection` y el seeder de roles de `club-access-control` |
+| Login, selección de club, invitaciones y recuperación de contraseña | Hecho en la API | `platform-auth`; la integración de pantallas se verifica en Front-Sportiva |
+| Conexión `tenant`, cambio de base por request y jobs, `TenantDatabase`, permisos MySQL y tests multi-club | Hecho; PR #15 tiene CI verde | `tenant-connection` |
+| Módulo 1 (`club_users`, roles y permisos) y resolución de permisos (`hasClubPermission`, `permissions[]` en `/me`) | Hecho | `club-access-control` y `club-custom-roles` |
+| ABM y procesos de los módulos 2 a 8 | Implementados; ver estado por ola en la sección 4 | Changes de catálogo, planteles, calendario, competencia, pedidos e inventario |
+| Alta de clubes y usuarios, `ProvisionTenant`, `tenants:create`, `tenants:migrate`, conexión `provisioning` y worker | Hecho en la rama principal | `platform-admin-and-provisioning`; usa `TenantDatabase` y el seeder de roles del club |
 
 ### Archivos que el dev de ABM **no** toca
 
@@ -58,14 +58,14 @@ Los ABM de club **no se pueden probar** sin esto: el test 10 de la guía ABM (ai
 
 | # | Pieza | Qué necesita el dev de ABM | Cómo verificar que existe |
 |---|---|---|---|
-| C1 | ✅ Conexión `tenant` (hecho) | Que los modelos de club usen `protected $connection = 'tenant';` y apunten a la base del club del token | `grep -n "'tenant' =>" config/database.php` |
-| C2 | ✅ Cambio de conexión por request (hecho) | Que `tenant.token` apunte la conexión a la base del club y la desconecte al terminar | `grep -n "TenantDatabase" app/Http/Middleware/EnsureTenantContext.php` |
-| C3 | ✅ Migraciones de club (hecho) | La carpeta `database/migrations/tenant/` y `TenantDatabase::migrate()`, que la usan los tests | `ls database/migrations/tenant` |
-| C4 | ✅ Soporte de tests multi-club (hecho) | `Tests\Concerns\InteractsWithTenants`: `tenantA()`, `tenantB()`, `clubToken()`, `inTenant()` | `ls tests/Concerns` |
-| C5 | ✅ Permisos (hecho) | `hasClubPermission()` y `config/club-permissions.php`, al que cada ABM agrega sus claves ([roles y permisos](../roles-y-permisos.md)) | `grep -rn "hasClubPermission" app/Models/User.php` |
-| C6 | ✅ `club_users` (hecho) | `$request->user()->currentClubUser()` (lo necesitan `requested_by`, `performed_by`, `recorded_by`…) | `grep -n "currentClubUser" app/Models/User.php` |
+| C1 | Hecho y verificado | Conexión `tenant`; los modelos de club usan esa conexión | `config/database.php` y modelos en `app/Models/Club/` |
+| C2 | Hecho y verificado | `tenant.token` conecta al club del token y limpia/restaura el contexto al terminar | `app/Http/Middleware/EnsureTenantContext.php` |
+| C3 | Hecho y verificado | Migraciones en `database/migrations/tenant/` y `TenantDatabase::migrate()` | `database/migrations/tenant/` y tests de tenancy |
+| C4 | Hecho y verificado | Tests multi-club con `tenantA()`, `tenantB()`, `clubToken()` e `inTenant()` | `tests/Concerns/InteractsWithTenants.php` |
+| C5 | Hecho y verificado | `hasClubPermission()` y catálogo en `config/club-permissions.php` ([roles y permisos](../roles-y-permisos.md)) | `app/Models/User.php` y `config/club-permissions.php` |
+| C6 | Hecho y verificado | `currentClubUser()` y tablas de identidad/roles del club | `app/Models/User.php` y `database/migrations/tenant/` |
 
-**C1 a C6 ya están hechos** (`tenant-connection` y `club-access-control`).
+**C1 a C6 existen en el código** (`tenant-connection` y `club-access-control`); la CI de tenant-connection pasó y las migraciones de club se ejecutan en los tests multi-club.
 
 **Sin el alta de clubes de Tiziano** se puede desarrollar y testear todo (los tests crean sus propias bases `club_test_*`). Lo único que falta es probar a mano desde Swagger contra un club local, que necesita `tenants:create`.
 
@@ -76,26 +76,28 @@ Se cierran **en el change de OpenSpec de la ola** que las necesita (en el `desig
 | # | Decisión | Recomendación | Ola |
 |---|---|---|---|
 | D1–D9 | Las 9 [diferencias con el borrador](README.md#diferencias-con-el-borrador-y-con-el-repo) | La opción "en este doc" de cada una | 1 (se revisan todas juntas) |
-| D10 | Quién hace el módulo 1 (identidad y roles del club) | **Dev de ABM**, en `club-access-control`: todos los ABM lo necesitan para los permisos. El alta de clubes de Tiziano llama a su seeder de roles. Además, hay que resolver la [diferencia 4](README.md#diferencias-con-el-borrador-y-con-el-repo): `tenant_memberships` ya tiene una columna `role` en la base central | Antes de la ola 1 |
+| D10 | Quién hace el módulo 1 (identidad y roles del club) | **Cerrada (`club-access-control`):** los roles y permisos viven en la base del club; `tenant_memberships` solo controla el acceso al club | Antes de la ola 1 |
 | D11 | Qué responde `DELETE` sobre un catálogo que está en uso (por ejemplo, un deporte con categorías) | **Cerrada (TIZ-14):** 409 `resource_in_use` para una temporada con categorías y un deporte con categorías activas | 1 |
 | D12 | Catálogos: baja lógica (`deleted_at`) o desactivar (`is_active`) | **Cerrada (TIZ-14):** `is_active` para deportes y categorías, borrado real para temporadas sin uso, `deleted_at` para profes | 1 |
-| D13 | Cómo se genera `orders.order_number` | Secuencia por club con prefijo de año (`2027-0001`), generada en una transacción | 4 |
-| D14 | Signo de la cantidad en `inventory_movements` de tipo `adjustment` | **Propuesta / A confirmar (TIZ-17):** Cantidad con signo (positivo suma, negativo resta). En `in`, `out` y `transfer_*` siempre positiva | 4 |
+| D13 | Cómo se genera `orders.order_number` | **Cerrada (TIZ-18):** secuencia por club con prefijo de año (`2027-0001`), generada en una transacción | 4 |
+| D14 | Signo de la cantidad en `inventory_movements` de tipo `adjustment` | **Cerrada (TIZ-17):** cantidad con signo (positivo suma, negativo resta, distinto de cero). En `in`, `out` y `transfer_*` siempre positiva | 4 |
 | D15 | ¿Hace falta `players.document_number`? Retención de evaluaciones físicas y auditoría | **Parcial (TIZ-15):** `document_number` queda opcional, solo si la liga lo pide; nada médico en `players.notes` (los aptos van como requisitos y documentos privados, TIZ-29 y TIZ-32). Falta definir la retención con el equipo | 2 y 4 |
 
 ## 4. Orden de implementación (olas)
 
-El orden sigue las FK: una tabla se implementa cuando ya existen las tablas a las que apunta. Cada ola es **un change de OpenSpec y un PR**.
+El orden sigue las FK: una tabla se implementa cuando ya existen las tablas a las que apunta. El estado de la tabla siguiente se verificó contra el código el 3 de noviembre de 2026; una ola puede incluir más de un change/PR.
 
 | Ola | Tablas | Depende de | Por qué en este orden |
 |---|---|---|---|
-| −1 | Infraestructura: conexión `tenant`, `TenantDatabase`, permisos de MySQL, tests multi-club (`tenant-connection`) | Nada | Entrega C1–C4: sin esto no se puede probar ningún ABM |
-| 0 | Módulo 1: `club_users`, `roles`, `permissions`, pivotes (`club-access-control`) | Ola −1 | Lo referencian casi todas las tablas, y todos los ABM lo necesitan para los permisos. Entrega C5 y C6 |
-| 1 | `sports`, `seasons`, `storage_locations`, `materials`, `apparel_items`, `facilities` | Ola 0 | Catálogos sin FK: sirven para estrenar la guía ABM con código real |
-| 2 | `categories`, `players`, `coaches`, `facility_components` | Ola 1 | Primeras FK simples |
-| 3 | `player_category_memberships`, `category_coaches`, `matches`, `trainings` | Ola 2 | Asignaciones y calendario |
-| 4 | Pedidos (`orders` + líneas + `order_status_history`), inventario, `player_attendance`, evaluaciones físicas, reparaciones y mantenimiento | Ola 3 | Son **procesos** con estados y transacciones, no ABM puros. Se pueden repartir en varios changes |
-| 5 | `notifications`, `audit_logs` | Según lo que se quiera auditar | Transversales |
+| −1 | Infraestructura: conexión `tenant`, `TenantDatabase`, permisos MySQL y tests multi-club | Nada | **Cerrada** (PR #15, CI verde); entrega C1–C4 |
+| 0 | `club_users`, `roles`, `permissions`, pivotes y roles custom | Ola −1 | **Cerrada** (`club-access-control`, `club-custom-roles`); entrega C5–C6 |
+| 1 | Deportes, temporadas, categorías, profes, depósitos, materiales, indumentaria e instalaciones | Ola 0 | **Implementada**: migraciones y ABM disponibles |
+| 2 | Jugadores, contactos, planteles, ramas/géneros, asignaciones de profes y componentes de instalaciones | Ola 1 | **Implementada**; la regla de rama/género valida asignaciones y cambios |
+| 3 | Partidos, entrenamientos, asistencia, calendario, competencias, habilitación y convocatorias | Ola 2 | **Implementada**; el aviso de convocatorias por email tiene verificación integrada pendiente |
+| 4 | Pedidos, inventario, evaluaciones físicas, reparaciones y mantenimiento | Ola 3 | **Implementada**: procesos con estados, transacciones y permisos |
+| 5 | Alertas, notificaciones y auditoría | Según los módulos anteriores | **Implementada**; consultas de actividad son de solo lectura y las notificaciones son personales |
+
+El change `club-announcements` sigue abierto: los jobs están en el código, pero faltan pruebas de idempotencia/fallo y la verificación integrada con worker. `automate-windows-bootstrap` también sigue abierto y vigente mientras el setup de Windows lo documente; su matriz manual de instalación aún no está cerrada.
 
 ### Qué tipo de endpoint lleva cada tabla
 
@@ -125,8 +127,8 @@ No todo es un `apiResource`. Los endpoints y permisos son una **propuesta**: se 
 | `physical_evaluations` + mediciones | ABM con hijos en el mismo payload | `apiResource('physical-evaluations')` | `physical_evaluations.*` | Soft delete |
 | `repair_requests` | ABM + acciones | `apiResource('repair-requests')` + `/assign`, `/resolve` | `repairs.*`, `repairs.assign` | Soft delete |
 | `maintenance_records` | ABM | `apiResource('maintenance-records')` | `maintenance.*` | Borrado real |
-| `notifications` | Del usuario actual | `GET /notifications`, `POST /notifications/{n}/read` | Sin permiso: cada usuario ve las suyas | — |
-| `audit_logs` | Interna | Sin endpoints en el alcance inicial | — | Nunca |
+| `notifications` | Del usuario actual | `GET /notifications`, `PATCH /notifications/{n}/read`, `POST /notifications/read-all` | Sin permiso: cada usuario ve las suyas | — |
+| `audit_logs` | Solo lectura | `GET /audit-logs` en club y `GET /admin/audit-logs` en plataforma | `audit.view` en club; admin de plataforma | Nunca |
 
 Las URLs usan `kebab-case` (`storage-locations`) y las claves JSON y los permisos, `snake_case` (`storage_locations.view`). Confirmalo en el change de la ola 1, que es el primero que lo usa.
 
@@ -146,7 +148,7 @@ Verificá C1 a C6 con los comandos de la [sección 2](#2-qué-tiene-que-existir-
 
 No necesita la conexión `tenant`: es diseño.
 
-1. Orden: `tenant-connection` (ya propuesto: revisarlo, aprobarlo y aplicarlo con `/opsx:apply tenant-connection`), después `/opsx:propose club-access-control` (ola 0) y después `/opsx:propose club-catalogs` (ola 1). La propuesta de una ola se puede escribir mientras se implementa la anterior. Para las siguientes: `club-squads` (2), `club-calendar` (3), y uno por proceso en la ola 4 (`club-orders`, `club-inventory`, `club-attendance`, `club-physical-evaluations`, `club-maintenance`).
+1. Consultá `openspec list` y elegí la primera capacidad realmente pendiente de la sección 4. Las olas −1 a 5 ya tienen implementación en el código; los changes abiertos de seguimiento (por ejemplo, anuncios o bootstrap de Windows) no autorizan a reimplementar las tablas ya entregadas.
 2. En el `design.md`: las decisiones de la [sección 3](#3-decisiones-que-hay-que-cerrar-antes-de-migrar) que le tocan a la ola, los endpoints y permisos de la [sección 4](#qué-tipo-de-endpoint-lleva-cada-tabla), y las dependencias C1–C6 que todavía faltan.
 3. En los `specs/`: un requirement por recurso, con escenarios para los 10 casos de la guía ABM.
 4. `openspec validate <change> --strict`.
@@ -155,10 +157,10 @@ No necesita la conexión `tenant`: es diseño.
 
 ### Paso 2: implementar (solo con el change aprobado **y** C1–C4 en `main`)
 
-Si C1–C4 no están en `main`, frená acá. No crees una conexión `tenant` provisoria, no apuntes los modelos de club a `mysql` y no corras las migraciones de club contra `sportiva_platform`.
+Si C1–C4 no están en `main`, frená acá. No crees una conexión `tenant` provisoria, no apuntes los modelos de club a `mysql` y no corras las migraciones de club contra `sportiva_platform`. En el estado verificado el 3 de noviembre de 2026, C1–C6 ya existen.
 
-1. `git checkout main && git pull && git checkout -b feat/club-catalogs`.
-2. `/opsx:apply club-catalogs`.
+1. `git checkout main && git pull && git checkout -b feat/<modulo-pendiente>`.
+2. `/opsx:apply <change-aprobado>`.
 3. Por cada recurso, el [checklist de guia-abm §12](../guia-abm.md#12-paso-a-paso-con-comandos-checklist), con estas precisiones:
    - La migración va en `database/migrations/tenant/` y sigue el documento del módulo: tipos, nulls, índices, `UNIQUE`, `CHECK` y reglas de FK.
    - El modelo va en `app/Models/Club/`, con `$connection = 'tenant'`.

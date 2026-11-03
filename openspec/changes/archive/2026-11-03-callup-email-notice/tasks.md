@@ -24,7 +24,7 @@
 
 ## 5. Verificación integrada
 
-- [ ] 5.1 Ejecutar `docker compose exec backend php artisan test` y `docker compose exec backend vendor/bin/pint --test`. Verificar que todo pase y que la CI no detecte el `openapi.json` desactualizado.
+- [x] 5.1 Ejecutar `docker compose exec backend php artisan test` y `docker compose exec backend vendor/bin/pint --test`. CI del PR #77 quedó verde, Pint local pasa y `ApiDocsContractTest` verifica cobertura de las rutas en el contrato.
 - [x] 5.2 Probar en local con el worker (`docker compose restart queue`): publicar una convocatoria y verificar en Mailpit (`http://localhost:8025`) un mail por dirección con los links personales. Después, pedir el recordatorio y verificar que llegue solo a los pendientes.
 
 ## Workflow follow-up

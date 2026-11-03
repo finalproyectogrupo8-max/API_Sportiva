@@ -39,6 +39,25 @@ Explicación funcional del ingreso a Sportiva, para quien no necesita ver códig
 
 El panel dura las 8 horas del pase de administración. Pasados los 15 minutos, el pase de sala de espera vence solo; si el admin quiere entrar a un club, tiene que volver a loguearse.
 
+## Crear una cuenta: invitación, no registro público
+
+Por decisión de TIZ-9, **no hay registro público**. Una persona no puede crear una cuenta desde una pantalla abierta; la cuenta la crea un administrador de plataforma o un administrador de club la invita al equipo.
+
+1. **El admin crea o invita.** En el panel de plataforma o desde el equipo del club indica el email; si la persona todavía no tiene cuenta, también indica su nombre. En el club se asignan además uno o más roles. Si no se define una contraseña inicial, se envía una invitación; si el admin define una, la cuenta nueva queda activa directamente.
+2. **La cuenta nueva queda pendiente.** No puede iniciar sesión hasta aceptar la invitación. Sportiva envía un enlace por email; el admin puede reenviarlo mientras siga pendiente.
+3. **La persona elige su contraseña.** Abre el enlace y envía el email invitado, el token y la contraseña nueva con su confirmación a `POST /api/auth/accept-invite`.
+4. **La cuenta se activa.** Con una invitación vigente, el sistema confirma la aceptación y permite iniciar sesión. Si el enlace venció, no coincide con el email o ya se usó, responde con un error de validación.
+
+Si la persona ya tiene cuenta, el admin del club la agrega usando el mismo email: se le asigna acceso y roles en ese club, sin crear otra cuenta ni mandarle una invitación nueva.
+
+## Recuperar la contraseña
+
+1. **La persona pide un enlace** desde la opción de recuperación. `POST /api/auth/forgot-password` responde siempre con el mismo mensaje (HTTP 202), exista o no la cuenta; solo se envía email a una cuenta activa. Hay un límite de tres solicitudes por minuto para la combinación de email e IP.
+2. **El enlace dura 60 minutos.** Llega al frontend configurado y contiene el token y el email. La persona elige una contraseña que cumpla las mismas reglas que en el resto del sistema y la confirma en `POST /api/auth/reset-password`.
+3. **Se cierran las sesiones API anteriores.** Si el token es válido, el cambio responde HTTP 204 y revoca todos los pases que tenía esa cuenta. Un enlace inválido, vencido o ya usado no cambia la contraseña.
+
+Un administrador de plataforma también puede pedir el envío del enlace desde la ficha de un usuario activo. La respuesta no revela si se envió: las cuentas inactivas reciben la misma respuesta, pero no reciben un correo.
+
 ## Por qué existe el pase de sala de espera
 
 Entre el login y la elección del club, el servidor tiene que demostrar quién sos para mostrarte tus clubes. Las alternativas eran peores:
@@ -57,12 +76,11 @@ Si alguien lo roba, solo puede ver la lista de clubes de esa persona, por unos m
 - **Cuando un pase vence**, o el admin desactiva al usuario, la próxima acción lo devuelve al login.
 - **Si a alguien le quitan el acceso a un club** (o el club se suspende), lo pierde aunque tenga la sesión abierta: el acceso se verifica en cada pedido.
 
-## Estado (23/10/2026)
+## Estado de la API (03/11/2026)
 
 | Parte | Estado |
 |---|---|
-| Login, pases, salir y vencimientos | Funciona (API y front) |
-| Redirección al panel o a los clubes según el usuario | Funciona |
-| Elección de club con los clubes reales | Pendiente (FRO-3) |
-| Entrar al club con sus datos reales | Pendiente (FRO-4) |
-| Panel de administración | Pendiente (FRO-5 a FRO-7) |
+| Login, selección de club, pases, salir y vencimientos | Implementado en la API |
+| Invitaciones y aceptación de cuenta | Implementado en la API; no hay registro público |
+| Recuperación de contraseña | Implementada en la API |
+| Integración de las pantallas del frontend con estos endpoints | Verificar en el repo Front-Sportiva |

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
@@ -26,6 +27,46 @@ class ApiDocsContractTest extends TestCase
 
         $this->assertStringStartsWith('3.1.', $response->json('openapi'));
         $this->assertArrayHasKey('/health', $response->json('paths'));
+    }
+
+    public function test_openapi_documents_every_registered_api_route_and_method(): void
+    {
+        $document = json_decode(
+            file_get_contents(base_path('docs/api/openapi.json')),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        $paths = $document['paths'];
+
+        foreach (Route::getRoutes() as $route) {
+            $uri = $route->uri();
+
+            if (! str_starts_with($uri, 'api/')) {
+                continue;
+            }
+
+            $path = '/'.substr($uri, 4);
+            if ($path === '/docs' || str_starts_with($path, '/docs/')) {
+                continue;
+            }
+
+            $documentedPath = collect(array_keys($paths))->first(
+                fn (string $candidate): bool => preg_replace('/\{[^}]+\}/', '{}', $candidate)
+                    === preg_replace('/\{[^}]+\}/', '{}', $path),
+            );
+            $this->assertNotNull($documentedPath, "OpenAPI is missing {$uri}.");
+
+            $routeMethods = array_diff($route->methods(), ['HEAD']);
+            if (in_array('PUT', $routeMethods, true) && in_array('PATCH', $routeMethods, true)) {
+                // Laravel combines resource updates; Scramble documents that route as PUT.
+                $routeMethods = array_diff($routeMethods, ['PATCH']);
+            }
+            $documentedMethods = array_map('strtoupper', array_keys($paths[$documentedPath]));
+
+            foreach ($routeMethods as $method) {
+                $this->assertContains($method, $documentedMethods, "OpenAPI is missing {$method} {$uri}.");
+            }
+        }
     }
 
     public function test_the_documentation_routes_are_not_part_of_the_contract(): void
