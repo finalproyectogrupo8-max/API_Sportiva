@@ -7,18 +7,18 @@ Define cómo los administradores de plataforma asocian usuarios con clubes y ges
 ## ADDED Requirements
 
 ### Requirement: Asociar un usuario a un club
-`POST /api/admin/tenants/{tenant}/memberships` SHALL crear una membresía para un usuario existente con el rol inicial válido `admin`; cada usuario MUST NOT tener más de una membresía por club.
+`POST /api/admin/tenants/{tenant}/memberships` SHALL crear una membresía para un usuario existente y requerir uno o más `roles` válidos del club. También puede aceptar `sport_ids` para asignar el alcance de un coordinador deportivo. Cada usuario MUST NOT tener más de una membresía por club.
 
 #### Scenario: Asociación válida
-- **WHEN** un administrador envía el `user_id` de un usuario existente para un club activo
-- **THEN** responde 201 con la membresía activa y su rol
+- **WHEN** un administrador envía el `user_id` y roles válidos para un club activo
+- **THEN** responde 201 con la membresía activa, sus roles y sus deportes asignados
 
 #### Scenario: Membresía duplicada
 - **WHEN** el usuario ya tiene una membresía en ese club
 - **THEN** responde 422 y no crea otra membresía
 
-#### Scenario: Rol no permitido
-- **WHEN** el request envía un rol distinto de `admin`
+#### Scenario: Rol inexistente
+- **WHEN** el request incluye un rol que no existe en el catálogo del club
 - **THEN** responde 422
 
 #### Scenario: Club dado de baja
@@ -26,11 +26,11 @@ Define cómo los administradores de plataforma asocian usuarios con clubes y ges
 - **THEN** responde 404
 
 ### Requirement: Modificar una membresía
-`PATCH /api/admin/tenants/{tenant}/memberships/{membership}` SHALL permitir cambiar el rol o `is_active` de la membresía del club indicado; no SHALL permitir cambiar el usuario ni el club asociados.
+`PATCH /api/admin/tenants/{tenant}/memberships/{membership}` SHALL permitir reemplazar `roles` o `sport_ids` y cambiar `is_active` en la membresía del club indicado; no SHALL permitir cambiar el usuario ni el club asociados. Desactivar la membresía SHALL revocar los tokens del usuario asociados a ese club sin revocar los de otros clubes.
 
-#### Scenario: Cambiar el rol
-- **WHEN** un administrador cambia el rol de una membresía por un rol válido
-- **THEN** responde 200 con la membresía actualizada
+#### Scenario: Cambiar roles y deportes
+- **WHEN** un administrador reemplaza los roles o deportes de una membresía
+- **THEN** responde 200 con la membresía actualizada y el perfil del club refleja el nuevo acceso
 
 #### Scenario: Membresía de otro club
 - **WHEN** la membresía pertenece a un club distinto del indicado en la URL

@@ -38,7 +38,7 @@ Todos los comandos corren con `docker compose exec backend` adelante, salvo `ope
 ## 6. Verificación final
 
 - [x] 6.1 Con un volumen recreado: `vendor/bin/pint --test`, `php artisan test` y `openspec validate tenant-connection --strict`, y pegar la salida real en el PR
-- [ ] 6.2 Verificar en la CI del PR que los tests de club pasan con el volumen nuevo, sin cambios en `.github/workflows/ci.yml`
+- [x] 6.2 Verificar en la CI del PR #15 que los tests de club pasan con el volumen nuevo, sin cambios en `.github/workflows/ci.yml` (check `verify` verde).
 
 ## Workflow follow-up
 

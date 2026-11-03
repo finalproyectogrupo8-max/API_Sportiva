@@ -2,11 +2,11 @@
 
 Esta guía es la receta para escribir un ABM (alta, baja, modificación y consulta) en la API: dónde va cada archivo, cómo se nombran las rutas, qué hace el controller, cómo se valida, cómo se responde, cómo se lista, cómo se autoriza, cómo se borra y qué tests son obligatorios.
 
-> **🟡 PROPUESTO.** Estas convenciones se adelantaron para que el equipo arranque con las mismas reglas. Se confirman y ajustan con el **primer ABM real**: el de usuarios y clubes del panel de admin, en el change `platform-admin-and-provisioning`. Si algo de esta guía choca con ese código, gana el código, y esta guía se corrige.
+> **Convenciones confirmadas** por los ABM centrales y de club ya implementados. Si esta guía contradice el código actual, gana el código y se corrige la guía en el mismo cambio.
 >
 > **Dependencias.** Los ABM **de club** usan la autenticación (`platform-auth`) y la conexión `tenant` (`tenant-connection`, ver [guia-bases-de-datos.md](guia-bases-de-datos.md)), que ya existen. Los permisos por rol (`hasClubPermission()`, caso 8 de los tests) están en `club-access-control`: ver [roles y permisos](roles-y-permisos.md).
 >
-> Versión: 17 de octubre de 2026 · Laravel 13.37.
+> Actualizado: 3 de noviembre de 2026 · Laravel 13.
 
 ## Índice
 
@@ -78,7 +78,7 @@ tests/Feature/Club/PlayerApiTest.php
 
 ## 3. Ejemplo completo: el ABM de jugadores (players)
 
-> 🟡 **Ilustrativo.** Los nombres de los campos son de ejemplo, no el modelo definitivo de jugadores. La auth y la conexión `tenant` ya existen; los permisos por rol todavía no (`club-access-control`).
+> 🟡 **Ilustrativo.** Los nombres de los campos son de ejemplo, no el modelo definitivo de jugadores. La autenticación, la conexión `tenant` y los permisos por rol ya existen.
 
 **Migración de club** (`database/migrations/tenant/...create_players_table.php`):
 
@@ -411,7 +411,7 @@ Todos los comandos van con `docker compose exec backend` adelante (acá se omite
    > Existe un atajo, `make:model Club/Player --factory --policy --requests --controller --api`, pero deja el controller, los Requests y la Policy **fuera** de `Club/` (verificado: crea `app/Http/Controllers/PlayerController.php`), y hay que moverlos a mano. Además, en `make:model` la opción `--resource` **no** crea el API Resource: indica que el controller es "de recurso".
 4. **Ruta:** `Route::apiResource('players', PlayerController::class)` dentro del grupo de club.
 5. **Permisos:** agregá `players.view`, `players.create`, `players.update` y `players.delete` al seeder de roles del club.
-6. **Migrar:** `php artisan tenants:migrate` (🟡 cuando exista) en las bases de club locales.
+6. **Migrar:** `php artisan tenants:migrate` en las bases de club locales.
 7. **Tests:**
    ```bash
    php artisan make:test Club/PlayerApiTest
@@ -434,11 +434,15 @@ Siguen las mismas reglas, con estas diferencias:
 | --- | --- | --- |
 | Base | La del club (`$connection = 'tenant'`) | La central (conexión por defecto) |
 | Carpetas | `Club/` | `Admin/` (controllers, Requests y Resources). Los modelos centrales van en `app/Models/` |
-| Rutas | Grupo `['auth:sanctum', 'tenant.token']` | Grupo `['auth:sanctum', 'platform.admin']`, con prefijo `/api/admin` |
+| Rutas | Grupo `['auth:sanctum', 'tenant.token']` | Grupo `['auth:sanctum', 'abilities:platform:admin', 'platform.admin']`, con prefijo `/api/admin` |
 | Autorización | Permisos del rol en el club | Ser admin de plataforma (`is_platform_admin`) |
 | Migraciones | `database/migrations/tenant/` | `database/migrations/` |
 | Auditoría | Según el caso | **Siempre**: cada alta, baja o cambio queda registrado |
 | Test de aislamiento (caso 10) | Entre clubes | Un usuario que **no** es admin de plataforma recibe 403 |
+
+En el panel central, `users.is_active` controla el acceso global: desactivar una cuenta revoca sus tokens, y cambiar su contraseña también los revoca. `is_platform_admin` solo se asigna con `platform:create-admin`. Las membresías centrales indican acceso al club; los roles y permisos viven en la base del club y se administran como una lista de roles, no con un enum en `tenant_memberships`.
+
+Los cambios administrativos se registran en `audit_logs` dentro de la transacción correspondiente. La auditoría no guarda contraseñas, hashes ni tokens; sus endpoints son de solo lectura (`GET /api/admin/audit-logs` y `GET /api/audit-logs` para la actividad del club). No hay endpoints para modificar o borrar registros de auditoría.
 
 ## 14. Errores comunes
 

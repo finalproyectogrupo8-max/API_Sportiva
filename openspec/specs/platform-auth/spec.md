@@ -49,6 +49,21 @@ El sistema SHALL crear administradores de plataforma solo mediante `php artisan 
 - **WHEN** se ejecuta el comando con un email nuevo y una contraseña de al menos 12 caracteres
 - **THEN** se crea un usuario con `is_platform_admin = true`
 
+#### Scenario: Sin registro público
+- **WHEN** una persona intenta crear una cuenta desde un endpoint público de registro
+- **THEN** no existe una ruta de autorregistro y las cuentas se crean desde las funciones administrativas o mediante invitación
+
+### Requirement: Aceptación de invitaciones
+El sistema SHALL permitir que una persona invitada establezca su contraseña mediante `POST /api/auth/accept-invite`, usando email, token de invitación y contraseña confirmada. Una invitación aceptada SHALL activar la cuenta; un token incorrecto, vencido o asociado a otro email SHALL responder 422.
+
+#### Scenario: Aceptar una invitación
+- **WHEN** la persona envía el email invitado, el token vigente y una contraseña válida confirmada
+- **THEN** responde 200, activa la cuenta y permite iniciar sesión
+
+#### Scenario: Invitación inválida o vencida
+- **WHEN** el token expiró, no corresponde al email o ya fue utilizado
+- **THEN** responde 422 sin activar la cuenta
+
 ### Requirement: Asignación explícita de is_platform_admin
 `is_platform_admin` MUST NOT ser asignable en masa.
 
