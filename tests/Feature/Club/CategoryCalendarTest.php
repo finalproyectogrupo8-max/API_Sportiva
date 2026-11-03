@@ -25,7 +25,7 @@ class CategoryCalendarTest extends TestCase
         [$u15, $u17] = $this->inTenant($this->tenantA(), function () {
             $u15 = Category::factory()->create(['name' => 'Sub-15']);
             $u17 = Category::factory()->create(['name' => 'Sub-17']);
-            GameMatch::factory()->create(['category_id' => $u15->id, 'opponent' => 'Club Rival', 'match_date' => now()->addDays(3)->setTime(17, 0), 'venue' => 'Cancha 1']);
+            GameMatch::factory()->create(['category_id' => $u15->id, 'opponent' => 'Club Rival', 'is_home' => true, 'match_date' => now()->addDays(3)->setTime(17, 0), 'venue' => 'Cancha 1']);
             Training::factory()->create(['category_id' => $u15->id, 'starts_at' => now()->addDays(1)->setTime(18, 0), 'ends_at' => now()->addDays(1)->setTime(19, 30)]);
             GameMatch::factory()->create(['category_id' => $u17->id, 'opponent' => 'Otra Categoría']);
             Player::factory()->create(['first_name' => 'Nombre', 'last_name' => 'Secreto']);
