@@ -3482,6 +3482,142 @@
                 }
             }
         },
+        "/categories/{category}/calendar-link": {
+            "get": {
+                "operationId": "categoryCalendar.show",
+                "summary": "Devuelve el link (lo crea la primera vez)",
+                "tags": [
+                    "CategoryCalendar"
+                ],
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "description": "The category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "url": {
+                                                    "type": "string"
+                                                },
+                                                "webcal_url": {
+                                                    "description": "Para el calendario del celular (iPhone, Outlook).",
+                                                    "type": [
+                                                        "null",
+                                                        "array",
+                                                        "string",
+                                                        "object"
+                                                    ]
+                                                },
+                                                "google_url": {
+                                                    "type": "string",
+                                                    "description": "Agregar en Google Calendar por URL."
+                                                }
+                                            },
+                                            "required": [
+                                                "url",
+                                                "webcal_url",
+                                                "google_url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "categoryCalendar.store",
+                "summary": "Genera un link nuevo: el anterior deja de funcionar",
+                "tags": [
+                    "CategoryCalendar"
+                ],
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "description": "The category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "url": {
+                                                    "type": "string"
+                                                },
+                                                "webcal_url": {
+                                                    "description": "Para el calendario del celular (iPhone, Outlook).",
+                                                    "type": [
+                                                        "null",
+                                                        "array",
+                                                        "string",
+                                                        "object"
+                                                    ]
+                                                },
+                                                "google_url": {
+                                                    "type": "string",
+                                                    "description": "Agregar en Google Calendar por URL."
+                                                }
+                                            },
+                                            "required": [
+                                                "url",
+                                                "webcal_url",
+                                                "google_url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/categories/{category}/coaches": {
             "get": {
                 "operationId": "categoryCoach.index",
@@ -11416,6 +11552,53 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/public/calendar/{token}.ics": {
+            "get": {
+                "operationId": "publicCalendar.show",
+                "tags": [
+                    "PublicCalendar"
+                ],
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "text/calendar; charset=utf-8": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "inline; filename=\"calendario.ics\""
+                                }
+                            },
+                            "Cache-Control": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "public, max-age=900"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
