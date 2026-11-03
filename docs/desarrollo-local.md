@@ -20,6 +20,8 @@ Cómo levantar la API Sportiva en tu máquina. **No hace falta instalar PHP, Com
 | `backend` | Contenedor PHP 8.5 + Laravel 13. Sirve la API con `php artisan serve` en `http://127.0.0.1:8000` |
 | `mysql` | MySQL 8.4. Bases `sportiva_platform` (central), `sportiva_testing` (tests) y las de club (`club_*`). No se expone fuera de Docker |
 | `mailpit` | Captura los emails locales. SMTP en `mailpit:1025` y UI en `http://localhost:8025` |
+| `adminer` | Visor web de la base, en `http://127.0.0.1:8080`. Sistema MySQL, servidor `mysql`, usuario y clave de tu `.env` |
+| Front (Next.js) | Corre fuera de Docker, con `scripts/setup.sh` del repo `Front-Sportiva`, en `http://127.0.0.1:3000` |
 | `mysql-data` | Volumen de Docker con los datos de MySQL. Sobrevive a reinicios y rebuilds |
 | `.env` | Configuración local (la copia `setup.sh` desde `.env.example`). La leen Compose y Laravel |
 | `scripts/setup.sh` | Deja todo levantado y migrado. Es idempotente: se puede correr siempre que haya dudas |
@@ -56,8 +58,11 @@ powershell -ExecutionPolicy Bypass -File .\setup-windows.ps1
 | 3. Docker Desktop | Lo instala **por usuario**, sin admin y con la licencia aceptada. Después lo arranca y espera a que el motor responda | Nada |
 | 4. Docker dentro de Ubuntu | Si Ubuntu no ve `docker`, lo repara: reinicia la distro (`wsl --terminate`) y, si hace falta, Docker Desktop | Confirmar los reinicios |
 | 5. Git en WSL | Configura el acceso al repo con el Git Credential Manager de Windows, y tu identidad con el email noreply de GitHub | Escribir tu usuario de GitHub, si te lo pide |
-| 6. Proyecto | Clona en `~/repos/api-sportiva` **dentro de WSL** y corre `scripts/setup.sh` | Nada |
-| 7. VS Code | Lo instala si falta, agrega la extensión **WSL** y abre el proyecto | Aceptar las **extensiones recomendadas** cuando VS Code las ofrezca |
+| 6. API | Clona en `~/repos/api-sportiva` **dentro de WSL** y corre `scripts/setup.sh` | Nada |
+| 6b. Front | Clona el repo del front al lado y corre su `scripts/setup.sh`: instala Node 24 y pnpm, y levanta la app en `http://127.0.0.1:3000` | Nada |
+| 7. VS Code | Lo instala si falta, agrega la extensión **WSL** y abre el proyecto de la API | Aceptar las **extensiones recomendadas** cuando VS Code las ofrezca |
+
+Si una fase falla, el script la anota como **pendiente**, sigue con las demás y al final te muestra qué quedó y las URLs. No se corta ni cierra la ventana.
 
 Todo lo que instala o cambia configuración pregunta antes. Con `-Yes` acepta todo.
 
@@ -70,6 +75,8 @@ Todo lo que instala o cambia configuración pregunta antes. Con `-Yes` acepta to
 | `-GitHubUser <usuario>` | Tu usuario de GitHub, para no tener que escribirlo. Es obligatorio con `-Yes` |
 | `-Distro <nombre>` | Otra distro de WSL. Por defecto es `Ubuntu` |
 | `-TargetDir <ruta>` | Otra carpeta dentro de WSL. Por defecto es `repos/api-sportiva` |
+| `-FrontTargetDir <ruta>` | Otra carpeta para el front. Por defecto es `repos/gestion-operativa-club-deportivo` |
+| `-FrontRepoUrl <url>` | Otro repo del front (para probar un fork) |
 | `-NoOpen` | No abrir VS Code al final |
 
 Con `irm`, los parámetros se pasan así:
@@ -81,6 +88,7 @@ Con `irm`, los parámetros se pasan así:
 ### Si algo falla
 
 - Leé el mensaje, resolvé lo que pide y **volvé a correr el mismo comando**. El script retoma desde donde quedó, sin repetir lo que ya está hecho, y la ventana de PowerShell no se cierra.
+- Si el error es de un paso que se puede reintentar después (por ejemplo, Docker Hub no responde y no puede bajar una imagen), el script sigue con el resto y lo deja en la lista de **pendientes** del resumen final.
 - Cada corrida deja un **log** en `%TEMP%\api-sportiva-setup-<fecha>.log`, y el script muestra la ruta al final. Si pedís ayuda, pasá ese archivo: no contiene contraseñas.
 
 > **¿Por qué dentro de WSL y no en `C:\repos`?** Docker monta el código en el contenedor. Desde `C:\` ese montaje cruza del sistema de archivos de Windows al de Linux y es **muy lento** con los miles de archivos de `vendor/`, además de tener permisos emulados. Desde WSL es nativo. Para editar, usá VS Code con la extensión **WSL** (`code .` desde la terminal de Ubuntu). En el Explorador de Windows, los archivos aparecen en `\\wsl$\Ubuntu\home\<usuario>\repos\api-sportiva`.
@@ -145,6 +153,8 @@ docker compose run --rm --no-deps backend composer install
 docker compose run --rm --no-deps backend php artisan key:generate   # solo si APP_KEY está vacía
 docker compose up -d --wait
 docker compose exec backend php artisan migrate
+docker compose exec backend php artisan db:seed --class='Database\Seeders\Demo\DemoSeeder' --force   # solo si la base esta vacia
+docker compose up -d adminer
 ```
 
 ### 4. Correr los tests
@@ -320,6 +330,23 @@ Para ver qué está escuchando en cada puerto (PowerShell): `netstat -ano | find
 
 3. **Test Connection**.
 
+## Datos de demo
+
+En el primer arranque, MySQL importa `docker/mysql/init/03-demo-data.sql`: la plataforma y un club completo (**Demo Sportiva**), con todas las tablas cargadas. Si la base ya existe pero está vacía, `scripts/setup.sh` importa lo mismo. El detalle de las cuentas y de los datos está en [`docs/datos-demo.md`](datos-demo.md).
+
+## Visor de la base (Adminer)
+
+`scripts/setup.sh` lo levanta solo; a mano es `docker compose up -d adminer`. Queda en [http://127.0.0.1:8080](http://127.0.0.1:8080). Si la imagen no se puede bajar, el resto del entorno funciona igual: Adminer es opcional. Para entrar:
+
+| Campo | Valor |
+| --- | --- |
+| Sistema | MySQL |
+| Servidor | `mysql` |
+| Usuario / Contraseña | `DB_USERNAME` / `DB_PASSWORD` de tu `.env` |
+| Base | `sportiva_platform` o `club_demo` |
+
+Si el puerto 8080 está ocupado, cambiá `ADMINER_PORT` en el `.env`. Adminer queda solo en `127.0.0.1`: no se publica fuera de tu máquina.
+
 ## Cola de jobs en desarrollo local y demo
 
 `docker compose up -d` levanta también el servicio `queue`, un worker que procesa los jobs (por ejemplo, `ProvisionTenant` al crear un club). Con `QUEUE_CONNECTION=database` (el valor de `.env.example`), el alta de un club responde enseguida con `status: provisioning` y el worker crea la base en segundo plano: el panel de admin muestra "Creando" y avisa cuando queda `active`. Es el mismo comportamiento que en producción.
@@ -364,6 +391,15 @@ bash scripts/setup.sh
 Nunca uses `docker compose down -v` como forma "normal" de bajar el entorno: para eso es `docker compose down` (sin `-v`).
 
 ## Troubleshooting
+
+### `EPROTO: The TLS handshake failed` o `ERR_SSL_PROTOCOL_ERROR`
+
+Los puertos locales hablan **HTTP**. Si abrís `https://127.0.0.1:3000`, `https://localhost:8000` o dejás `https://` en `APP_URL`, `FRONTEND_URL` o `API_URL`, Node intenta un handshake TLS contra un servidor HTTP y falla con ese error.
+
+- En el navegador, usá `http://127.0.0.1:3000` y `http://127.0.0.1:8000`.
+- En la API, `APP_URL` y `FRONTEND_URL` del `.env` tienen que empezar con `http://`.
+- En el front, `API_URL` de `.env.local` tiene que empezar con `http://`.
+- `scripts/setup.sh` (en los dos repos) corrige solo las URLs que apuntan a `127.0.0.1` o `localhost` con `https://` y avisa al hacerlo. Las URLs reales no se tocan.
 
 ### `docker: command not found` dentro de Ubuntu
 
