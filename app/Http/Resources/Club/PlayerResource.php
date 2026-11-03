@@ -23,6 +23,7 @@ class PlayerResource extends JsonResource
             'document_number' => $this->document_number,
             'registration_number' => $this->registration_number,
             'preferred_position' => $this->preferred_position,
+            'positions' => $this->whenLoaded('positions', fn () => PositionResource::collection($this->positions)),
             'dominant_side' => $this->dominant_side,
             'status' => $this->status,
             /** Id del documento con la foto (`GET /api/documents/{id}/download`), si se cargó y tiene. */

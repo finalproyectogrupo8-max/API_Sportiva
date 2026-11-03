@@ -3,6 +3,7 @@
 namespace Tests\Feature\Club;
 
 use App\Club\Roles\ManageClubRoles;
+use App\Models\Club\ClubUser;
 use App\Models\Club\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,12 +41,12 @@ class RoleApiTest extends TestCase
         $this->withClubToken($this->adminToken())
             ->getJson('/api/roles')
             ->assertOk()
-            ->assertJsonCount(7, 'data')
+            ->assertJsonCount(6, 'data')
             ->assertJsonPath('data.0.slug', 'admin')
             ->assertJsonPath('data.0.is_system', true)
             ->assertJsonPath('data.0.users_count', 1)
-            ->assertJsonPath('data.2.slug', 'sport_coordinator')
-            ->assertJsonPath('data.3.slug', 'coach')
+            ->assertJsonPath('data.1.slug', 'sport_coordinator')
+            ->assertJsonPath('data.2.slug', 'coach')
             ->assertJsonFragment(['name' => 'players.view', 'scope' => 'sport'])
             ->assertJsonFragment(['name' => 'players.view', 'scope' => 'own']);
     }
@@ -118,16 +119,55 @@ class RoleApiTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath('errors.name.0', 'Ya existe un rol con ese nombre en el club.');
 
-        $this->assertSame(7, $this->inTenant($this->tenantA(), fn () => Role::query()->count()));
+        $this->assertSame(6, $this->inTenant($this->tenantA(), fn () => Role::query()->count()));
     }
 
     public function test_requires_role_permissions(): void
     {
-        $token = $this->clubToken($this->tenantA(), roles: ['coordinator']);
+        $token = $this->clubToken($this->tenantA(), roles: ['coach']);
 
         $this->withClubToken($token)->getJson('/api/roles')->assertForbidden()->assertJsonPath('code', 'forbidden');
         $this->withClubToken($token)->postJson('/api/roles', $this->payload())->assertForbidden();
         $this->withClubToken($token)->getJson('/api/permissions')->assertForbidden();
+    }
+
+    public function test_sync_removes_legacy_coordinator_assignments_without_reassigning_users(): void
+    {
+        $user = User::factory()->create();
+        $token = $this->clubToken($this->tenantA(), $user, ['coach']);
+
+        $this->inTenant($this->tenantA(), function () use ($user) {
+            $legacyRole = Role::query()->create([
+                'slug' => 'coordinator',
+                'name' => 'Coordinador deportivo',
+                'description' => 'Rol retirado',
+                'is_system' => true,
+            ]);
+            $clubUser = ClubUser::query()->where('global_user_id', $user->id)->sole();
+            $clubUser->roles()->attach($legacyRole->id);
+        });
+
+        $this->artisan('club:sync-permissions', ['--tenant' => $this->tenantA()->slug])->assertSuccessful();
+        $this->artisan('club:sync-permissions', ['--tenant' => $this->tenantA()->slug])->assertSuccessful();
+
+        $this->inTenant($this->tenantA(), function () use ($user) {
+            $this->assertFalse(Role::query()->where('slug', 'coordinator')->exists());
+            $clubUser = ClubUser::query()->where('global_user_id', $user->id)->sole();
+            $this->assertSame(['coach'], $clubUser->roles()->pluck('slug')->all());
+        });
+
+        $this->withClubToken($token)->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('profile.roles.0.slug', 'coach')
+            ->assertJsonMissing(['slug' => 'coordinator']);
+    }
+
+    public function test_custom_role_cannot_reuse_the_retired_coordinator_slug(): void
+    {
+        $this->withClubToken($this->adminToken())
+            ->postJson('/api/roles', $this->payload(['name' => 'Coordinator']))
+            ->assertCreated()
+            ->assertJsonPath('data.slug', 'coordinator_2');
     }
 
     public function test_standard_roles_cannot_be_edited_or_deleted(): void
@@ -241,11 +281,11 @@ class RoleApiTest extends TestCase
         $this->withClubToken($this->adminToken())->postJson('/api/roles', $this->payload())->assertCreated();
         $tokenB = $this->clubToken($this->tenantB(), roles: ['admin']);
 
-        $this->withClubToken($tokenB)->getJson('/api/roles')->assertOk()->assertJsonCount(7, 'data');
+        $this->withClubToken($tokenB)->getJson('/api/roles')->assertOk()->assertJsonCount(6, 'data');
         $this->withClubToken($tokenB)->getJson('/api/roles/profe_con_indumentaria')->assertNotFound();
         $this->withClubToken($tokenB)->deleteJson('/api/roles/profe_con_indumentaria')->assertNotFound();
 
-        $this->assertSame(8, $this->inTenant($this->tenantA(), fn () => Role::query()->count()));
+        $this->assertSame(7, $this->inTenant($this->tenantA(), fn () => Role::query()->count()));
     }
 
     public function test_sync_keeps_custom_roles(): void

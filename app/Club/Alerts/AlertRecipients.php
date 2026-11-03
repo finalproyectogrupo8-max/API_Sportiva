@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Resuelve los destinatarios de las alertas según rol y alcance (TIZ-27):
  * - El profe recibe lo de sus categorías (category_coaches).
- * - El coordinador recibe lo de su alcance (all o sport, TIZ-35).
+ * - El administrador recibe las alertas generales y el coordinador de deporte las de sus deportes.
  */
 class AlertRecipients
 {
@@ -33,10 +33,10 @@ class AlertRecipients
             ->map(fn ($id) => (int) $id)
             ->all();
 
-        // 2. Coordinadores generales (alcance all: admin y coordinator)
-        $generalCoordinators = ClubUser::query()
+        // 2. Administradores del club
+        $administrators = ClubUser::query()
             ->where('status', ClubUser::STATUS_ACTIVE)
-            ->whereHas('roles', fn ($q) => $q->whereIn('slug', ['admin', 'coordinator']))
+            ->whereHas('roles', fn ($q) => $q->where('slug', 'admin'))
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->all();
@@ -50,17 +50,17 @@ class AlertRecipients
             ->map(fn ($id) => (int) $id)
             ->all();
 
-        return array_values(array_unique([...$coachUserIds, ...$generalCoordinators, ...$sportCoordinators]));
+        return array_values(array_unique([...$coachUserIds, ...$administrators, ...$sportCoordinators]));
     }
 
     /**
      * @return list<int>
      */
-    public function generalCoordinators(): array
+    public function administrators(): array
     {
         return ClubUser::query()
             ->where('status', ClubUser::STATUS_ACTIVE)
-            ->whereHas('roles', fn ($q) => $q->whereIn('slug', ['admin', 'coordinator']))
+            ->whereHas('roles', fn ($q) => $q->where('slug', 'admin'))
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->all();

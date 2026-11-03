@@ -131,7 +131,7 @@ class ClubProfileTest extends TestCase
     {
         $tenant = $this->tenantA();
 
-        $this->withClubToken($this->clubToken($tenant, roles: ['coordinator']))
+        $this->withClubToken($this->clubToken($tenant, roles: ['sport_coordinator']))
             ->patchJson('/api/club', ['city' => 'Rosario'])
             ->assertForbidden()
             ->assertJsonPath('code', 'forbidden');

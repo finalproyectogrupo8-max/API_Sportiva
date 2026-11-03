@@ -59,7 +59,7 @@ class NotificationApiTest extends TestCase
         $token1 = $this->clubToken($this->tenantA(), $user1, ['coach']);
 
         $user2 = User::factory()->create();
-        $token2 = $this->clubToken($this->tenantA(), $user2, ['coordinator']);
+        $token2 = $this->clubToken($this->tenantA(), $user2, ['admin']);
 
         $notificationOfUser2 = $this->inTenant($this->tenantA(), function () use ($user2) {
             $clubUser2 = ClubUser::query()->where('global_user_id', $user2->id)->sole();

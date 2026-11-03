@@ -157,7 +157,7 @@ class PlayerApiTest extends TestCase
         $this->withClubToken($token)->getJson("/api/players/{$mine->id}")->assertOk();
         $this->withClubToken($token)->getJson("/api/players/{$other->id}")->assertNotFound();
 
-        $this->withClubToken($this->token('coordinator'))->getJson('/api/players')->assertJsonCount(3, 'data');
+        $this->withClubToken($this->token('admin'))->getJson('/api/players')->assertJsonCount(3, 'data');
     }
 
     public function test_history_lists_current_and_ended_categories(): void

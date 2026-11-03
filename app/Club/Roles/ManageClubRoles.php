@@ -194,7 +194,7 @@ class ManageClubRoles
         $base = Str::limit(Str::slug($name, '_') ?: 'rol', 70, '');
         $slug = $base;
 
-        for ($i = 2; Role::query()->where('slug', $slug)->exists(); $i++) {
+        for ($i = 2; $slug === 'coordinator' || Role::query()->where('slug', $slug)->exists(); $i++) {
             $slug = "{$base}_{$i}";
         }
 

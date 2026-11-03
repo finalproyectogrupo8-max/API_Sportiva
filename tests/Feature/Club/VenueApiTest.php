@@ -62,7 +62,7 @@ class VenueApiTest extends TestCase
         $this->withClubToken($coach)->getJson('/api/venues')->assertOk();
         $this->withClubToken($coach)->postJson('/api/venues', ['name' => 'X', 'address' => 'Y'])->assertForbidden();
         $this->withClubToken($coach)->deleteJson("/api/venues/{$venue->id}")->assertForbidden();
-        $this->withClubToken($this->token('coordinator'))->patchJson("/api/venues/{$venue->id}", ['name' => 'Nueva'])->assertOk();
+        $this->withClubToken($this->token('admin'))->patchJson("/api/venues/{$venue->id}", ['name' => 'Nueva'])->assertOk();
     }
 
     public function test_a_venue_of_another_club_is_not_visible(): void

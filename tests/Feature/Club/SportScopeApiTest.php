@@ -5,6 +5,7 @@ namespace Tests\Feature\Club;
 use App\Models\Club\Category;
 use App\Models\Club\ClubUser;
 use App\Models\Club\Coach;
+use App\Models\Club\Competition;
 use App\Models\Club\Player;
 use App\Models\Club\PlayerCategoryMembership;
 use App\Models\Club\Season;
@@ -22,7 +23,91 @@ class SportScopeApiTest extends TestCase
     use InteractsWithTenants;
     use RefreshDatabase;
 
-    public function test_sport_coordinator_only_sees_categories_players_and_coaches_of_assigned_sports(): void
+    public function test_sport_coordinator_only_receives_read_permissions_for_seasons_categories_and_competitions(): void
+    {
+        $token = $this->clubToken($this->tenantA(), roles: ['sport_coordinator']);
+
+        $this->withClubToken($token)->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('permissions', ['categories.view', 'competitions.view', 'seasons.view'])
+            ->assertJsonPath('permission_scopes', [
+                'categories.view' => 'sport',
+                'competitions.view' => 'sport',
+                'seasons.view' => 'all',
+            ]);
+    }
+
+    public function test_sport_coordinator_can_only_read_seasons_categories_and_competitions(): void
+    {
+        $user = User::factory()->create();
+        $token = $this->clubToken($this->tenantA(), $user, ['sport_coordinator']);
+
+        [$season, $football, $footballCategory, $basketballCategory, $footballCompetition, $basketballCompetition] = $this->inTenant($this->tenantA(), function () use ($user) {
+            $football = Sport::factory()->create(['name' => 'Fútbol']);
+            $basketball = Sport::factory()->create(['name' => 'Básquet']);
+            $season = Season::factory()->create(['name' => '2027']);
+            $clubUser = ClubUser::query()->where('global_user_id', $user->id)->sole();
+            $clubUser->sports()->attach($football->id);
+
+            $footballCategory = Category::factory()->create([
+                'sport_id' => $football->id,
+                'season_id' => $season->id,
+                'name' => 'Fútbol U15',
+            ]);
+            $basketballCategory = Category::factory()->create([
+                'sport_id' => $basketball->id,
+                'season_id' => $season->id,
+                'name' => 'Básquet U15',
+            ]);
+
+            return [
+                $season,
+                $football,
+                $footballCategory,
+                $basketballCategory,
+                Competition::factory()->create(['sport_id' => $football->id, 'season_id' => $season->id]),
+                Competition::factory()->create(['sport_id' => $basketball->id, 'season_id' => $season->id]),
+            ];
+        });
+
+        $this->withClubToken($token)->getJson('/api/seasons')
+            ->assertOk()->assertJsonCount(1, 'data');
+        $this->withClubToken($token)->getJson('/api/categories')
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $footballCategory->id);
+        $this->withClubToken($token)->getJson('/api/competitions')
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.sport_id', $football->id);
+        $this->withClubToken($token)->getJson('/api/players')->assertForbidden();
+        $this->withClubToken($token)->getJson('/api/positions')->assertForbidden();
+
+        $this->withClubToken($token)->postJson('/api/seasons', [
+            'name' => '2028', 'start_date' => '2028-01-01', 'end_date' => '2028-12-31', 'status' => 'planned',
+        ])->assertForbidden();
+        $this->withClubToken($token)->patchJson("/api/seasons/{$season->id}", ['name' => '2028'])->assertForbidden();
+        $this->withClubToken($token)->deleteJson("/api/seasons/{$season->id}")->assertForbidden();
+
+        $categoryPayload = [
+            'sport_id' => $football->id,
+            'season_id' => $season->id,
+            'name' => 'Fútbol U17',
+        ];
+        $this->withClubToken($token)->postJson('/api/categories', $categoryPayload)->assertForbidden();
+        $this->withClubToken($token)->patchJson("/api/categories/{$footballCategory->id}", ['name' => 'Nuevo nombre'])->assertForbidden();
+        $this->withClubToken($token)->deleteJson("/api/categories/{$footballCategory->id}")->assertForbidden();
+
+        $competitionPayload = [
+            'sport_id' => $football->id,
+            'season_id' => $season->id,
+            'name' => 'Liga 2027',
+        ];
+        $this->withClubToken($token)->postJson('/api/competitions', $competitionPayload)->assertForbidden();
+        $this->withClubToken($token)->patchJson("/api/competitions/{$footballCompetition->id}", ['name' => 'Nueva liga'])->assertForbidden();
+        $this->withClubToken($token)->deleteJson("/api/competitions/{$footballCompetition->id}")->assertForbidden();
+
+        $this->withClubToken($token)->getJson("/api/categories/{$basketballCategory->id}")->assertNotFound();
+        $this->withClubToken($token)->getJson("/api/competitions/{$basketballCompetition->id}")->assertNotFound();
+    }
+
+    public function test_sport_coordinator_only_sees_categories_of_assigned_sports(): void
     {
         $user = User::factory()->create();
         $token = $this->clubToken($this->tenantA(), $user, ['sport_coordinator']);
@@ -92,34 +177,17 @@ class SportScopeApiTest extends TestCase
         $this->withClubToken($token)->getJson("/api/categories/{$basketballCat->id}")
             ->assertNotFound();
 
-        // Players: only football player
-        $this->withClubToken($token)->getJson('/api/players')
-            ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.last_name', 'Messi');
-
-        $this->withClubToken($token)->getJson("/api/players/{$footballPlayer->id}")
-            ->assertOk()
-            ->assertJsonPath('data.last_name', 'Messi');
-
-        $this->withClubToken($token)->getJson("/api/players/{$basketballPlayer->id}")
-            ->assertNotFound();
-
-        // Coaches: only football coach
-        $this->withClubToken($token)->getJson('/api/coaches')
-            ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.last_name', 'Scaloni');
-
-        $this->withClubToken($token)->getJson("/api/coaches/{$basketballCoach->id}")
-            ->assertNotFound();
+        $this->withClubToken($token)->getJson('/api/players')->assertForbidden();
+        $this->withClubToken($token)->getJson("/api/players/{$footballPlayer->id}")->assertForbidden();
+        $this->withClubToken($token)->getJson('/api/coaches')->assertForbidden();
+        $this->withClubToken($token)->getJson("/api/coaches/{$basketballCoach->id}")->assertForbidden();
     }
 
     public function test_broadest_scope_wins_when_user_has_multiple_roles(): void
     {
         $user = User::factory()->create();
-        // sport_coordinator gives sport scope, coordinator gives all scope
-        $token = $this->clubToken($this->tenantA(), $user, ['sport_coordinator', 'coordinator']);
+        // sport_coordinator gives sport scope, admin gives all scope
+        $token = $this->clubToken($this->tenantA(), $user, ['sport_coordinator', 'admin']);
 
         $this->inTenant($this->tenantA(), function () use ($user) {
             $football = Sport::factory()->create(['name' => 'Fútbol']);
@@ -160,7 +228,7 @@ class SportScopeApiTest extends TestCase
             $footballCat = Category::factory()->create(['name' => 'Fútbol U15', 'sport_id' => $football->id, 'season_id' => $season->id]);
             $basketballCat = Category::factory()->create(['name' => 'Básquet U15', 'sport_id' => $basketball->id, 'season_id' => $season->id]);
 
-            // User is coach of Basketball, but coordinator of Football
+            // User is coach of Basketball, but sport coordinator of Football
             $coach = Coach::factory()->create(['club_user_id' => $clubUser->id]);
             DB::connection('tenant')->table('category_coaches')->insert([
                 'category_id' => $basketballCat->id,
@@ -199,9 +267,7 @@ class SportScopeApiTest extends TestCase
         $this->withClubToken($token)->getJson("/api/categories/{$cat->id}")
             ->assertNotFound();
 
-        $this->withClubToken($token)->getJson('/api/players')
-            ->assertOk()
-            ->assertJsonCount(0, 'data');
+        $this->withClubToken($token)->getJson('/api/players')->assertForbidden();
     }
 
     public function test_me_returns_assigned_sports_for_selector(): void

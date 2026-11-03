@@ -22,6 +22,8 @@ class UpdatePlayerRequest extends FormRequest
             'document_number' => ['sometimes', 'nullable', 'string', 'max:30'],
             'registration_number' => ['sometimes', 'nullable', 'string', 'max:50'],
             'preferred_position' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'position_ids' => ['sometimes', 'array'],
+            'position_ids.*' => ['integer', 'distinct', Rule::exists('tenant.positions', 'id')->where('is_active', true)],
             'dominant_side' => ['sometimes', 'nullable', 'string', 'in:left,right,both'],
             // TIZ-40: `female`, `male` u `other`; opcional.
             'gender' => ['sometimes', 'nullable', 'string', Rule::in(Player::GENDERS)],

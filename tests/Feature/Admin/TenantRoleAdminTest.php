@@ -72,13 +72,13 @@ class TenantRoleAdminTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.name', 'Copia de Mantenimiento');
 
-        $this->getJson($this->url($tenant))->assertOk()->assertJsonCount(9, 'data');
+        $this->getJson($this->url($tenant))->assertOk()->assertJsonCount(8, 'data');
 
         $this->deleteJson($this->url($tenant, '/tesorero'))->assertNoContent();
         $this->getJson($this->url($tenant, '/tesorero'))->assertNotFound();
 
         // Solo en el club A.
-        $this->getJson($this->url($this->tenantB()))->assertOk()->assertJsonCount(7, 'data');
+        $this->getJson($this->url($this->tenantB()))->assertOk()->assertJsonCount(6, 'data');
     }
 
     public function test_admin_endpoints_keep_role_rules(): void
@@ -132,7 +132,7 @@ class TenantRoleAdminTest extends TestCase
         $admin = $this->member($tenant, ['admin']);
         $membershipUrl = "/api/admin/tenants/{$tenant->id}/memberships/{$admin->id}";
 
-        $this->patchJson($membershipUrl, ['roles' => ['coordinator']])
+        $this->patchJson($membershipUrl, ['roles' => ['sport_coordinator']])
             ->assertConflict()
             ->assertJsonPath('code', 'last_admin');
         $this->patchJson($membershipUrl, ['is_active' => false])
@@ -144,14 +144,14 @@ class TenantRoleAdminTest extends TestCase
 
         // Un admin con la membresía desactivada no cuenta.
         $this->member($tenant, ['admin'], active: false);
-        $this->patchJson($membershipUrl, ['roles' => ['coordinator']])->assertConflict();
+        $this->patchJson($membershipUrl, ['roles' => ['sport_coordinator']])->assertConflict();
 
         // Con otro admin activo, ya se puede.
         $this->member($tenant, ['admin']);
-        $this->patchJson($membershipUrl, ['roles' => ['coordinator']])->assertOk();
+        $this->patchJson($membershipUrl, ['roles' => ['sport_coordinator']])->assertOk();
         $this->patchJson($membershipUrl, ['is_active' => false])->assertOk();
 
-        $this->assertSame(['coordinator'], $this->inTenant($tenant, fn () => Role::query()
+        $this->assertSame(['sport_coordinator'], $this->inTenant($tenant, fn () => Role::query()
             ->whereHas('clubUsers', fn ($query) => $query->where('global_user_id', $admin->user_id))
             ->pluck('slug')
             ->all()));

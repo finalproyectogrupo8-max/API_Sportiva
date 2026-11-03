@@ -188,6 +188,26 @@ class TenantMembershipAdminTest extends TestCase
         $this->assertDatabaseCount('tenant_memberships', 2);
     }
 
+    public function test_disabling_one_club_membership_keeps_the_users_other_club_access(): void
+    {
+        $this->asAdmin();
+        $user = User::factory()->create();
+        $tokenA = $this->clubToken($this->tenantA(), $user, ['coach']);
+        $tokenB = $this->clubToken($this->tenantB(), $user, ['coach']);
+        $membershipA = TenantMembership::query()
+            ->where('user_id', $user->id)
+            ->where('tenant_id', $this->tenantA()->id)
+            ->sole();
+
+        $this->patchJson($this->updateUrl($this->tenantA(), $membershipA), ['is_active' => false])
+            ->assertOk();
+
+        $this->assertSame(1, $user->tokens()->count());
+        $this->withClubToken($tokenA)->getJson('/api/me')->assertUnauthorized();
+        $this->withClubToken($tokenB)->getJson('/api/me')
+            ->assertOk()->assertJsonPath('tenant.slug', $this->tenantB()->slug);
+    }
+
     public function test_store_rejects_client_selected_active_state(): void
     {
         $this->asAdmin();
@@ -236,23 +256,23 @@ class TenantMembershipAdminTest extends TestCase
             ->assertJsonPath('data.is_active', false)
             ->assertJsonPath('data.roles.0.slug', 'coach');
 
-        $this->patchJson($this->updateUrl($tenant, $membership), ['roles' => ['coordinator', 'inventory_manager']])
+        $this->patchJson($this->updateUrl($tenant, $membership), ['roles' => ['sport_coordinator', 'inventory_manager']])
             ->assertOk()
-            ->assertJsonPath('data.roles.0.slug', 'coordinator')
+            ->assertJsonPath('data.roles.0.slug', 'sport_coordinator')
             ->assertJsonPath('data.roles.1.slug', 'inventory_manager');
 
         $this->assertDatabaseHas('tenant_memberships', ['id' => $membership->id, 'is_active' => false]);
         $this->assertEqualsCanonicalizing(
-            ['coordinator', 'inventory_manager'],
+            ['sport_coordinator', 'inventory_manager'],
             $this->inTenant($tenant, fn () => ClubUser::query()->sole()->roles->pluck('slug')->all()),
         );
 
         $log = AuditLog::query()->where('action', 'membership.roles_updated')->sole();
         $this->assertSame($admin->id, $log->actor_id);
-        $this->assertEquals(['from' => ['coach'], 'to' => ['coordinator', 'inventory_manager']], $log->changes['roles']);
+        $this->assertEquals(['from' => ['coach'], 'to' => ['inventory_manager', 'sport_coordinator']], $log->changes['roles']);
 
         // Mismos roles: no audita.
-        $this->patchJson($this->updateUrl($tenant, $membership), ['roles' => ['inventory_manager', 'coordinator']])
+        $this->patchJson($this->updateUrl($tenant, $membership), ['roles' => ['inventory_manager', 'sport_coordinator']])
             ->assertOk();
         $this->assertSame(1, AuditLog::query()->where('action', 'membership.roles_updated')->count());
 

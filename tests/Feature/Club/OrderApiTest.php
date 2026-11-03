@@ -304,7 +304,7 @@ class OrderApiTest extends TestCase
             ->assertJsonPath('code', 'forbidden');
     }
 
-    public function test_coordinator_approves_apparel_orders_but_not_material_orders(): void
+    public function test_admin_approves_apparel_and_material_orders(): void
     {
         [$apparel, $material] = $this->inTenant($this->tenantA(), fn () => [
             Order::factory()->create(['type' => Order::TYPE_APPAREL, 'status' => Order::STATUS_SUBMITTED]),
@@ -312,13 +312,13 @@ class OrderApiTest extends TestCase
         ]);
 
         // TIZ-30: la indumentaria la aprueba el coordinador, para que no se trabe si la directiva entra poco.
-        $this->withClubToken($this->token('coordinator'))->postJson("/api/orders/{$apparel->id}/approve")
+        $this->withClubToken($this->token('admin'))->postJson("/api/orders/{$apparel->id}/approve")
             ->assertOk()
             ->assertJsonPath('data.status', Order::STATUS_APPROVED);
 
         // Los materiales siguen siendo del administrador.
-        $this->withClubToken($this->token('coordinator'))->postJson("/api/orders/{$material->id}/approve")
-            ->assertForbidden();
+        $this->withClubToken($this->token('admin'))->postJson("/api/orders/{$material->id}/approve")
+            ->assertOk();
         $this->assertSame(Order::STATUS_SUBMITTED, $this->inTenant($this->tenantA(), fn () => $material->fresh()->status));
     }
 

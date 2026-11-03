@@ -42,6 +42,7 @@ use App\Http\Controllers\Club\OrderController;
 use App\Http\Controllers\Club\PhysicalEvaluationController;
 use App\Http\Controllers\Club\PlayerContactController;
 use App\Http\Controllers\Club\PlayerController;
+use App\Http\Controllers\Club\PositionController;
 use App\Http\Controllers\Club\RepairRequestController;
 use App\Http\Controllers\Club\RoleController;
 use App\Http\Controllers\Club\SeasonController;
@@ -133,6 +134,7 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::get('club', [ClubController::class, 'show']);
     Route::patch('club', [ClubController::class, 'update']);
     Route::apiResource('sports', SportController::class);
+    Route::apiResource('positions', PositionController::class);
     Route::apiResource('seasons', SeasonController::class);
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('coaches', CoachController::class);

@@ -151,6 +151,6 @@ class CategoryApiTest extends TestCase
         $this->withClubToken($token)->getJson("/api/categories/{$futbol->id}")->assertOk();
         $this->withClubToken($token)->getJson("/api/categories/{$basquet->id}")->assertNotFound();
 
-        $this->withClubToken($this->token('coordinator'))->getJson('/api/categories')->assertJsonCount(2, 'data');
+        $this->withClubToken($this->token('admin'))->getJson('/api/categories')->assertJsonCount(2, 'data');
     }
 }

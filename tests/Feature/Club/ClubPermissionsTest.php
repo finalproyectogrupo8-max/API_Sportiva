@@ -96,7 +96,7 @@ class ClubPermissionsTest extends TestCase
     public function test_role_changes_apply_on_the_next_request(): void
     {
         $user = User::factory()->create();
-        $token = $this->clubToken($this->tenantA(), $user, ['coordinator']);
+        $token = $this->clubToken($this->tenantA(), $user, ['admin']);
 
         $this->withClubToken($token)->postJson('/api/sports', ['name' => 'Rugby'])->assertCreated();
 
@@ -198,9 +198,9 @@ class ClubPermissionsTest extends TestCase
         $this->withClubToken($token)->getJson("/api/coaches/{$colleague->id}")->assertOk();
         $this->withClubToken($token)->getJson("/api/coaches/{$stranger->id}")->assertNotFound();
 
-        // Con alcance "todo el club", el coordinador ve a todos.
-        $coordinator = $this->clubToken($this->tenantA(), roles: ['coordinator']);
-        $this->withClubToken($coordinator)->getJson('/api/coaches')->assertJsonCount(4, 'data');
+        // Con alcance "todo el club", el administrador ve a todos.
+        $admin = $this->clubToken($this->tenantA(), roles: ['admin']);
+        $this->withClubToken($admin)->getJson('/api/coaches')->assertJsonCount(4, 'data');
     }
 
     public function test_tenants_migrate_seeds_roles_without_duplicates_and_backfills_admins(): void
@@ -222,7 +222,7 @@ class ClubPermissionsTest extends TestCase
         $this->artisan('tenants:migrate', ['--tenant' => $tenant->slug])->assertSuccessful();
 
         $this->assertSame($first, $counts());
-        $this->assertSame(7, $first[0]);
+        $this->assertSame(6, $first[0]);
         $this->assertSame(1, $first[3]);
 
         // La membresía activa sin perfil (anterior a los roles) queda como Administrador del club.

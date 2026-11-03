@@ -64,7 +64,7 @@ Perfil local de un usuario global en este club. Se crea cuando el usuario recibe
 | Columna | Tipo | Null | Restricciones | Descripción |
 |---|---|---|---|---|
 | `id` | BIGINT UNSIGNED | no | PK | |
-| `slug` | VARCHAR(80) | no | UK | Clave estable. Estándar: `admin`, `coordinator`, `coach`, `physical_trainer`, `inventory_manager`, `maintenance_manager`. Custom: generada del nombre *(TIZ-10)* |
+| `slug` | VARCHAR(80) | no | UK | Clave estable. Estándar: `admin`, `sport_coordinator`, `coach`, `physical_trainer`, `inventory_manager`, `maintenance_manager`. Custom: generada del nombre *(TIZ-10)* |
 | `name` | VARCHAR(80) | no | UK | Nombre visible |
 | `is_system` | BOOLEAN | no | default `false` | Rol estándar: no se edita ni se borra *(TIZ-10)* |
 | `description` | VARCHAR(255) | sí | | |

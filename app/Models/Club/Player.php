@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -56,6 +57,12 @@ class Player extends Model
     public function activeMemberships(): HasMany
     {
         return $this->memberships()->where('status', PlayerCategoryMembership::STATUS_ACTIVE);
+    }
+
+    /** @return BelongsToMany<Position, $this> */
+    public function positions(): BelongsToMany
+    {
+        return $this->belongsToMany(Position::class, 'player_positions')->withTimestamps();
     }
 
     /** @return MorphMany<Document, $this> */

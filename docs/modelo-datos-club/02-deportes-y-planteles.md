@@ -7,8 +7,11 @@ La unidad competitiva es la **categoría** (U21, Primera, Pre-mini) de un deport
 ```mermaid
 erDiagram
     sports ||--o{ categories : agrupa
+    sports ||--o{ positions : ofrece
     seasons ||--o{ categories : agrupa
     players ||--o{ player_category_memberships : integra
+    players ||--o{ player_positions : juega
+    positions ||--o{ player_positions : asigna
     players ||--o{ player_contacts : tiene
     categories ||--o{ player_category_memberships : contiene
     club_users |o--o| coaches : "cuenta de"
@@ -18,6 +21,12 @@ erDiagram
     sports {
         bigint id PK
         varchar name UK
+        boolean is_active
+    }
+    positions {
+        bigint id PK
+        bigint sport_id FK
+        varchar name
         boolean is_active
     }
     seasons {
@@ -52,6 +61,11 @@ erDiagram
         smallint shirt_number
         varchar status "active | ended"
     }
+    player_positions {
+        bigint id PK
+        bigint player_id FK
+        bigint position_id FK
+    }
     coaches {
         bigint id PK
         bigint club_user_id FK "opcional"
@@ -77,6 +91,19 @@ erDiagram
 | `name` | VARCHAR(80) | no | UK | Básquet, fútbol, vóley… |
 | `is_active` | BOOLEAN | no | default `true` | Si el club ofrece el deporte |
 | `created_at`, `updated_at` | TIMESTAMP | sí | | |
+
+## `positions`
+
+| Columna | Tipo | Null | Restricciones | Descripción |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | no | PK | |
+| `sport_id` | BIGINT UNSIGNED | no | FK → `sports.id` | |
+| `name` | VARCHAR(80) | no | | Nombre dentro de ese deporte |
+| `is_active` | BOOLEAN | no | default `true` | Las inactivas no se ofrecen para nuevas asignaciones |
+| `created_at`, `updated_at` | TIMESTAMP | sí | | |
+
+- `UNIQUE (sport_id, name)`: el nombre puede repetirse en otro deporte del club.
+- `DELETE` desactiva la posición. Las asociaciones existentes se conservan.
 
 ## `seasons`
 
@@ -129,6 +156,22 @@ Contiene **datos personales**, muchas veces de menores.
 
 - Índice sugerido: `(last_name, first_name)` para la búsqueda en el listado.
 - Si se agrega un `UNIQUE` sobre `document_number`, tiene que ignorar los borrados lógicos (ver guía ABM §10).
+- `preferred_position` se conserva como texto histórico; las posiciones estructuradas se exponen en `positions`.
+
+## `player_positions`
+
+Asocia un jugador con cero o más posiciones del catálogo, incluidas posiciones de más de un deporte.
+
+| Columna | Tipo | Null | Restricciones | Descripción |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | no | PK | |
+| `player_id` | BIGINT UNSIGNED | no | FK → `players.id`, `ON DELETE CASCADE` | |
+| `position_id` | BIGINT UNSIGNED | no | FK → `positions.id`, `ON DELETE CASCADE` | |
+| `created_at`, `updated_at` | TIMESTAMP | sí | | |
+
+- `UNIQUE (player_id, position_id)`: no duplica una asociación.
+- La API acepta `position_ids` al crear o editar jugadores. En edición reemplaza la lista solo si se envía el campo; una lista vacía quita todas las posiciones.
+- Solo se pueden asociar posiciones activas del club autenticado. Las asociaciones a posiciones que luego se desactivan siguen apareciendo en el recurso del jugador.
 
 ## `player_category_memberships`
 
