@@ -32,6 +32,8 @@ Thumbs.db
 !.env.example
 *.sql
 *.sql.gz
+# Datos de demo que se importan al primer arranque de MySQL (ver docs/datos-demo.md).
+!docker/mysql/init/03-demo-data.sql
 /compose.override.yaml
 /database/*.sqlite
 /storage/logs/*.log
