@@ -3,8 +3,8 @@
 namespace Database\Seeders\Demo;
 
 use App\Models\Club\Order;
-use App\Models\Club\Player;
 use App\Models\Tenant;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -97,7 +97,7 @@ class ClubDemoSeeder extends Seeder
         $this->auditLog();
     }
 
-    private function t(string $table): \Illuminate\Database\Query\Builder
+    private function t(string $table): Builder
     {
         return DB::connection('tenant')->table($table);
     }
@@ -725,7 +725,7 @@ class ClubDemoSeeder extends Seeder
 
         $this->t('announcements')->insert([
             'subject' => 'Recordatorio: traer la autorización firmada',
-            'body' => "Borrador: recordar a las familias que traigan la autorización firmada antes del torneo.",
+            'body' => 'Borrador: recordar a las familias que traigan la autorización firmada antes del torneo.',
             'audience' => json_encode(['type' => 'club']),
             'status' => 'draft', 'created_by' => $author, 'sent_by' => null, 'sent_at' => null,
             'recipients_count' => 0, 'sent_count' => 0, 'failed_count' => 0, 'deleted_at' => null,
