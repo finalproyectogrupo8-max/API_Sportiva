@@ -37,3 +37,6 @@ Thumbs.db
 /compose.override.yaml
 /database/*.sqlite
 /storage/logs/*.log
+
+# Lo genera scripts/setup.sh con los usuarios y links de esta máquina.
+ACCESOS.txt

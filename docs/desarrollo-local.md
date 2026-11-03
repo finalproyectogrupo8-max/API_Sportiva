@@ -15,6 +15,8 @@ Cómo levantar la API Sportiva en tu máquina. **No hace falta instalar PHP, Com
 
 ## Resumen
 
+> **¿Es la primera vez y la PC no tiene nada instalado?** Seguí [instalacion.md](instalacion.md): un solo comando en PowerShell deja todo listo. Esta guía asume el entorno ya instalado.
+
 | Pieza | Qué es |
 | --- | --- |
 | `backend` | Contenedor PHP 8.5 + Laravel 13. Sirve la API con `php artisan serve` en `http://127.0.0.1:8000` |

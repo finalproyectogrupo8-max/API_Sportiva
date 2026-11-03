@@ -78,6 +78,78 @@ if command -v docker > /dev/null 2>&1 && ! retry 12 docker_ready; then
     PENDING+=("Abrir Docker Desktop, esperar a que diga 'running' y volver a correr: bash scripts/setup.sh")
 fi
 
+# Deja un ACCESOS.txt en la raíz del repo con todo lo que hay que saber para usar la app:
+# links, usuarios, datos del visor de base y de Mailpit. Es local y no se versiona.
+write_access_file() {
+    local file="ACCESOS.txt"
+    local db_user db_pass
+    db_user="$(grep -E '^DB_USERNAME=' .env | cut -d= -f2- || true)"
+    db_pass="$(grep -E '^DB_PASSWORD=' .env | cut -d= -f2- || true)"
+    cat > "$file" <<EOF
+ACCESOS DE SPORTIVA EN ESTA MÁQUINA
+Generado: $(date '+%d/%m/%Y %H:%M')
+
+------------------------------------------------------------
+LINKS
+------------------------------------------------------------
+App (front) .......... http://127.0.0.1:3000
+API (salud) .......... http://127.0.0.1:${port:-8000}/api/health
+Visor de base ........ http://127.0.0.1:${adminer_port:-8080}/   (Adminer)
+Mails (Mailpit) ...... http://127.0.0.1:8025
+Documentación API .... http://127.0.0.1:${port:-8000}/api/docs
+
+------------------------------------------------------------
+USUARIOS
+------------------------------------------------------------
+Plataforma (panel /admin):
+  admin@sportiva.com          admin123     Admin de plataforma
+  general@sportiva.com        general123   Usuario sin club
+
+Club Demo Sportiva (entra directo a /c/demo):
+  admin.club@sportiva.com          demo1234   Administrador del club
+  coordinador@sportiva.com         demo1234   Coordinador deportivo
+  coordinador.futbol@sportiva.com  demo1234   Coordinador de Fútbol
+  profe@sportiva.com               demo1234   Profe (Sub-13 y Sub-15)
+  preparador@sportiva.com          demo1234   Preparador físico
+  utilero@sportiva.com             demo1234   Utilero (stock e indumentaria)
+  mantenimiento@sportiva.com       demo1234   Mantenimiento (canchas)
+
+------------------------------------------------------------
+VISOR DE LA BASE (Adminer)
+------------------------------------------------------------
+URL:      http://127.0.0.1:${adminer_port:-8080}/
+Sistema:  MySQL
+Servidor: mysql
+Usuario:  ${db_user:-sportiva}
+Clave:    ${db_pass:-la del .env}
+Bases:    sportiva_platform (plataforma) y club_demo (club)
+
+------------------------------------------------------------
+MAILS (Mailpit)
+------------------------------------------------------------
+Todo mail que manda la app queda acá y no sale a internet:
+  http://127.0.0.1:8025
+
+Para probar: en el login usá "Olvidé mi contraseña" con cualquier
+usuario; el mail aparece en Mailpit en segundos.
+
+Para mandar mails reales con Gmail, o cambiar de proveedor:
+  docs/mail-demo.md  y  docs/mail-produccion.md
+
+------------------------------------------------------------
+COMANDOS ÚTILES (desde la carpeta de la API)
+------------------------------------------------------------
+Levantar todo:    docker compose up -d
+Bajar todo:       docker compose down
+Ver estado:       docker compose ps
+Ver logs:         docker compose logs -f backend
+Reiniciar cola:   docker compose exec backend php artisan queue:restart
+
+Guía completa: docs/instalacion.md
+EOF
+    ok "usuarios, links y accesos en $file"
+}
+
 summary() {
     printf '\n============================================================\n'
     if ((${#PENDING[@]} == 0)); then
@@ -217,5 +289,6 @@ step "Levantando el visor de base de datos (Adminer)" \
     "Levantar el visor: docker compose up -d adminer (requiere bajar la imagen de Docker Hub)" \
     retry 2 start_adminer
 
+write_access_file
 summary
 exit 0
