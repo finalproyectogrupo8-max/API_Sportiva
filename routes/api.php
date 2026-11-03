@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
 use App\Http\Controllers\Admin\NewsletterSubscriberController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\TenantController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Club\AnalyticsController;
 use App\Http\Controllers\Club\AnnouncementController;
 use App\Http\Controllers\Club\ApparelItemController;
 use App\Http\Controllers\Club\AttendanceController;
+use App\Http\Controllers\Club\AuditLogController;
 use App\Http\Controllers\Club\CalendarController;
 use App\Http\Controllers\Club\CallupController;
 use App\Http\Controllers\Club\CategoryCalendarController;
@@ -109,6 +111,7 @@ Route::middleware(['auth:sanctum', 'abilities:platform:admin', 'platform.admin']
         ])->scopeBindings();
         Route::apiResource('tickets', AdminSupportTicketController::class)->only(['index', 'show', 'update']);
         Route::get('newsletter-subscribers', [NewsletterSubscriberController::class, 'index']);
+        Route::get('audit-logs', [AdminAuditLogController::class, 'index']);
     });
 
 // Convocatoria (TIZ-33): lo que abren el jugador y su familia desde el link, sin login.
@@ -199,6 +202,7 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::post('orders/{order}/reject', [OrderController::class, 'reject']);
     Route::post('orders/{order}/deliveries', [OrderController::class, 'deliveries']);
     Route::get('club-users', [ClubUserController::class, 'index']);
+    Route::get('audit-logs', [AuditLogController::class, 'index']);
     Route::get('categories/{category}/calendar-link', [CategoryCalendarController::class, 'show']);
     Route::post('categories/{category}/calendar-link', [CategoryCalendarController::class, 'store']);
     Route::post('club-users', [ClubUserController::class, 'store']);

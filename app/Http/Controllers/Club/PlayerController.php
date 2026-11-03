@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Club;
 
+use App\Club\Audit\ClubAudit;
 use App\Club\Squads\BranchRule;
 use App\Http\Controllers\Club\Concerns\ChecksClubScope;
 use App\Http\Controllers\Controller;
@@ -103,6 +104,7 @@ class PlayerController extends Controller
             'end_date' => today()->toDateString(),
         ]);
         $player->delete();
+        app(ClubAudit::class)->record('player.deleted', 'player', $player->id, ['name' => trim($player->first_name.' '.$player->last_name)]);
 
         return response()->noContent();
     }

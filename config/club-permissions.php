@@ -132,6 +132,7 @@ return [
             'resources' => [
                 'club_users' => ['label' => 'Usuarios', 'actions' => ['view', 'invite', 'update', 'disable']],
                 'roles' => ['label' => 'Roles', 'actions' => [...$crud, 'assign']],
+                'audit' => ['label' => 'Registro de actividad', 'actions' => ['view']],
             ],
         ],
         'comunicados' => [
