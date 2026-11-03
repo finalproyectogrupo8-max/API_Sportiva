@@ -44,6 +44,11 @@ param(
     # Usuario de GitHub para la identidad de git en WSL (si falta). Sin el, se pregunta.
     [ValidatePattern('^$|^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$')]
     [string]$GitHubUser = '',
+    # Front (Next.js): se clona al lado de la API y se levanta con su propio scripts/setup.sh.
+    [ValidatePattern('^[A-Za-z0-9@:/._~+-]+$')]
+    [string]$FrontRepoUrl = 'https://github.com/finalproyectogrupo8-max/Front-Sportiva.git',
+    [ValidatePattern('^[A-Za-z0-9._/-]+$')]
+    [string]$FrontTargetDir = 'repos/gestion-operativa-club-deportivo',
     [switch]$Yes,
     [switch]$NoOpen
 )
@@ -75,14 +80,25 @@ function Stop-Log {
 
 function Stop-WithHelp([string]$Message) {
     Write-Host "`n$Message" -ForegroundColor Yellow
-    Write-Host "Cuando este resuelto, volve a correr este script." -ForegroundColor Yellow
+    Write-Host 'Cuando este resuelto, volve a correr el script: lo que ya quedo hecho no se repite.' -ForegroundColor Yellow
     if ($LogPath) { Write-Host "Log de esta corrida: $LogPath" -ForegroundColor Yellow }
-    Stop-Log
-    # Desde un archivo (-File), exit 1 termina el script con codigo de error.
-    # Desde "irm <url> | iex" no hay archivo ($PSCommandPath vacio): exit cerraria la ventana de
-    # PowerShell del usuario antes de que lea las instrucciones, asi que se corta con throw.
-    if ($PSCommandPath) { exit 1 }
-    throw 'Setup detenido (ver el mensaje de arriba).'
+    # Lanza una excepcion: la fase que lo llamo (Invoke-Phase) la captura y el script sigue con la proxima.
+    throw $Message
+}
+
+# Una fase del setup. Si falla (o se lanza Stop-WithHelp), se anota como pendiente y el script sigue.
+# Se corre con dot-sourcing (". $Body") para que las variables que define la fase sigan visibles
+# para las fases siguientes.
+$script:Pending = New-Object System.Collections.Generic.List[string]
+function Invoke-Phase([string]$Name, [scriptblock]$Body) {
+    try {
+        . $Body
+    } catch {
+        $detail = $_.Exception.Message
+        Write-Host "`n!! ${Name}: no se pudo completar en esta corrida." -ForegroundColor Yellow
+        Write-Host "   $detail" -ForegroundColor Yellow
+        $script:Pending.Add("${Name}: $detail")
+    }
 }
 
 # -AlwaysAsk: se pregunta aunque se haya pasado -Yes (reiniciar Windows, seguir como admin).
@@ -433,6 +449,7 @@ if (Test-IsAdmin) {
     }
 }
 
+Invoke-Phase 'WSL 2' {
 # ---------------------------------------------------------------------------
 # 1. WSL 2
 # ---------------------------------------------------------------------------
@@ -458,6 +475,9 @@ if ($wslReady) {
     }
 }
 
+}
+
+Invoke-Phase 'Distro de Linux' {
 # ---------------------------------------------------------------------------
 # 2. Distro y usuario de Linux
 # ---------------------------------------------------------------------------
@@ -519,6 +539,9 @@ if ($distroReady) {
     }
 }
 
+}
+
+Invoke-Phase 'Docker Desktop' {
 # ---------------------------------------------------------------------------
 # 3. Docker Desktop
 # ---------------------------------------------------------------------------
@@ -552,6 +575,9 @@ if ($dockerExe) {
     if ($dockerReady) { Write-Ok "el motor de Docker responde ($dockerExe)" }
 }
 
+}
+
+Invoke-Phase 'Docker dentro de WSL' {
 # ---------------------------------------------------------------------------
 # 4. docker dentro de WSL (integracion de Docker Desktop), con reparacion escalonada
 # ---------------------------------------------------------------------------
@@ -626,6 +652,9 @@ if (-not ($distroReady -and $dockerReady)) {
     }
 }
 
+}
+
+Invoke-Phase 'git en WSL' {
 # ---------------------------------------------------------------------------
 # 5. git y credenciales dentro de WSL
 # ---------------------------------------------------------------------------
@@ -707,6 +736,9 @@ if (-not $distroReady) {
     $gitReady = $true
 }
 
+}
+
+Invoke-Phase 'Clonado y setup de la API' {
 # ---------------------------------------------------------------------------
 # 6. Clonar dentro de WSL y correr el setup del proyecto
 # ---------------------------------------------------------------------------
@@ -749,6 +781,46 @@ if (-not ($cloneReady -and $dockerReady)) {
     if ($result -eq 'declined') { Write-Note "Correlo cuando quieras dentro de WSL: cd ~/$TargetDir && bash scripts/setup.sh" }
 }
 
+}
+
+# ---------------------------------------------------------------------------
+# 6b. Front (Next.js): clonar dentro de WSL y correr su scripts/setup.sh
+# ---------------------------------------------------------------------------
+Invoke-Phase 'Front' {
+Write-Step "Clonando el front en ~/$FrontTargetDir (dentro de WSL)"
+
+$frontReady = $false
+if (-not $gitReady) {
+    Write-Note '(se hace despues de preparar git)'
+} elseif ((Invoke-InWsl "test -d ~/$FrontTargetDir/.git") -eq 0) {
+    Write-Ok "Ya existe el front en ~/${FrontTargetDir}: se usa tal como esta (no se hace pull)"
+    $frontReady = $true
+} elseif ((Invoke-InWsl "test -e ~/$FrontTargetDir") -eq 0) {
+    Stop-WithHelp "~/$FrontTargetDir ya existe y no es un repo git. Movelo o usa otro -FrontTargetDir."
+} else {
+    $result = Request-Change "Clonar $FrontRepoUrl en ~/$FrontTargetDir" {
+        if ((Invoke-InWsl ("mkdir -p `$(dirname ~/$FrontTargetDir) && git clone " + (ConvertTo-BashLiteral $FrontRepoUrl) + " ~/$FrontTargetDir")) -ne 0) {
+            Stop-WithHelp 'Fallo el git clone del front.'
+        }
+    }
+    if ($result -eq 'declined') { Stop-WithHelp "Clona el front manualmente en WSL: git clone $FrontRepoUrl ~/$FrontTargetDir" }
+    $frontReady = ($result -eq 'done')
+    if ($frontReady) { Write-Ok "Front clonado en ~/$FrontTargetDir" }
+}
+
+Write-Step 'Levantando el front con scripts/setup.sh (Node, dependencias y servidor de desarrollo)'
+if (-not $frontReady) {
+    Write-Note '(se corre despues de clonar el front)'
+} else {
+    $result = Request-Change 'Instalar dependencias del front y arrancar el servidor de desarrollo (http://127.0.0.1:3000)' {
+        # El setup.sh del front no corta por errores recuperables: si algo quedo pendiente, lo dice al final.
+        Invoke-InWsl "cd ~/$FrontTargetDir && bash scripts/setup.sh" | Out-Null
+    }
+    if ($result -eq 'declined') { Write-Note "Corre lo cuando quieras dentro de WSL: cd ~/$FrontTargetDir && bash scripts/setup.sh" }
+}
+}
+
+Invoke-Phase 'VS Code' {
 # ---------------------------------------------------------------------------
 # 7. VS Code con la extension WSL
 # ---------------------------------------------------------------------------
@@ -779,6 +851,8 @@ if ($codeCmd) {
     }
 }
 
+}
+
 # ---------------------------------------------------------------------------
 # Resumen
 # ---------------------------------------------------------------------------
@@ -807,7 +881,22 @@ if ($codeCmd -and -not $NoOpen -and $cloneReady) {
 }
 
 $uncPath = '\\wsl$\' + $Distro + ($projectPath -replace '/', '\')
-Write-Host "`nListo. El proyecto esta en $uncPath" -ForegroundColor Green
-Write-Host "Desde una terminal de WSL:  cd ~/$TargetDir && docker compose ps" -ForegroundColor Green
+Write-Host ''
+if ($script:Pending.Count -eq 0) {
+    Write-Host 'Listo: todo quedo instalado y levantado.' -ForegroundColor Green
+} else {
+    Write-Host 'Quedo pendiente lo siguiente (lo demas si se completo). Volve a correr el script cuando lo resuelvas:' -ForegroundColor Yellow
+    $script:Pending | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
+}
+Write-Host ''
+Write-Host 'Donde esta cada cosa:' -ForegroundColor Cyan
+Write-Host '  App (front):         http://127.0.0.1:3000'
+Write-Host '  API (salud):         http://127.0.0.1:8000/api/health'
+Write-Host '  Visor de base:       http://127.0.0.1:8080  (Sistema MySQL, servidor mysql, usuario y clave del .env de la API)'
+Write-Host '  Mails de prueba:     http://127.0.0.1:8025'
+Write-Host '  Usuarios de prueba:  docs/datos-demo.md (repo de la API)'
+Write-Host ('  Usuarios y links:    \\wsl$\' + $Distro + '\' + ($TargetDir -replace '/', '\') + '\ACCESOS.txt')
+Write-Host "  Proyecto (API):      $uncPath"
+Write-Host ('  Proyecto (front):    \\wsl$\' + $Distro + '\' + ($FrontTargetDir -replace '/', '\'))
 if ($LogPath) { Write-Host "Log de esta corrida: $LogPath" }
 Stop-Log
