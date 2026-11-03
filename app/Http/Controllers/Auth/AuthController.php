@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Club\Access\ClubAccess;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\AcceptInviteRequest;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
@@ -78,6 +79,48 @@ class AuthController extends Controller
         event(new PasswordReset($resetUser));
 
         return response()->noContent();
+    }
+
+    #[OpenApiResponse(status: 200, description: 'Invitación aceptada exitosamente.', type: 'array{message: string}')]
+    #[OpenApiResponse(status: 422, description: 'Token inválido, vencido o email incorrecto.', type: 'array{message: string, errors: array{email: list<string>}}')]
+    public function acceptInvite(AcceptInviteRequest $request, AuditLogger $auditLogger): JsonResponse
+    {
+        $email = $request->validated('email');
+        $user = User::query()->where('email', $email)->first();
+
+        if (! $user || ! $user->isInvited()) {
+            throw ValidationException::withMessages([
+                'email' => ['El enlace de invitación es inválido o venció.'],
+            ]);
+        }
+
+        $acceptedUser = null;
+        $status = Password::broker('invites')->reset(
+            $request->validated(),
+            function (User $user, string $password) use ($auditLogger, &$acceptedUser): void {
+                DB::transaction(function () use ($user, $password, $auditLogger): void {
+                    $user->forceFill([
+                        'password' => $password,
+                        'is_active' => true,
+                        'invite_accepted_at' => now(),
+                        'remember_token' => Str::random(60),
+                    ])->save();
+                    $user->tokens()->delete();
+                    $auditLogger->recordInviteAccepted($user);
+                });
+                $acceptedUser = $user;
+            },
+        );
+
+        if ($status !== Password::PASSWORD_RESET || ! ($acceptedUser instanceof User)) {
+            throw ValidationException::withMessages([
+                'email' => ['El enlace de invitación es inválido o venció.'],
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Invitación aceptada correctamente. Ya podés iniciar sesión.',
+        ]);
     }
 
     /**

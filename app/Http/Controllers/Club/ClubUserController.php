@@ -15,6 +15,7 @@ use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Support\ApiError;
 use App\Tenancy\TenantDatabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -79,17 +80,26 @@ class ClubUserController extends Controller
         }
 
         $created = false;
+        $hasPassword = ! blank($data['password'] ?? null);
+
         // La base central y la del club en una sola operación: si falla la del club, se revierte la central.
-        $clubUser = DB::transaction(function () use ($data, $email, &$user, &$created, $tenant, $audit) {
+        $clubUser = DB::transaction(function () use ($data, $email, &$user, &$created, $hasPassword, $tenant, $audit) {
             if (! $user) {
                 $user = new User;
                 $user->forceFill([
                     'name' => trim($data['name']),
                     'email' => $email,
-                    'password' => Hash::make(Str::random(48)),
-                    'is_active' => true,
+                    'password' => $hasPassword ? $data['password'] : Hash::make(Str::random(64)),
+                    'is_active' => $hasPassword,
+                    'invited_at' => $hasPassword ? null : now(),
+                    'invite_accepted_at' => null,
                 ])->save();
                 $created = true;
+                if (! $hasPassword) {
+                    $audit->recordInviteSent($user, $tenant);
+                } else {
+                    $audit->recordCreated($user);
+                }
             }
 
             $membership = TenantMembership::query()->firstOrNew(['tenant_id' => $tenant->id, 'user_id' => $user->id]);
@@ -105,12 +115,34 @@ class ClubUserController extends Controller
             });
         });
 
-        // La invitación es el mail para elegir contraseña (TIZ-23 lo reemplaza por uno propio).
-        if ($created) {
-            $user->sendPasswordResetNotification(Password::broker()->createToken($user));
+        if ($created && ! $hasPassword) {
+            $token = Password::broker('invites')->createToken($user);
+            $user->sendInvitationNotification($token, $tenant->name);
         }
 
         return response()->json(['data' => $this->present(collect([$clubUser->load(['roles', 'sports'])]), $tenant)[0], 'meta' => ['invited' => $created]], 201);
+    }
+
+    public function resendInvite(Request $request, ClubUser $clubUser, AuditLogger $audit): JsonResponse
+    {
+        $this->authorizeClub('club_users.update');
+        $this->ensureCanAssign($clubUser->roles()->pluck('slug')->all());
+
+        $user = User::findOrFail($clubUser->global_user_id);
+
+        if (! $user->isInvited()) {
+            return ApiError::conflict('not_invited');
+        }
+
+        $tenant = $this->tenant($request);
+        $token = Password::broker('invites')->createToken($user);
+        $user->sendInvitationNotification($token, $tenant->name);
+
+        $audit->recordInviteResent($user, $tenant);
+
+        return response()->json([
+            'message' => 'Invitación reenviada correctamente.',
+        ]);
     }
 
     public function update(UpdateClubUserRequest $request, ClubUser $clubUser, AuditLogger $audit): JsonResponse
@@ -185,21 +217,38 @@ class ClubUserController extends Controller
     private function present($users, Tenant $tenant): array
     {
         $globalIds = $users->pluck('global_user_id')->all();
-        $emails = User::query()->whereKey($globalIds)->pluck('email', 'id');
+        $globalUsers = User::query()->whereKey($globalIds)->get()->keyBy('id');
+        $emails = $globalUsers->pluck('email', 'id');
         $access = TenantMembership::query()->where('tenant_id', $tenant->id)->whereIn('user_id', $globalIds)->pluck('is_active', 'user_id');
         $me = request()->user()->id;
 
-        return $users->map(fn (ClubUser $user) => [
-            'id' => $user->id,
-            'display_name' => $user->display_name,
-            'email' => $emails->get($user->global_user_id),
-            /** `active` o `disabled` (sin acceso al club). */
-            'status' => $user->isActive() && ($access->get($user->global_user_id) ?? false) ? ClubUser::STATUS_ACTIVE : ClubUser::STATUS_DISABLED,
-            'roles' => $user->roles->map(fn (Role $role) => ['slug' => $role->slug, 'name' => $role->name])->values(),
-            'sport_ids' => $user->sports->pluck('id')->values(),
-            'is_self' => (int) $user->global_user_id === (int) $me,
-            'created_at' => $user->created_at?->toIso8601String(),
-        ])->values()->all();
+        return $users->map(function (ClubUser $user) use ($globalUsers, $emails, $access, $me) {
+            $globalUser = $globalUsers->get($user->global_user_id);
+            $isInvited = $globalUser?->isInvited() ?? false;
+            $isActive = $user->isActive() && ($access->get($user->global_user_id) ?? false);
+
+            if ($user->status === ClubUser::STATUS_DISABLED || ! ($access->get($user->global_user_id) ?? false)) {
+                $status = ClubUser::STATUS_DISABLED;
+            } elseif ($isInvited) {
+                $status = 'invited';
+            } elseif ($isActive) {
+                $status = ClubUser::STATUS_ACTIVE;
+            } else {
+                $status = ClubUser::STATUS_DISABLED;
+            }
+
+            return [
+                'id' => $user->id,
+                'display_name' => $user->display_name,
+                'email' => $emails->get($user->global_user_id),
+                /** `active`, `disabled` o `invited`. */
+                'status' => $status,
+                'roles' => $user->roles->map(fn (Role $role) => ['slug' => $role->slug, 'name' => $role->name])->values(),
+                'sport_ids' => $user->sports->pluck('id')->values(),
+                'is_self' => (int) $user->global_user_id === (int) $me,
+                'created_at' => $user->created_at?->toIso8601String(),
+            ];
+        })->values()->all();
     }
 
     private function tenant(Request $request): Tenant

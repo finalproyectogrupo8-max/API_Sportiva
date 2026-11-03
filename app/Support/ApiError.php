@@ -30,6 +30,7 @@ class ApiError
         'invalid_order_transition' => 'Transición de estado no permitida para el pedido.',
         'rejection_reason_required' => 'El motivo de rechazo es obligatorio.',
         'exceeds_ordered_quantity' => 'La cantidad entregada supera la cantidad pedida.',
+        'not_invited' => 'El usuario no tiene una invitación pendiente.',
     ];
 
     public static function forbidden(string $code): JsonResponse

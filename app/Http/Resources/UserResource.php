@@ -15,6 +15,7 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'status' => $this->status(),
             // Solo para que el front decida si muestra /admin: la API verifica el permiso en cada request.
             'is_platform_admin' => (bool) $this->is_platform_admin,
         ];

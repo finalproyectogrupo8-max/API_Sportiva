@@ -2493,6 +2493,77 @@
                 }
             }
         },
+        "/auth/accept-invite": {
+            "post": {
+                "operationId": "auth.acceptInvite",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcceptInviteRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invitaci\u00f3n aceptada exitosamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Token inv\u00e1lido, vencido o email incorrecto.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "properties": {
+                                                "email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "email"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "operationId": "auth.login",
@@ -4545,6 +4616,76 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/club-users/{clubUser}/resend-invite": {
+            "post": {
+                "operationId": "clubUser.resendInvite",
+                "tags": [
+                    "ClubUser"
+                ],
+                "parameters": [
+                    {
+                        "name": "clubUser",
+                        "in": "path",
+                        "required": true,
+                        "description": "The club user ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Invitaci\u00f3n reenviada correctamente."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "El usuario no tiene una invitaci\u00f3n pendiente."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "not_invited"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -17048,6 +17189,79 @@
                 }
             }
         },
+        "/admin/users/{user}/resend-invite": {
+            "post": {
+                "operationId": "user.resendInvite",
+                "tags": [
+                    "User"
+                ],
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "description": "The user ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Invitaci\u00f3n reenviada correctamente."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "El usuario no tiene una invitaci\u00f3n pendiente."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "const": "not_invited"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "operationId": "users.index",
@@ -17855,6 +18069,32 @@
     },
     "components": {
         "schemas": {
+            "AcceptInviteRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "token": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "password_confirmation": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "email",
+                    "token",
+                    "password",
+                    "password_confirmation"
+                ],
+                "title": "AcceptInviteRequest"
+            },
             "AnnouncementRecipientResource": {
                 "type": "object",
                 "properties": {
@@ -17978,6 +18218,9 @@
                     "email": {
                         "type": "string"
                     },
+                    "status": {
+                        "type": "string"
+                    },
                     "is_active": {
                         "type": "boolean"
                     },
@@ -18001,6 +18244,7 @@
                     "id",
                     "name",
                     "email",
+                    "status",
                     "is_active",
                     "is_platform_admin",
                     "created_at",
@@ -21098,6 +21342,14 @@
                         "description": "Obligatorio si la persona todav\u00eda no tiene usuario en Sportiva.",
                         "maxLength": 255
                     },
+                    "password": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 12,
+                        "maxLength": 255
+                    },
                     "roles": {
                         "type": "array",
                         "items": {
@@ -22469,7 +22721,10 @@
                                 "maxLength": 255
                             },
                             "password": {
-                                "type": "string",
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
                                 "minLength": 12,
                                 "maxLength": 255
                             }
@@ -22545,7 +22800,10 @@
                         "maxLength": 255
                     },
                     "password": {
-                        "type": "string",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
                         "minLength": 12,
                         "maxLength": 255
                     },
@@ -22558,8 +22816,7 @@
                 },
                 "required": [
                     "name",
-                    "email",
-                    "password"
+                    "email"
                 ],
                 "title": "StoreUserRequest"
             },
@@ -23984,6 +24241,9 @@
                     "email": {
                         "type": "string"
                     },
+                    "status": {
+                        "type": "string"
+                    },
                     "is_platform_admin": {
                         "type": "boolean",
                         "description": "Solo para que el front decida si muestra /admin: la API verifica el permiso en cada request."
@@ -23993,6 +24253,7 @@
                     "id",
                     "name",
                     "email",
+                    "status",
                     "is_platform_admin"
                 ],
                 "title": "UserResource"

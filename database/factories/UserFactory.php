@@ -52,4 +52,13 @@ class UserFactory extends Factory
     {
         return $this->state(fn () => ['is_active' => false]);
     }
+
+    public function invited(): static
+    {
+        return $this->state(fn () => [
+            'is_active' => false,
+            'invited_at' => now(),
+            'invite_accepted_at' => null,
+        ]);
+    }
 }

@@ -176,7 +176,7 @@ class TenantAdminTest extends TestCase
             'name' => 'Club River',
             'slug' => 'river',
             'admin' => ['email' => 'nuevo@river.test', 'is_platform_admin' => true],
-        ])->assertUnprocessable()->assertJsonValidationErrors(['admin', 'admin.name', 'admin.password']);
+        ])->assertUnprocessable()->assertJsonValidationErrors(['admin', 'admin.name']);
 
         $this->assertDatabaseMissing('tenants', ['slug' => 'river']);
         $this->assertSame($users, User::query()->count());

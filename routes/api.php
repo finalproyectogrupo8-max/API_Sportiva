@@ -67,6 +67,7 @@ Route::post('/newsletter', [NewsletterController::class, 'store']);
 Route::prefix('auth')->group(function () {
     Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:password-reset');
     Route::post('reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('accept-invite', [AuthController::class, 'acceptInvite'])->middleware('throttle:accept-invite');
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
 
     Route::middleware('auth:sanctum')->group(function () {
@@ -91,6 +92,7 @@ Route::middleware(['auth:sanctum', 'abilities:platform:admin', 'platform.admin']
     ->group(function () {
         Route::post('tenants/{tenant}/retry', [TenantController::class, 'retry']);
         Route::post('users/{user}/send-password-reset', [UserController::class, 'sendPasswordReset']);
+        Route::post('users/{user}/resend-invite', [UserController::class, 'resendInvite'])->middleware('throttle:resend-invite');
         Route::apiResource('tenants', TenantController::class);
         Route::apiResource('users', UserController::class)->except(['destroy']);
         Route::get('tenants/{tenant}/permissions', [TenantRoleController::class, 'permissions']);
@@ -205,6 +207,7 @@ Route::middleware(['auth:sanctum', 'tenant.token'])->group(function () {
     Route::post('categories/{category}/calendar-link', [CategoryCalendarController::class, 'store']);
     Route::post('club-users', [ClubUserController::class, 'store']);
     Route::patch('club-users/{clubUser}', [ClubUserController::class, 'update']);
+    Route::post('club-users/{clubUser}/resend-invite', [ClubUserController::class, 'resendInvite'])->middleware('throttle:resend-invite');
     Route::post('physical-evaluations/session', [PhysicalEvaluationController::class, 'session']);
     Route::apiResource('physical-evaluations', PhysicalEvaluationController::class);
     Route::apiResource('season-objectives', SeasonObjectiveController::class);

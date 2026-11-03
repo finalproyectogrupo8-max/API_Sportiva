@@ -28,7 +28,7 @@ class StoreTenantRequest extends FormRequest
             'admin' => ['sometimes', 'array:name,email,password'],
             'admin.name' => ['required_with:admin', 'string', 'max:255'],
             'admin.email' => ['required_with:admin', 'email', 'max:255', 'unique:users,email'],
-            'admin.password' => ['required_with:admin', 'string', 'min:12', 'max:255'],
+            'admin.password' => ['sometimes', 'nullable', 'string', 'min:12', 'max:255'],
         ];
     }
 
