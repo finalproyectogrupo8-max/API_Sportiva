@@ -895,6 +895,7 @@ Write-Host '  API (salud):         http://127.0.0.1:8000/api/health'
 Write-Host '  Visor de base:       http://127.0.0.1:8080  (Sistema MySQL, servidor mysql, usuario y clave del .env de la API)'
 Write-Host '  Mails de prueba:     http://127.0.0.1:8025'
 Write-Host '  Usuarios de prueba:  docs/datos-demo.md (repo de la API)'
+Write-Host ('  Usuarios y links:    \\wsl$\' + $Distro + '\' + ($TargetDir -replace '/', '\') + '\ACCESOS.txt')
 Write-Host "  Proyecto (API):      $uncPath"
 Write-Host ('  Proyecto (front):    \\wsl$\' + $Distro + '\' + ($FrontTargetDir -replace '/', '\'))
 if ($LogPath) { Write-Host "Log de esta corrida: $LogPath" }

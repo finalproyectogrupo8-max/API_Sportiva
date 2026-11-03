@@ -25,6 +25,8 @@ Detalles, comandos del día a día y troubleshooting: **[docs/desarrollo-local.m
 
 | Documento | Contenido |
 | --- | --- |
+| [docs/instalacion.md](docs/instalacion.md) | **Instalación desde cero en Windows** (un comando), usuarios, Mailpit y visor de base |
+| [docs/datos-demo.md](docs/datos-demo.md) | Cuentas de ejemplo y qué datos trae la demo |
 | [docs/desarrollo-local.md](docs/desarrollo-local.md) | Setup, uso diario, reset de datos, troubleshooting |
 | [docs/actualizar-entorno.md](docs/actualizar-entorno.md) | Qué hacer después de un pull (API y front) y cómo resolver lo que no levanta |
 | [docs/mail-demo.md](docs/mail-demo.md) | Mails en desarrollo (Mailpit), en la demo (Gmail) y en producción (Resend) |
