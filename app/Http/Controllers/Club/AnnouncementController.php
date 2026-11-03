@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Club;
 
 use App\Club\Announcements\AnnouncementScope;
 use App\Club\Announcements\AudienceResolver;
+use App\Club\Audit\ClubAudit;
 use App\Http\Controllers\Club\Concerns\ChecksClubScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Club\IndexAnnouncementRecipientRequest;
@@ -157,6 +158,7 @@ class AnnouncementController extends Controller
         if (! $started) {
             return ApiError::conflict('announcement_not_draft');
         }
+        app(ClubAudit::class)->record('announcement.sent', 'announcement', $announcement->id, ['subject' => $announcement->subject, 'recipients' => count($recipients)]);
 
         return AnnouncementResource::make($announcement->refresh())->response()->setStatusCode(202);
     }

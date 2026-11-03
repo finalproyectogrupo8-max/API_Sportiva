@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Club;
 
 use App\Club\Access\ClubMembers;
+use App\Club\Audit\ClubAudit;
 use App\Http\Controllers\Club\Concerns\ChecksClubScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Club\StoreClubUserRequest;
@@ -98,6 +99,7 @@ class ClubUserController extends Controller
             return DB::connection('tenant')->transaction(function () use ($user, $data, $membership, $audit) {
                 $clubUser = $this->members->ensure($user, $data['roles'], sportIds: $data['sport_ids'] ?? null);
                 $audit->recordMembershipRoles($membership, [], $clubUser->roles()->pluck('slug')->all());
+                app(ClubAudit::class)->record('club_user.added', 'club_user', $clubUser->id, ['name' => $clubUser->display_name, 'roles' => ['to' => $clubUser->roles()->pluck('name')->all()]]);
 
                 return $clubUser;
             });
@@ -143,6 +145,13 @@ class ClubUserController extends Controller
                 }
                 if ($membership && isset($data['roles'])) {
                     $audit->recordMembershipRoles($membership, $before, $clubUser->roles()->pluck('slug')->all());
+                }
+                if (isset($data['roles'])) {
+                    $beforeNames = Role::query()->whereIn('slug', $before)->pluck('name')->all();
+                    app(ClubAudit::class)->record('club_user.roles_updated', 'club_user', $clubUser->id, ['name' => $clubUser->display_name, 'roles' => ['from' => $beforeNames, 'to' => $clubUser->roles()->pluck('name')->all()]]);
+                }
+                if (isset($data['status'])) {
+                    app(ClubAudit::class)->record($data['status'] === ClubUser::STATUS_ACTIVE ? 'club_user.enabled' : 'club_user.disabled', 'club_user', $clubUser->id, ['name' => $clubUser->display_name]);
                 }
             });
         });

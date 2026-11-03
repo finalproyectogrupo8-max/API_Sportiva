@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Club;
 
 use App\Club\Alerts\Channels\NotificationChannel;
+use App\Club\Audit\ClubAudit;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Club\DeliverOrderRequest;
 use App\Http\Requests\Club\IndexOrderRequest;
@@ -273,6 +274,7 @@ class OrderController extends Controller
             $order->recordStatusTransition($clubUserId, Order::STATUS_APPROVED, $request->input('comment'));
 
             $this->notifyRequester($order, $clubUserId, 'order_approved', "Tu pedido {$order->order_number} fue aprobado", $this->orderLabel($order).' aprobado. Ya se puede preparar.');
+            app(ClubAudit::class)->record('order.approved', 'order', $order->id, ['number' => $order->order_number, 'status' => ['to' => $order->status]]);
         });
 
         return OrderResource::make($order->refresh()->load([
@@ -299,6 +301,7 @@ class OrderController extends Controller
             $order->recordStatusTransition($clubUserId, Order::STATUS_REJECTED, $reason);
 
             $this->notifyRequester($order, $clubUserId, 'order_rejected', "Tu pedido {$order->order_number} fue rechazado", $reason ? "Motivo: {$reason}" : $this->orderLabel($order).' rechazado.');
+            app(ClubAudit::class)->record('order.rejected', 'order', $order->id, ['number' => $order->order_number, 'reason' => $reason]);
         });
 
         return OrderResource::make($order->refresh()->load([
@@ -463,6 +466,7 @@ class OrderController extends Controller
                 $isFullyDelivered ? "Tu pedido {$order->order_number} está entregado" : "Tu pedido {$order->order_number} tiene una entrega parcial",
                 $isFullyDelivered ? $this->orderLabel($order).' entregado completo.' : 'Se entregó una parte; el resto queda pendiente.',
             );
+            app(ClubAudit::class)->record($isFullyDelivered ? 'order.delivered' : 'order.partially_delivered', 'order', $order->id, ['number' => $order->order_number, 'comment' => $comment]);
 
             return null;
         });
