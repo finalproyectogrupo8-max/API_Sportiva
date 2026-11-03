@@ -128,6 +128,42 @@ class AuditLogger
         ]);
     }
 
+    public function recordInviteSent(User $subject, ?Tenant $tenant = null): void
+    {
+        AuditLog::query()->create([
+            'actor_id' => $this->request->user()?->getKey(),
+            'action' => 'user.invite_sent',
+            'subject_type' => 'user',
+            'subject_id' => $subject->getKey(),
+            'changes' => $tenant ? ['tenant' => $tenant->slug] : null,
+            'ip' => $this->request->ip(),
+        ]);
+    }
+
+    public function recordInviteResent(User $subject, ?Tenant $tenant = null): void
+    {
+        AuditLog::query()->create([
+            'actor_id' => $this->request->user()?->getKey(),
+            'action' => 'user.invite_resent',
+            'subject_type' => 'user',
+            'subject_id' => $subject->getKey(),
+            'changes' => $tenant ? ['tenant' => $tenant->slug] : null,
+            'ip' => $this->request->ip(),
+        ]);
+    }
+
+    public function recordInviteAccepted(User $subject): void
+    {
+        AuditLog::query()->create([
+            'actor_id' => $this->request->user()?->getKey(),
+            'action' => 'user.invite_accepted',
+            'subject_type' => 'user',
+            'subject_id' => $subject->getKey(),
+            'changes' => null,
+            'ip' => $this->request->ip(),
+        ]);
+    }
+
     public function recordDeleted(Model $subject): void
     {
         $type = $this->subjectType($subject);

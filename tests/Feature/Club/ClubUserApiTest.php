@@ -7,7 +7,7 @@ use App\Models\Club\Permission;
 use App\Models\Club\Role;
 use App\Models\TenantMembership;
 use App\Models\User;
-use App\Notifications\ResetPasswordNotification;
+use App\Notifications\UserInvitationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\Concerns\InteractsWithTenants;
@@ -43,11 +43,11 @@ class ClubUserApiTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('meta.invited', true)
             ->assertJsonPath('data.email', 'nueva@club.test')
-            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('data.status', 'invited')
             ->assertJsonPath('data.roles.0.slug', 'coach');
 
         $user = User::where('email', 'nueva@club.test')->firstOrFail();
-        Notification::assertSentTo($user, ResetPasswordNotification::class);
+        Notification::assertSentTo($user, UserInvitationNotification::class);
         $this->assertTrue(TenantMembership::where('tenant_id', $this->tenantA()->id)->where('user_id', $user->id)->where('is_active', true)->exists());
 
         $this->withClubToken($token)->postJson('/api/club-users', ['email' => 'nueva@club.test', 'roles' => ['coach']])
