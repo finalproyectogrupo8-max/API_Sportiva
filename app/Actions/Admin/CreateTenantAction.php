@@ -9,13 +9,16 @@ use App\Models\TenantMembership;
 use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class CreateTenantAction
 {
     /**
-     * @param  array{name: string, email: string, password: string}|null  $admin  Si viene, se crea ese
-     *                                                                            usuario y se lo asocia al club en la misma transacción. ProvisionTenant le asigna el rol
-     *                                                                            "Administrador del club" cuando crea la base.
+     * @param  array{name: string, email: string, password?: string|null}|null  $admin  Si viene, se crea ese
+     *                                                                                  usuario y se lo asocia al club en la misma transacción. ProvisionTenant le asigna el rol
+     *                                                                                  "Administrador del club" cuando crea la base.
      * @param  array<string, mixed>  $profile  Datos del perfil (Tenant::PROFILE_FIELDS).
      */
     public function execute(
@@ -37,11 +40,23 @@ class CreateTenantAction
             $auditLogger?->recordCreated($tenant);
 
             if ($admin !== null) {
-                $user = new User($admin);
-                $user->is_active = true;
+                $hasPassword = ! blank($admin['password'] ?? null);
+                $user = new User([
+                    'name' => $admin['name'],
+                    'email' => $admin['email'],
+                    'password' => $hasPassword ? $admin['password'] : Hash::make(Str::random(64)),
+                ]);
+                $user->is_active = $hasPassword;
                 $user->is_platform_admin = false;
+                $user->invited_at = $hasPassword ? null : now();
+                $user->invite_accepted_at = null;
                 $user->save();
-                $auditLogger?->recordCreated($user);
+
+                if (! $hasPassword) {
+                    $auditLogger?->recordInviteSent($user, $tenant);
+                } else {
+                    $auditLogger?->recordCreated($user);
+                }
 
                 $membership = TenantMembership::create([
                     'user_id' => $user->id,
@@ -49,6 +64,11 @@ class CreateTenantAction
                     'is_active' => true,
                 ]);
                 $auditLogger?->recordCreated($membership);
+
+                if (! $hasPassword) {
+                    $token = Password::broker('invites')->createToken($user);
+                    $user->sendInvitationNotification($token, $tenant->name);
+                }
             }
 
             ProvisionTenant::dispatch($tenant->id)->afterCommit();

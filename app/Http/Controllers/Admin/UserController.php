@@ -9,12 +9,14 @@ use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Http\Resources\Admin\UserResource;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Support\ApiError;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -47,18 +49,55 @@ class UserController extends Controller
     {
         Gate::authorize('create', User::class);
 
-        $user = DB::transaction(function () use ($request, $auditLogger) {
-            $user = new User($request->validated());
-            $user->is_active = true;
+        $validated = $request->validated();
+        $hasPassword = ! blank($validated['password'] ?? null);
+
+        $user = DB::transaction(function () use ($validated, $hasPassword, $auditLogger) {
+            $user = new User([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => $hasPassword ? $validated['password'] : Hash::make(Str::random(64)),
+            ]);
+            $user->is_active = $hasPassword;
             $user->is_platform_admin = false;
+            $user->invited_at = $hasPassword ? null : now();
+            $user->invite_accepted_at = null;
             $user->save();
 
-            $auditLogger->recordCreated($user);
+            if (! $hasPassword) {
+                $auditLogger->recordInviteSent($user);
+            } else {
+                $auditLogger->recordCreated($user);
+            }
 
             return $user;
         });
 
+        if (! $hasPassword) {
+            $token = Password::broker('invites')->createToken($user);
+            $user->sendInvitationNotification($token);
+        }
+
         return UserResource::make($user)->response()->setStatusCode(201);
+    }
+
+    public function resendInvite(User $user, AuditLogger $auditLogger): JsonResponse
+    {
+        Gate::authorize('update', $user);
+
+        if (! $user->isInvited()) {
+            return ApiError::conflict('not_invited');
+        }
+
+        $token = Password::broker('invites')->createToken($user);
+        $tenant = $user->tenantMemberships()->first()?->tenant;
+        $user->sendInvitationNotification($token, $tenant?->name);
+
+        $auditLogger->recordInviteResent($user, $tenant);
+
+        return response()->json([
+            'message' => 'Invitación reenviada correctamente.',
+        ]);
     }
 
     public function show(User $user): UserResource

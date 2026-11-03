@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Club\Alerts\Channels\DatabaseNotificationChannel;
 use App\Club\Alerts\Channels\NotificationChannel;
+use App\Models\Club\ClubUser;
 use App\Models\Club\Player;
 use App\Models\PersonalAccessToken;
+use App\Models\User;
 use App\Support\PasswordResetUrl;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
@@ -50,6 +52,27 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(3)
             ->by(strtolower(trim((string) $request->input('email'))).'|'.$request->ip()));
+
+        RateLimiter::for('accept-invite', fn (Request $request) => Limit::perMinute(5)
+            ->by(strtolower(trim((string) $request->input('email'))).'|'.$request->ip()));
+
+        RateLimiter::for('resend-invite', function (Request $request) {
+            $userParam = $request->route('user');
+            $clubUserParam = $request->route('clubUser');
+            $targetId = null;
+
+            if ($userParam instanceof User) {
+                $targetId = $userParam->id;
+            } elseif (is_numeric($userParam)) {
+                $targetId = (int) $userParam;
+            } elseif ($clubUserParam instanceof ClubUser) {
+                $targetId = $clubUserParam->global_user_id;
+            } elseif (is_numeric($clubUserParam)) {
+                $targetId = (int) $clubUserParam;
+            }
+
+            return Limit::perHour(3)->by('resend-invite:'.($targetId ?: $request->ip()));
+        });
 
         // Por email + IP: los formularios de la landing llegan desde el servidor de Next,
         // así que la IP sola sería la misma para todos los visitantes.

@@ -99,6 +99,12 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+        'invites' => [
+            'provider' => 'users',
+            'table' => env('AUTH_INVITE_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 4320, // 72 horas (TIZ-23)
+            'throttle' => 60,
+        ],
     ],
 
     /*

@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Club\Access\ClubAccess;
 use App\Models\Club\ClubUser;
 use App\Notifications\ResetPasswordNotification;
+use App\Notifications\UserInvitationNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -34,7 +35,23 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_platform_admin' => 'boolean',
             'is_active' => 'boolean',
+            'invited_at' => 'immutable_datetime',
+            'invite_accepted_at' => 'immutable_datetime',
         ];
+    }
+
+    public function isInvited(): bool
+    {
+        return ! $this->is_active && $this->invited_at !== null && $this->invite_accepted_at === null;
+    }
+
+    public function status(): string
+    {
+        if ($this->isInvited()) {
+            return 'invited';
+        }
+
+        return $this->is_active ? 'active' : 'inactive';
     }
 
     public function tenantMemberships(): HasMany
@@ -46,6 +63,11 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    public function sendInvitationNotification(string $token, ?string $clubName = null): void
+    {
+        $this->notify(new UserInvitationNotification($token, $clubName));
     }
 
     /**
