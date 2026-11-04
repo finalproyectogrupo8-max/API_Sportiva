@@ -18,7 +18,9 @@ Para el día a día (comandos, tests, migraciones) está [desarrollo-local.md](d
 
 No instales nada a mano: el script se encarga de WSL, Ubuntu, Docker Desktop, Git y VS Code.
 
-## 2. Instalación en un comando
+## 2. Instalación en un comando (Windows)
+
+> ¿Preferís hacerlo a mano, o estás en Linux o macOS? Andá a la [instalación manual paso a paso](#2b-instalación-manual-paso-a-paso-sin-el-script).
 
 Abrí **PowerShell normal** (no "Ejecutar como administrador") y pegá:
 
@@ -48,6 +50,133 @@ powershell -ExecutionPolicy Bypass -File .\setup-windows.ps1
 ```
 
 `-ExecutionPolicy Bypass` aplica solo a ese proceso y no cambia la configuración de tu Windows.
+
+## 2b. Instalación manual, paso a paso (sin el script)
+
+Hace lo mismo que el script, a mano. Sirve si preferís ver cada paso, si el script no se puede usar en tu PC o si estás en Linux o macOS ([más abajo](#en-linux-o-macos)). Calculá una hora, casi toda de descargas.
+
+### Paso 1. Activar WSL 2 (Windows, una vez por PC)
+
+Abrí PowerShell **como administrador**: menú Inicio, escribí *PowerShell*, clic derecho y **Ejecutar como administrador**. Corré:
+
+```powershell
+wsl --install --no-distribution
+Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -All
+```
+
+**Reiniciá Windows.** Si es una máquina virtual, antes activá la virtualización anidada en el hipervisor (ver [Si algo falla](#8-si-algo-falla)).
+
+### Paso 2. Instalar Ubuntu
+
+En PowerShell **normal**:
+
+```powershell
+wsl --install -d Ubuntu
+```
+
+Se abre la terminal de Ubuntu y te pide un **usuario y una contraseña de Linux** (la contraseña es para `sudo`). De acá en adelante, todos los comandos `bash` van en esa terminal (menú Inicio → **Ubuntu**).
+
+Instalá git y curl:
+
+```bash
+sudo apt-get update && sudo apt-get install -y git curl
+```
+
+### Paso 3. Instalar Docker Desktop
+
+1. Bajalo de <https://www.docker.com/products/docker-desktop/> e instalalo con las opciones por defecto (backend **WSL 2**).
+2. Abrí **Docker Desktop**, aceptá los términos y esperá a que diga **Engine running**.
+3. **Settings → Resources → WSL integration**: activá **Ubuntu** y tocá **Apply & restart**.
+4. En la terminal de Ubuntu, verificá:
+
+```bash
+docker version            # tiene que mostrar "Client" y "Server"
+docker compose version
+```
+
+Si `docker` no aparece, cerrá y abrí de nuevo la terminal de Ubuntu.
+
+### Paso 4. Clonar los dos proyectos (dentro de Ubuntu, no en `C:\`)
+
+```bash
+mkdir -p ~/repos && cd ~/repos
+git clone https://github.com/finalproyectogrupo8-max/API_Sportiva.git api-sportiva
+git clone https://github.com/finalproyectogrupo8-max/Front-Sportiva.git gestion-operativa-club-deportivo
+```
+
+Los repos son públicos: no pide usuario ni contraseña.
+
+### Paso 5. Levantar la API
+
+**Opción corta:** `cd ~/repos/api-sportiva && bash scripts/setup.sh`. Hace todo lo de abajo y termina mostrando `{"status":"ok",...}`.
+
+**Opción a mano**, comando por comando:
+
+```bash
+cd ~/repos/api-sportiva
+cp -n .env.example .env                                   # configuración local (no pisa una existente)
+export HOST_UID=$(id -u) HOST_GID=$(id -g)
+docker compose build backend                              # imagen de PHP con tu usuario (tarda unos minutos)
+docker compose up -d --wait mysql                         # base de datos; la primera vez carga sola los datos de demo
+docker compose run --rm --no-deps backend composer install
+docker compose run --rm --no-deps backend php artisan key:generate
+docker compose up -d --wait backend queue mailpit          # API, cola de trabajos y Mailpit
+docker compose exec backend php artisan migrate            # deja la base al día
+docker compose exec backend php artisan tenants:migrate    # y la de cada club
+curl -s http://127.0.0.1:8000/api/health                   # {"status":"ok",...}
+docker compose up -d adminer                               # visor de la base (opcional)
+```
+
+Los datos de demo (la plataforma y un club con jugadores, partidos y pedidos) se cargan solos **la primera vez** que arranca MySQL. Si la base ya existía de antes y quedó vacía, cargalos a mano una sola vez:
+
+```bash
+docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -usportiva' < docker/mysql/init/03-demo-data.sql
+```
+
+### Paso 6. Levantar el front
+
+**Opción corta:** `cd ~/repos/gestion-operativa-club-deportivo && bash scripts/setup.sh`. Instala Node, las dependencias y deja el front andando en segundo plano.
+
+**Opción a mano:**
+
+```bash
+# Node 24 con nvm (sin sudo)
+curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+source ~/.nvm/nvm.sh
+nvm install 24
+
+cd ~/repos/gestion-operativa-club-deportivo
+corepack enable                                           # activa pnpm (la versión sale de package.json)
+cp -n .env.example .env.local                             # API_URL=http://127.0.0.1:8000/api
+pnpm install --frozen-lockfile
+pnpm dev                                                  # deja la terminal ocupada: no la cierres
+```
+
+Cuando diga `Ready`, abrí <http://127.0.0.1:3000>.
+
+### Paso 7. Entrar
+
+| Usuario | Contraseña | Qué ve |
+| --- | --- | --- |
+| `admin@sportiva.com` | `admin123` | Panel de plataforma (`/admin`): clubes y usuarios |
+| `admin.club@sportiva.com` | `demo1234` | Administrador del club de demo |
+| `profe@sportiva.com` | `demo1234` | Profe (Sub-13 y Sub-15) |
+
+Hay un usuario de demo por cada rol (coordinador, preparador, utilero, mantenimiento): están en [datos-demo.md](datos-demo.md). Los mails que manda la app aparecen en Mailpit: <http://127.0.0.1:8025>.
+
+### Uso diario (después de reiniciar la PC)
+
+```bash
+cd ~/repos/api-sportiva && docker compose up -d                  # con Docker Desktop abierto
+cd ~/repos/gestion-operativa-club-deportivo && pnpm dev
+```
+
+### En Linux o macOS
+
+No hace falta WSL. Instalá **Docker** (Docker Desktop en macOS; Docker Engine con el plugin *compose* en Linux), **git** y **curl**, y seguí desde el [paso 4](#paso-4-clonar-los-dos-proyectos-dentro-de-ubuntu-no-en-c) en una terminal:
+
+- **Linux:** los `scripts/setup.sh` de los dos repos funcionan igual que en Ubuntu dentro de WSL.
+- **macOS:** el de la API funciona. Para el front usá la **opción a mano** del paso 6: su script usa `setsid`, que macOS no trae.
 
 ## 3. Cómo saber que terminó bien
 
