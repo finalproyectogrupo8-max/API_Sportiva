@@ -205,6 +205,30 @@ Todos los comandos se corren desde la raíz del repo (en WSL, en `~/repos/api-sp
 | Detener (conserva datos) | `docker compose stop` o `docker compose down` |
 | Reconstruir la imagen | `HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose build backend` (o `bash scripts/setup.sh`) |
 
+### Datos de demostración
+
+Para crear dos clubes locales con usuarios y datos relacionados de deportes, temporadas, categorías,
+posiciones, jugadores, entrenamientos, asistencias, partidos, notificaciones y alertas:
+
+```bash
+docker compose exec backend php artisan db:seed --class=DemoDataSeeder
+```
+
+La carga es idempotente y solo está permitida con `APP_ENV=local`. Crea `Club Demo Activo` con
+asistencias variadas, un partido programado y una alerta sin resolver; y `Club Demo Alternativo` con
+una invitación pendiente, un jugador inactivo, un partido postergado y una alerta resuelta. No borra
+registros.
+
+Los usuarios activos de demostración tienen la contraseña `sportiva-demo`. `demo.invited` permanece
+inactivo para mostrar el estado de invitación y no puede iniciar sesión hasta ser activado:
+
+| Usuario | Club / estado |
+| --- | --- |
+| `demo.admin@example.test` | Administrador de Club Demo Activo |
+| `demo.coach@example.test` | Entrenador de Club Demo Activo |
+| `demo.alternate@example.test` | Administrador de Club Demo Alternativo |
+| `demo.invited@example.test` | Invitación pendiente en Club Demo Alternativo |
+
 Usá la **terminal de Ubuntu** (o la terminal integrada de VS Code en modo WSL). Desde PowerShell, entrá primero a WSL: `wsl -d Ubuntu --cd ~/repos/api-sportiva`.
 
 `docker compose down` **conserva** los datos: borra los contenedores y la red, no el volumen.

@@ -318,8 +318,9 @@ class OrderApiTest extends TestCase
 
         // Los materiales siguen siendo del administrador.
         $this->withClubToken($this->token('admin'))->postJson("/api/orders/{$material->id}/approve")
-            ->assertOk();
-        $this->assertSame(Order::STATUS_SUBMITTED, $this->inTenant($this->tenantA(), fn () => $material->fresh()->status));
+            ->assertOk()
+            ->assertJsonPath('data.status', Order::STATUS_APPROVED);
+        $this->assertSame(Order::STATUS_APPROVED, $this->inTenant($this->tenantA(), fn () => $material->fresh()->status));
     }
 
     public function test_coach_scoped_permission_only_sees_and_creates_orders_for_own_categories(): void
