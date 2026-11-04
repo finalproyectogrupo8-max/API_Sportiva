@@ -248,7 +248,7 @@ function Get-ResumeScriptPath {
     $folder = Join-Path $env:LOCALAPPDATA 'ApiSportiva'
     New-Item -ItemType Directory -Path $folder -Force -WhatIf:$false | Out-Null
     $copy = Join-Path $folder 'setup-windows.ps1'
-    Invoke-WebRequest -UseBasicParsing -Uri $ScriptUrl -OutFile $copy -WhatIf:$false
+    Invoke-WebRequest -UseBasicParsing -Uri $ScriptUrl -OutFile $copy
     return $copy
 }
 
@@ -417,10 +417,17 @@ function Install-DockerDesktop {
         & winget.exe install -e --id Docker.DockerDesktop --accept-package-agreements --accept-source-agreements --override $DockerInstallArgs | Out-Host
         if ($LASTEXITCODE -eq 0) { return }
         Write-Note "winget termino con codigo $LASTEXITCODE; se intenta con el instalador oficial."
+        Write-Note "Si el error de winget fue de red (0x80072efd), suele ser el proxy o el DNS de la maquina; el instalador oficial se baja por HTTPS."
     }
     # Plan B: instalador oficial, verificando que este firmado por Docker antes de ejecutarlo.
     $installer = Join-Path $env:TEMP ("DockerDesktopInstaller-{0}.exe" -f [guid]::NewGuid())
-    Invoke-WebRequest -UseBasicParsing -Uri $DockerInstallerUrl -OutFile $installer -WhatIf:$false
+    try {
+        Invoke-WebRequest -UseBasicParsing -Uri $DockerInstallerUrl -OutFile $installer
+    } catch {
+        Stop-WithHelp ("No se pudo descargar el instalador de Docker Desktop: $($_.Exception.Message). " +
+            "Si la VM usa proxy o la red bloquea dominios, descargalo a mano desde $DockerInstallerUrl " +
+            "y ejecutalo; despues volve a correr este script.")
+    }
     $signature = Get-AuthenticodeSignature -FilePath $installer
     # Organizacion EXACTA del certificado (no un substring: "Docker Incubator" no tiene que pasar).
     $signerIsDocker = $signature.SignerCertificate -and
