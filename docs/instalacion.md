@@ -160,6 +160,8 @@ La app queda en <http://127.0.0.1:3000> y la API en <http://127.0.0.1:8000>. La 
 | Síntoma | Qué hacer |
 | --- | --- |
 | `EPROTO: The TLS handshake failed` o `ERR_SSL_PROTOCOL_ERROR` | Estás usando `https://` contra un puerto local que habla HTTP. Usá `http://127.0.0.1:3000` y `http://127.0.0.1:8000` |
+| Docker dice "Virtual Machine Platform is not enabled" | El script activa esa característica de Windows y reinicia; si no lo hizo, corré el comando como administrador y reiniciá |
+| La PC es una VM y Docker/WSL no arrancan | Habilitá **virtualización anidada** en el hipervisor (VirtualBox: "Enable Nested VT-x/AMD-V"; VMware: "Virtualize Intel VT-x/EPT") |
 | Docker no puede bajar una imagen (`context deadline exceeded`) | Es la conexión a Docker Hub. Reintentá; el visor de base es opcional y el resto funciona igual |
 | "El puerto 3000 está en uso" | Cerrá el otro programa o levantá el front con `pnpm dev --port 3001` y actualizá `FRONTEND_URL` en la API |
 | El club queda en "Aprovisionando" | La cola no corre: `docker compose ps queue` y `docker compose logs queue` |
