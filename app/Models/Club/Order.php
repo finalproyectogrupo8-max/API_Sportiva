@@ -116,30 +116,35 @@ class Order extends Model
     }
 
     /**
-     * Alcance para usuarios con permiso reducido (sport u own).
+     * Pedidos que el usuario puede ver. Cada tipo usa su propio permiso: sin
+     * `apparel_orders.view` no ve pedidos de indumentaria, sin `material_orders.view` no ve
+     * los de materiales. Con alcance reducido (sport u own) ve los de sus categorías y los
+     * que pidió él.
      *
      * @param  Builder<static>  $query
      */
-    public function scopeVisibleTo(Builder $query, ClubAccess $access, string $permission): void
+    public function scopeVisibleTo(Builder $query, ClubAccess $access): void
     {
-        $scopedCategoryIds = null;
+        $currentClubUserId = $access->clubUser?->id ?? 0;
+        $types = [self::TYPE_APPAREL => 'apparel_orders.view', self::TYPE_MATERIAL => 'material_orders.view'];
 
-        if ($access->has($permission) && $access->scope($permission) !== Permission::SCOPE_ALL) {
-            $scopedCategoryIds = $access->scopedCategoryIds($permission);
-        } elseif ($access->has('orders.view') && $access->scope('orders.view') !== Permission::SCOPE_ALL) {
-            $scopedCategoryIds = $access->scopedCategoryIds('orders.view');
-        } elseif ($access->has('apparel_orders.view') && $access->scope('apparel_orders.view') !== Permission::SCOPE_ALL) {
-            $scopedCategoryIds = $access->scopedCategoryIds('apparel_orders.view');
-        }
+        $query->where(function (Builder $q) use ($access, $types, $currentClubUserId) {
+            $q->whereRaw('1 = 0');
 
-        if ($scopedCategoryIds !== null) {
-            $currentClubUserId = $access->clubUser?->id ?? 0;
+            foreach ($types as $type => $permission) {
+                if (! $access->has($permission)) {
+                    continue;
+                }
 
-            $query->where(function (Builder $q) use ($scopedCategoryIds, $currentClubUserId) {
-                $q->whereIn('category_id', $scopedCategoryIds ?: [0])
-                    ->orWhere('requested_by', $currentClubUserId);
-            });
-        }
+                $categoryIds = $access->scope($permission) === Permission::SCOPE_ALL ? null : $access->scopedCategoryIds($permission);
+
+                $q->orWhere(fn (Builder $ofType) => $ofType
+                    ->where('type', $type)
+                    ->when($categoryIds !== null, fn (Builder $scoped) => $scoped->where(fn (Builder $mine) => $mine
+                        ->whereIn('category_id', $categoryIds ?: [0])
+                        ->orWhere('requested_by', $currentClubUserId))));
+            }
+        });
     }
 
     public function requestedBy(): BelongsTo

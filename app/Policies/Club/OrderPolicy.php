@@ -72,9 +72,10 @@ class OrderPolicy
         return true;
     }
 
-    public function create(User $user): bool
+    /** Con el tipo, pide el permiso de ese tipo: sin `apparel_orders.create` no arma pedidos de indumentaria. */
+    public function create(User $user, ?string $type = null): bool
     {
-        return $this->hasTypePermission($user, null, 'create');
+        return $this->hasTypePermission($user, $type, 'create');
     }
 
     public function update(User $user, Order $order): bool
@@ -121,10 +122,11 @@ class OrderPolicy
         return $this->hasTypePermission($user, $order->type, 'approve');
     }
 
+    /** Rechaza quien aprueba, o quien puede editar ese pedido (con su alcance: sus categorías o lo que pidió). */
     public function reject(User $user, Order $order): bool
     {
         return $this->hasTypePermission($user, $order->type, 'approve')
-            || $this->hasTypePermission($user, $order->type, 'update');
+            || $this->update($user, $order);
     }
 
     public function deliver(User $user, Order $order): bool

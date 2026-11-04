@@ -55,7 +55,7 @@ Las claves siguen [guia-abm §9](guia-abm.md#9-autorización-policies-y-permisos
 
 Cambios respecto del [plan de implementación](modelo-datos-club/plan-implementacion.md#qué-tipo-de-endpoint-lleva-cada-tabla):
 
-- `orders.*` se separa en **`apparel_orders.*`** y **`material_orders.*`**. Es la misma tabla `orders` (columna `type`), pero así se puede dar "pedir indumentaria" sin dar "pedir materiales". La Policy mira el `type` del pedido.
+- `orders.*` se separa en **`apparel_orders.*`** y **`material_orders.*`**. Es la misma tabla `orders` (columna `type`), pero así se puede dar "pedir indumentaria" sin dar "pedir materiales". La Policy mira el `type` del pedido. Cada tipo usa solo su permiso: el listado muestra los pedidos de indumentaria a quien tiene `apparel_orders.view` y los de materiales a quien tiene `material_orders.view`, cada uno con su alcance, y crear un pedido pide el `create` de su tipo. Quien tiene `material_orders.create` también ve el catálogo de materiales (`GET /api/materials`) para elegir qué pedir, aunque no tenga `materials.view`; el stock sigue pidiendo `inventory.view`.
 - Se agregan `project.*`, `club.update`, `club_users.*`, `roles.*` y `announcements.*`, que el plan no tenía.
 
 ### Qué módulo del front habilita cada permiso
