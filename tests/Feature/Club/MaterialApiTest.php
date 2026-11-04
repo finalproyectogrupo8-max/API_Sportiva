@@ -156,9 +156,10 @@ class MaterialApiTest extends TestCase
     {
         $this->getJson('/api/materials')->assertUnauthorized();
 
-        // El profe no tiene materials.*
+        // El profe no tiene materials.*: ve el catálogo para pedir materiales, pero no lo edita.
         $token = $this->token('coach');
-        $this->withClubToken($token)->getJson('/api/materials')->assertForbidden()->assertJsonPath('code', 'forbidden');
+        $this->withClubToken($token)->getJson('/api/materials')->assertOk();
+        $this->withClubToken($this->token('maintenance_manager'))->getJson('/api/materials')->assertForbidden()->assertJsonPath('code', 'forbidden');
         $this->withClubToken($token)->postJson('/api/materials', [
             'name' => 'Pelotas',
             'unit' => 'unidades',

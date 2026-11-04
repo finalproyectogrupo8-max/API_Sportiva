@@ -418,6 +418,69 @@ class OrderApiTest extends TestCase
             ->assertJsonPath('data.category_id', $cat1->id);
     }
 
+    public function test_each_order_type_uses_its_own_permission(): void
+    {
+        // El preparador físico pide materiales para sus categorías, pero no tiene nada de indumentaria.
+        [$trainer, $own, $other, $material, $apparel, $player] = $this->inTenant($this->tenantA(), function () {
+            $user = User::factory()->create();
+            $clubUser = ClubUser::create(['global_user_id' => $user->id, 'display_name' => 'Profe PF', 'status' => 'active']);
+            $own = Category::factory()->create(['name' => 'Sub-15']);
+            $other = Category::factory()->create(['name' => 'Sub-17']);
+            $coach = Coach::create(['club_user_id' => $clubUser->id, 'first_name' => 'Pablo', 'last_name' => 'PF', 'status' => 'active']);
+            CategoryCoach::create(['category_id' => $own->id, 'coach_id' => $coach->id, 'assignment_type' => 'physical_trainer']);
+
+            $someone = ClubUser::create(['global_user_id' => User::factory()->create()->id, 'display_name' => 'Otro', 'status' => 'active']);
+            Order::factory()->create(['type' => Order::TYPE_APPAREL, 'category_id' => $own->id, 'requested_by' => $someone->id]);
+            Order::factory()->create(['type' => Order::TYPE_MATERIAL, 'category_id' => $own->id, 'requested_by' => $someone->id]);
+            Order::factory()->create(['type' => Order::TYPE_MATERIAL, 'category_id' => null, 'requested_by' => $someone->id]);
+            Order::factory()->create(['type' => Order::TYPE_MATERIAL, 'category_id' => $other->id, 'requested_by' => $someone->id]);
+
+            return [$user, $own, $other, Material::factory()->create(), ApparelItem::factory()->create(), Player::factory()->create()];
+        });
+        $token = $this->clubToken($this->tenantA(), $trainer, ['physical_trainer']);
+
+        // Solo el pedido de materiales de su categoría: ni indumentaria, ni los de otros sin categoría.
+        $this->withClubToken($token)->getJson('/api/orders')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.type', 'material')
+            ->assertJsonPath('data.0.category_id', $own->id);
+
+        $this->withClubToken($token)->postJson('/api/orders', [
+            'type' => 'apparel',
+            'category_id' => $own->id,
+            'apparel_order_items' => [['player_id' => $player->id, 'apparel_item_id' => $apparel->id, 'size' => 'M', 'quantity' => 1]],
+        ])->assertForbidden();
+
+        // Para pedir materiales ve el catálogo, aunque no maneje el stock.
+        $this->withClubToken($token)->getJson('/api/materials')->assertOk()->assertJsonPath('data.0.id', $material->id);
+        $this->withClubToken($token)->getJson('/api/inventory/balances')->assertForbidden();
+
+        $this->withClubToken($token)->postJson('/api/orders', [
+            'type' => 'material',
+            'category_id' => $other->id,
+            'material_order_items' => [['material_id' => $material->id, 'quantity' => 2]],
+        ])->assertUnprocessable()->assertJsonValidationErrors('category_id');
+
+        $this->withClubToken($token)->postJson('/api/orders', [
+            'type' => 'material',
+            'category_id' => $own->id,
+            'material_order_items' => [['material_id' => $material->id, 'quantity' => 2]],
+        ])->assertCreated();
+
+        // Un pedido enviado de otra categoría no lo puede rechazar.
+        $foreign = $this->inTenant($this->tenantA(), fn () => Order::factory()->create([
+            'type' => Order::TYPE_MATERIAL, 'category_id' => $other->id, 'status' => Order::STATUS_SUBMITTED,
+            'requested_by' => ClubUser::where('display_name', 'Otro')->value('id'),
+        ]));
+        $this->withClubToken($token)->postJson("/api/orders/{$foreign->id}/reject", ['reason' => 'No'])->assertForbidden();
+
+        // Mantenimiento no tiene permisos de pedidos ni ve el catálogo de materiales.
+        $maintenance = $this->clubToken($this->tenantA(), roles: ['maintenance_manager']);
+        $this->withClubToken($maintenance)->getJson('/api/orders')->assertForbidden();
+        $this->withClubToken($maintenance)->getJson('/api/materials')->assertForbidden();
+    }
+
     public function test_decision_d13_order_number_sequence_per_club_and_year(): void
     {
         $year = (int) date('Y');

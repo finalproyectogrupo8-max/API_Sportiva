@@ -64,7 +64,7 @@ class OrderController extends Controller
             ->when($filters['requested_by'] ?? null, fn ($q, $reqBy) => $q->where('requested_by', $reqBy))
             ->when($filters['priority'] ?? null, fn ($q, $prio) => $q->where('priority', $prio));
 
-        $query->visibleTo($request->user()->clubAccess(), 'orders.view');
+        $query->visibleTo($request->user()->clubAccess());
 
         $orders = $query->orderBy($column, $direction)
             ->orderBy('id', $direction)
@@ -75,7 +75,7 @@ class OrderController extends Controller
 
     public function store(StoreOrderRequest $request): JsonResponse
     {
-        Gate::authorize('create', Order::class);
+        Gate::authorize('create', [Order::class, $request->input('type')]);
 
         $data = $request->validated();
         $clubUserId = $this->resolveClubUserId($request);
