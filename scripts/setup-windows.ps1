@@ -213,6 +213,39 @@ function Invoke-InWslInteractive([string]$Command) {
     return $process.ExitCode
 }
 
+# Estado de una caracteristica opcional de Windows sin pedir elevacion (Win32_OptionalFeature:
+# 1 = habilitada, 2 = deshabilitada, 3 = ausente). Get-WindowsOptionalFeature -Online requiere admin.
+function Get-OptionalFeatureState([string]$Name) {
+    try {
+        $feature = Get-CimInstance -ClassName Win32_OptionalFeature -Filter "Name='$Name'" -ErrorAction Stop
+        if (-not $feature) { return 'Missing' }
+        switch ($feature.InstallState) {
+            1 { return 'Enabled' }
+            2 { return 'Disabled' }
+            default { return "State$($feature.InstallState)" }
+        }
+    } catch {
+        return 'Unknown'
+    }
+}
+
+# Activa caracteristicas de Windows en una ventana elevada (UAC). EncodedCommand evita problemas de comillas.
+function Enable-WindowsFeatures([string[]]$Names) {
+    $quoted = ($Names | ForEach-Object { "'$_'" }) -join ','
+    $inner = "`$ProgressPreference='SilentlyContinue'; Enable-WindowsOptionalFeature -Online -FeatureName $quoted -All -NoRestart | Out-Null"
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($inner))
+    $exe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    try {
+        $process = Start-Process -FilePath $exe -ArgumentList '-NoProfile', '-EncodedCommand', $encoded -Verb RunAs -Wait -PassThru
+    } catch {
+        Stop-WithHelp ("No se pudo abrir la ventana de administrador para activar: " + ($Names -join ', ') +
+            ". Acepta el UAC cuando aparezca y volve a correr el script.")
+    }
+    if ($process.ExitCode -ne 0) {
+        Stop-WithHelp "Activar las caracteristicas de Windows termino con codigo $($process.ExitCode)."
+    }
+}
+
 # WSL de la Store (wsl --version) o WSL del sistema activo (wsl --status). Sin WSL, los dos fallan.
 function Test-WslReady {
     if (-not (Test-Command 'wsl.exe')) { return $false }
@@ -510,7 +543,32 @@ Invoke-Phase 'WSL 2' {
 # ---------------------------------------------------------------------------
 Write-Step 'Verificando WSL 2'
 
+# Docker Desktop necesita VirtualMachinePlatform ADEMAS de WSL: sin la primera, el motor no arranca
+# aunque 'wsl --version' responda. Se consulta sin admin y se activa con UAC una sola vez.
 $wslReady = Test-WslReady
+$missingFeatures = @()
+$vmPlatform = Get-OptionalFeatureState 'VirtualMachinePlatform'
+if ($vmPlatform -eq 'Disabled' -or $vmPlatform -eq 'Missing') { $missingFeatures += 'VirtualMachinePlatform' }
+# La caracteristica "vieja" de WSL solo hace falta si no esta el WSL de la Store (wsl --version responde).
+$legacyWsl = Get-OptionalFeatureState 'Microsoft-Windows-Subsystem-Linux'
+if (-not $wslReady -and ($legacyWsl -eq 'Disabled' -or $legacyWsl -eq 'Missing')) { $missingFeatures += 'Microsoft-Windows-Subsystem-Linux' }
+if ($missingFeatures.Count -gt 0) {
+    Write-Note ("Faltan caracteristicas de Windows: " + ($missingFeatures -join ', '))
+    $result = Request-Change ("Activar " + ($missingFeatures -join ' y ') + " (pide administrador una vez y reinicia Windows)") {
+        Enable-WindowsFeatures -Names $missingFeatures
+    }
+    if ($result -eq 'declined') {
+        Stop-WithHelp ("Docker no arranca sin esas caracteristicas. Activalas en PowerShell como administrador: " +
+            "Enable-WindowsOptionalFeature -Online -FeatureName " + ($missingFeatures -join ',') + " -All")
+    }
+    if ($result -eq 'done') {
+        Write-Ok 'caracteristicas activadas: hace falta reiniciar'
+        Request-Reboot
+        return
+    }
+} else {
+    Write-Ok 'VirtualMachinePlatform esta habilitado'
+}
 $wslInstalledThisRun = $false
 if ($wslReady) {
     Write-Ok 'WSL esta activo'
@@ -547,7 +605,8 @@ if (-not $wslReady) {
         if ($LASTEXITCODE -ne 0) {
             # Recien activado WSL, la plataforma de virtualizacion puede necesitar un reinicio.
             if ($wslInstalledThisRun) { Request-Reboot }
-            Stop-WithHelp "No se pudo instalar $Distro (codigo $LASTEXITCODE)."
+            Stop-WithHelp ("No se pudo instalar $Distro (codigo $LASTEXITCODE). " +
+                "Si esta PC es una maquina virtual, revisa que tenga virtualizacion anidada habilitada y que Windows pueda activar VirtualMachinePlatform.")
         }
         # La distro recien instalada arranca como root hasta que exista un usuario.
         New-LinuxUser
@@ -621,7 +680,8 @@ if ($dockerExe) {
             Start-DockerDesktop $dockerExe
             Write-Note 'Esperando al motor de Docker (la primera vez puede tardar unos minutos)...'
             if (-not (Wait-DockerDaemon $dockerExe 5)) {
-                Stop-WithHelp "El motor de Docker no respondio en 5 minutos. Abri Docker Desktop y revisa que diga 'Engine running'."
+                Stop-WithHelp ("El motor de Docker no respondio en 5 minutos. Abri Docker Desktop y revisa que diga 'Engine running'. " +
+                "Si esta PC es una maquina virtual, habilita la virtualizacion anidada (nested virtualization) en el hipervisor.")
             }
         }
         if ($result -eq 'declined') { Stop-WithHelp "Abri Docker Desktop y espera a que diga 'Engine running'." }
