@@ -410,6 +410,57 @@ function Restart-DockerDesktop([string]$DockerExe) {
     }
 }
 
+# Descarga un archivo probando varias vias: Invoke-WebRequest (.NET), BITS y curl.exe.
+# En una VM con proxy, winget (WinINet) puede fallar aunque estas tres anden. Se reintenta 3 veces.
+function Save-FileWithRetry([string]$Url, [string]$Path, [long]$MinBytes = 1) {
+    $methods = @('webrequest')
+    if (Get-Service -Name BITS -ErrorAction SilentlyContinue) { $methods += 'bits' }
+    if (Test-Command 'curl.exe') { $methods += 'curl' }
+
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        foreach ($method in $methods) {
+            Remove-Item $Path -Force -ErrorAction SilentlyContinue
+            try {
+                switch ($method) {
+                    'webrequest' { Invoke-WebRequest -UseBasicParsing -Uri $Url -OutFile $Path -ErrorAction Stop }
+                    'bits' { Start-BitsTransfer -Source $Url -Destination $Path -ErrorAction Stop | Out-Null }
+                    'curl' {
+                        & curl.exe -L --fail --silent --show-error --retry 2 --connect-timeout 30 -o $Path $Url 2>&1 | Out-Host
+                        if ($LASTEXITCODE -ne 0) { throw "curl termino con codigo $LASTEXITCODE" }
+                    }
+                }
+                if ((Test-Path $Path) -and ((Get-Item $Path).Length -ge $MinBytes)) { return $true }
+                Write-Note "La descarga por $method quedo incompleta; se prueba otra via."
+            } catch {
+                Write-Note "Descarga por $method fallo: $($_.Exception.Message)"
+            }
+        }
+        if ($attempt -lt 3) { Write-Note "Reintentando la descarga en $($attempt * 5) s..."; Start-Sleep -Seconds ($attempt * 5) }
+    }
+    return $false
+}
+
+function Install-VSCode {
+    if (Test-Command 'winget.exe') {
+        & winget.exe install -e --id Microsoft.VisualStudioCode --scope user --accept-package-agreements --accept-source-agreements | Out-Host
+        if ($LASTEXITCODE -eq 0) { return }
+        Write-Note "winget termino con codigo $LASTEXITCODE; se intenta con el instalador oficial."
+    }
+    # Plan B: instalador oficial del canal estable (por usuario, sin admin), con firma de Microsoft.
+    $installer = Join-Path $env:TEMP ("VSCodeUserSetup-{0}.exe" -f [guid]::NewGuid())
+    if (-not (Save-FileWithRetry -Url 'https://update.code.visualstudio.com/latest/win32-x64-user/stable' -Path $installer -MinBytes 20MB)) {
+        Stop-WithHelp 'No se pudo descargar VS Code por ninguna via (revisa la conexion o el proxy de la maquina).'
+    }
+    $signature = Get-AuthenticodeSignature -FilePath $installer
+    if ($signature.Status -ne 'Valid' -or -not ($signature.SignerCertificate.Subject -match 'O=Microsoft Corporation')) {
+        Remove-Item $installer -Force -ErrorAction SilentlyContinue
+        Stop-WithHelp "El instalador de VS Code no tiene una firma valida de Microsoft (estado: $($signature.Status)). No se ejecuto."
+    }
+    $process = Start-Process -FilePath $installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/MERGETASKS=!runcode' -Wait -PassThru
+    Remove-Item $installer -Force -ErrorAction SilentlyContinue
+    if ($process.ExitCode -ne 0) { Stop-WithHelp "El instalador de VS Code termino con codigo $($process.ExitCode)." }
+}
+
 function Install-DockerDesktop {
     if (Test-Command 'winget.exe') {
         # El paquete de winget es el instalador oficial (tipo exe, verificado por SHA256): --override le
@@ -421,12 +472,9 @@ function Install-DockerDesktop {
     }
     # Plan B: instalador oficial, verificando que este firmado por Docker antes de ejecutarlo.
     $installer = Join-Path $env:TEMP ("DockerDesktopInstaller-{0}.exe" -f [guid]::NewGuid())
-    try {
-        Invoke-WebRequest -UseBasicParsing -Uri $DockerInstallerUrl -OutFile $installer
-    } catch {
-        Stop-WithHelp ("No se pudo descargar el instalador de Docker Desktop: $($_.Exception.Message). " +
-            "Si la VM usa proxy o la red bloquea dominios, descargalo a mano desde $DockerInstallerUrl " +
-            "y ejecutalo; despues volve a correr este script.")
+    if (-not (Save-FileWithRetry -Url $DockerInstallerUrl -Path $installer -MinBytes 100MB)) {
+        Stop-WithHelp ("No se pudo descargar el instalador de Docker Desktop por ninguna via. " +
+            "Revisa la conexion o el proxy de la maquina; el archivo se puede bajar de $DockerInstallerUrl")
     }
     $signature = Get-AuthenticodeSignature -FilePath $installer
     # Organizacion EXACTA del certificado (no un substring: "Docker Incubator" no tiene que pasar).
@@ -838,9 +886,7 @@ $codeCmd = if (Test-Command 'code') { 'code' } else {
     if (Test-Path $candidate) { $candidate } else { $null }
 }
 if (-not $codeCmd) {
-    $result = Request-Change 'Instalar VS Code con winget (por usuario)' {
-        & winget.exe install -e --id Microsoft.VisualStudioCode --scope user --accept-package-agreements --accept-source-agreements | Out-Host
-    }
+    $result = Request-Change 'Instalar VS Code (por usuario)' { Install-VSCode }
     $candidate = Join-Path $env:LOCALAPPDATA 'Programs\Microsoft VS Code\bin\code.cmd'
     if (Test-Path $candidate) { $codeCmd = $candidate }
     elseif ($result -eq 'done') { Write-Note 'VS Code se instalo; si no lo encuentro, cerra y abri PowerShell.' }
