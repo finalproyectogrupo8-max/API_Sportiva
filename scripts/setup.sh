@@ -107,7 +107,7 @@ Plataforma (panel /admin):
 
 Club Demo Sportiva (entra directo a /c/demo):
   admin.club@sportiva.com          demo1234   Administrador del club
-  coordinador@sportiva.com         demo1234   Coordinador deportivo
+  coordinador@sportiva.com         demo1234   Coordinador de Básquet
   coordinador.futbol@sportiva.com  demo1234   Coordinador de Fútbol
   profe@sportiva.com               demo1234   Profe (Sub-13 y Sub-15)
   preparador@sportiva.com          demo1234   Preparador físico

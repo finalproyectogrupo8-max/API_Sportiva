@@ -104,7 +104,7 @@ Se hace con la API, usando el **token de plataforma** del admin. La forma más f
 2. Tocá **Authorize** y pegá el `platform_token`.
 3. **Crear el club** (si no existe): `POST /api/admin/tenants` con `{ "name": "Club Demo", "slug": "demo" }`. Responde `"status": "provisioning"` y en unos segundos el worker lo pasa a `active` (`GET /api/admin/tenants/{id}`). Anotá el `id`.
 4. **Crear el usuario** (si no lo creaste con tinker): `POST /api/admin/users` con `{ "name": "Socio Demo", "email": "socio@demo.com", "password": "clave-socio-12" }`. Anotá el `id`.
-5. **Asociarlo:** `POST /api/admin/tenants/{id del club}/memberships` con `{ "user_id": <id del usuario>, "roles": ["admin"] }`. Los roles son los del club: los lista `GET /api/admin/tenants/{id del club}/roles` (`admin`, `coordinator`, `coach`, `physical_trainer`, `inventory_manager`, `maintenance_manager` y los custom). Ver [roles y permisos](roles-y-permisos.md).
+5. **Asociarlo:** `POST /api/admin/tenants/{id del club}/memberships` con `{ "user_id": <id del usuario>, "roles": ["admin"] }`. Los roles son los del club: los lista `GET /api/admin/tenants/{id del club}/roles` (`admin`, `sport_coordinator`, `coach`, `physical_trainer`, `inventory_manager`, `maintenance_manager` y los custom). Ver [roles y permisos](roles-y-permisos.md).
 
 Lo mismo con curl:
 
