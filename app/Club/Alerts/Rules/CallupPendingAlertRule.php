@@ -65,7 +65,7 @@ class CallupPendingAlertRule
             }
 
             $category = $match->category;
-            $recipientIds = $category ? $this->recipients->forCategory($category) : $this->recipients->generalCoordinators();
+            $recipientIds = $category ? $this->recipients->forCategory($category) : $this->recipients->administrators();
 
             $hoursLeft = (int) $now->diffInHours($match->match_date, false);
             $hoursText = $hoursLeft <= 1 ? 'en menos de una hora' : "en {$hoursLeft} horas ({$match->match_date->format('d/m/Y H:i')})";

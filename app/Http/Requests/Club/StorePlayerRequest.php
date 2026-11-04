@@ -23,6 +23,8 @@ class StorePlayerRequest extends FormRequest
             'document_number' => ['nullable', 'string', 'max:30'],
             'registration_number' => ['nullable', 'string', 'max:50'],
             'preferred_position' => ['nullable', 'string', 'max:50'],
+            'position_ids' => ['sometimes', 'array'],
+            'position_ids.*' => ['integer', 'distinct', Rule::exists('tenant.positions', 'id')->where('is_active', true)],
             'dominant_side' => ['nullable', 'string', 'in:left,right,both'],
             // TIZ-40: `female`, `male` u `other`; opcional.
             'gender' => ['nullable', 'string', Rule::in(Player::GENDERS)],

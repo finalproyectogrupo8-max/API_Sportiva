@@ -7,10 +7,11 @@ Este documento define **quién puede hacer qué dentro de un club**: el catálog
 ## 1. Resumen
 
 - **El catálogo de permisos es fijo y vive en el código** (`config/club-permissions.php`). Se organiza por **módulo → recurso → acciones**, y se sincroniza a la tabla `permissions` de cada club. Desde el panel no se crean permisos: el código tiene que saber chequearlos.
-- **Cada club arranca con roles estándar** (Administrador, Coordinador, Profe, Preparador físico, Utilero / Encargado, Mantenimiento). Son **fijos**: no se editan ni se borran.
+- **Cada club arranca con roles estándar** (Administrador, Coordinador de deporte, Profe, Preparador físico, Utilero / Encargado, Mantenimiento). Son **fijos**: no se editan ni se borran.
 - **Los roles custom** se crean desde el panel con una **grilla de checks** (módulo × acción). Para partir de un estándar, se usa **Duplicar**.
 - **Un usuario puede tener varios roles** en el club, y los permisos **se suman**. Ejemplo: un profe que además se encarga de los pedidos de indumentaria tiene **Profe + Utilero**, o un rol custom "Profe con indumentaria".
-- **Alcance:** algunos permisos se dan sobre **todo el club** (`all`), sobre **sus deportes** (`sport`, TIZ-35) o solo sobre **sus categorías** (`own`). Por ejemplo, el coordinador de fútbol ve y gestiona todo lo de fútbol y nada de básquet; un profe ve solo las categorías que dirige; y el coordinador general ve todo el club.
+- **Alcance:** algunos permisos se dan sobre **todo el club** (`all`), sobre **sus deportes** (`sport`, TIZ-35) o solo sobre **sus categorías** (`own`). El coordinador de deporte consulta categorías y competencias de sus deportes; un profe ve solo las categorías que dirige; el Administrador gestiona todo el club.
+- **Posiciones deportivas:** el Administrador del club administra el catálogo de posiciones por deporte. Las asociaciones de jugadores se actualizan desde el alta/edición del jugador; las posiciones inactivas no se ofrecen para nuevas asignaciones.
 - **Quién gestiona los roles:** el **admin de plataforma** desde `/admin`, cuando prepara el club, y el **Administrador del club** desde "Equipo del club". Los dos usan las mismas acciones del backend.
 - **El admin de plataforma no es un rol de club.** Es `users.is_platform_admin` y solo ve `/admin`.
 
@@ -21,6 +22,7 @@ Las claves siguen [guia-abm §9](guia-abm.md#9-autorización-policies-y-permisos
 | Módulo (front) | Recurso | Acciones | Alcance |
 |---|---|---|---|
 | **Jugadores** (`jugadores`) | `players` | `view`, `create`, `update`, `delete` | sí |
+| | `positions` (posiciones por deporte) | `view`, `create`, `update`, `delete` | — |
 | | `categories` | `manage_players` (armar planteles) | sí |
 | | `player_contacts` | `view`, `update` (tutores y contactos, TIZ-15) | sí |
 | | `player_documents` | `view`, `upload`, `delete` (apto, ficha, DNI, TIZ-29) | sí, `view` y `upload` |
@@ -76,6 +78,8 @@ Cambios respecto del [plan de implementación](modelo-datos-club/plan-implementa
 
 El **Inicio** (dashboard) lo ve todo usuario con acceso al club. Cada tarjeta muestra solo los datos de los módulos que el usuario puede ver.
 
+**Excepción para `sport_coordinator`:** como `categories.view` también es la clave principal de Configuración, el frontend no debe habilitar el módulo completo solo por ese permiso. Para este rol debe mostrar únicamente Temporadas, Categorías y Competencias, y ocultar el resto de Configuración y de los módulos del club.
+
 ## 3. Roles estándar
 
 Se cargan en cada club al darlo de alta, con `is_system = true`. Todos se pueden asignar, pero ninguno se edita ni se borra.
@@ -83,53 +87,59 @@ Se cargan en cada club al darlo de alta, con `is_system = true`. Todos se pueden
 | `slug` | Nombre | Para quién |
 |---|---|---|
 | `admin` | Administrador del club | Comisión directiva o gerente |
-| `coordinator` | Coordinador deportivo | Coordina categorías, profes y fixture de todo el club |
-| `sport_coordinator` | Coordinador de deporte | Coordina sus deportes asignados: categorías, planteles, profes y partidos (TIZ-35) |
+| `sport_coordinator` | Coordinador de deporte | Consulta temporadas, categorías y competencias |
 | `coach` | Profe | Entrenador de una o más categorías |
 | `physical_trainer` | Preparador físico | Evaluaciones físicas de sus categorías |
 | `inventory_manager` | Utilero / Encargado | Materiales, indumentaria y entregas |
 | `maintenance_manager` | Mantenimiento | Canchas e instalaciones |
 
+Al sincronizar el catálogo en un club existente, la API elimina el rol estándar retirado `coordinator` y sus asignaciones. No se asigna otro rol automáticamente: el Administrador del club debe revisar y reasignar manualmente a esas personas.
+
 ### Matriz de los roles estándar
 
 **Administrador del club: todos los permisos del catálogo, con alcance "todo el club".** Cuando se agrega un permiso nuevo al catálogo, el admin lo recibe automáticamente.
 
-Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, — = nada.
+Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, **(d)** = solo lectura en las secciones indicadas y categorías/competencias de sus deportes, — = nada.
 
-| Recurso | Coordinador | Profe | Preparador físico | Utilero / Encargado | Mantenimiento |
+| Recurso | Coordinador de deporte | Profe | Preparador físico | Utilero / Encargado | Mantenimiento |
 |---|---|---|---|---|---|
-| `players` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
-| `categories.manage_players` | ✓ | — | — | — | — |
-| `player_contacts` | ✓ ver, editar | ver (s) | — | — | — |
-| `player_documents` | ✓ ver, subir, borrar | ver, subir (s) | — | — | — |
-| `competitions` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
-| `player_requirements` | ✓ ver, presentar, aprobar | ver, presentar (s) | ver (s) | — | — |
-| `coaches` | ✓ ver, crear, editar, eliminar | ver (s) | ver (s) | — | — |
-| `categories.manage_coaches` | ✓ | — | — | — | — |
-| `matches` | ✓ ver, crear, editar, eliminar | ver, crear, editar (s) | ver (s) | ver | ver |
-| `trainings` | ✓ ver, crear, editar, eliminar | ver, crear, editar (s) | ver (s) | ver | ver |
-| `callups` (convocatorias, TIZ-33) | ✓ ver, armar, publicar | ver, armar, publicar (s) | ver (s) | ver | — |
-| `attendance` | ✓ ver, registrar | ver, registrar (s) | ver (s) | — | — |
-| `physical_evaluations` | ✓ ver | ver (s) | ver, crear, editar, eliminar (s) | — | — |
-| `project` | ✓ ver, editar | ver | ver | — | — |
-| `apparel_items` | ✓ ver | ver | — | ✓ ver, crear, editar, eliminar | — |
-| `apparel_orders` | ✓ ver, crear, editar, aprobar | ver, crear, editar (s) | — | ✓ ver, crear, editar, entregar | — |
-| `materials`, `storage_locations` | ✓ ver | — | — | ✓ ver, crear, editar, eliminar | — |
-| `inventory` | ✓ ver | — | — | ✓ ver, ajustar, transferir | — |
-| `material_orders` | ✓ ver, crear, editar | ver, crear, editar (s) | ver, crear, editar (s) | ✓ ver, crear, editar, entregar | — |
-| `facilities` | ✓ ver | ver | ver | ver | ✓ ver, crear, editar, eliminar |
-| `repairs` | ✓ ver, crear | ver, crear | ver, crear | ver, crear | ✓ todas, incluida `assign` |
-| `maintenance` | ✓ ver | — | — | — | ✓ ver, crear, editar, eliminar |
-| `sports`, `seasons`, `categories` | ✓ ver, crear, editar, eliminar | ver `categories` (s) | ver `categories` (s) | — | — |
-| `venues` (sedes, TIZ-39) | ✓ ver, crear, editar, eliminar | ver | ver | ver | ver |
+| `players` | — | ver (s) | ver (s) | — | — |
+| `positions` | — | — | — | — | — |
+| `categories.manage_players` | — | — | — | — | — |
+| `player_contacts` | — | ver (s) | — | — | — |
+| `player_documents` | — | ver, subir (s) | — | — | — |
+| `competitions` | ver (d) | ver (s) | ver (s) | — | — |
+| `player_requirements` | — | ver, presentar (s) | ver (s) | — | — |
+| `coaches` | — | ver (s) | ver (s) | — | — |
+| `categories.manage_coaches` | — | — | — | — | — |
+| `matches` | — | ver, crear, editar (s) | ver (s) | ver | ver |
+| `trainings` | — | ver, crear, editar (s) | ver (s) | ver | ver |
+| `callups` (convocatorias, TIZ-33) | — | ver, armar, publicar (s) | ver (s) | ver | — |
+| `attendance` | — | ver, registrar (s) | ver (s) | — | — |
+| `physical_evaluations` | — | ver (s) | ver, crear, editar, eliminar (s) | — | — |
+| `project` | — | ver | ver | — | — |
+| `apparel_items` | — | ver | — | ✓ ver, crear, editar, eliminar | — |
+| `apparel_orders` | — | ver, crear, editar (s) | — | ✓ ver, crear, editar, entregar | — |
+| `materials`, `storage_locations` | — | — | — | ✓ ver, crear, editar, eliminar | — |
+| `inventory` | — | — | — | ✓ ver, ajustar, transferir | — |
+| `material_orders` | — | ver, crear, editar (s) | ver, crear, editar (s) | ✓ ver, crear, editar, entregar | — |
+| `facilities` | — | ver | ver | ver | ✓ ver, crear, editar, eliminar |
+| `repairs` | — | ver, crear | ver, crear | ver, crear | ✓ todas, incluida `assign` |
+| `maintenance` | — | — | — | — | ✓ ver, crear, editar, eliminar |
+| `sports` | — | — | — | — | — |
+| `seasons` | ver (club) | — | — | — | — |
+| `categories` | ver (d) | ver (s) | ver (s) | — | — |
+| `venues` (sedes, TIZ-39) | — | ver | ver | ver | ver |
 | `club.update` | — | — | — | — | — |
 | `club_users`, `roles` | — | — | — | — | — |
-| `announcements` | ✓ ver, enviar | ver, enviar (s) | — | — | — |
+| `announcements` | — | ver, enviar (s) | — | — | — |
+
+El Administrador del club conserva todos los permisos del catálogo en todo el club.
 
 Notas:
 
-- **Coordinador de deporte (`sport_coordinator`):** tiene exactamente los mismos permisos que el Coordinador general (`coordinator`), pero con alcance **sus deportes** (`sport`, TIZ-35) en todos los permisos marcados como con alcance en el catálogo (`players.*`, `categories.manage_players`, `player_contacts.*`, `player_documents.view/upload`, `coaches.view`, `matches.*`, `trainings.*`, `attendance.*`, `callups.*`, `physical_evaluations.view`, `apparel_orders.view/create/update`, `material_orders.view/create/update`, `categories.view`, `competitions.view`, `player_requirements.view/update`, `announcements.*`). La excepción es `apparel_orders.approve`: no lo recibe, porque `approve` no tiene alcance y le permitiría aprobar pedidos de deportes que no son suyos (TIZ-30).
-- **Aprobar pedidos:** la indumentaria (`apparel_orders.approve`) la aprueban el Administrador y el Coordinador general, para que los pedidos no se traben si la directiva entra poco (TIZ-30). Los materiales (`material_orders.approve`) siguen siendo solo del Administrador; si un club quiere que otro rol los apruebe, crea un rol custom.
+- **Coordinador de deporte (`sport_coordinator`):** sus únicos permisos estándar son consultar temporadas, categorías y competencias. Categorías y competencias se limitan a sus deportes; temporadas se consultan a nivel del club porque no están asociadas directamente a un deporte.
+- **Aprobación y gestión general:** las tareas generales del club corresponden al Administrador. Los permisos de aprobación de pedidos no se asignan al Coordinador de deporte.
 - `delete` en pedidos solo aplica a pedidos en `draft` (lo valida la Policy, no el permiso).
 
 ## 4. Alcance: todo el club, sus deportes o sus categorías

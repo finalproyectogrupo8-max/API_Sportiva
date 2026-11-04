@@ -22,9 +22,15 @@ class SyncClubPermissions
     public function sync(): void
     {
         DB::connection(TenantDatabase::CONNECTION)->transaction(function () {
+            $standardRoles = $this->catalog->standardRoles();
+            Role::query()
+                ->where('is_system', true)
+                ->whereNotIn('slug', array_keys($standardRoles))
+                ->delete();
+
             $ids = $this->syncPermissions();
 
-            foreach ($this->catalog->standardRoles() as $slug => $definition) {
+            foreach ($standardRoles as $slug => $definition) {
                 $role = Role::updateOrCreate(
                     ['slug' => $slug],
                     ['name' => $definition['name'], 'description' => $definition['description'], 'is_system' => true],

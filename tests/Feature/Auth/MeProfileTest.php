@@ -18,7 +18,7 @@ class MeProfileTest extends TestCase
     {
         $user = User::factory()->create(['name' => 'Ana']);
         $token = $this->clubToken($this->tenantA(), $user, ['coach']);
-        $this->clubToken($this->tenantB(), $user, ['admin', 'coordinator']);
+        $this->clubToken($this->tenantB(), $user, ['admin', 'coach']);
 
         $this->withClubToken($token)->patchJson('/api/me', ['name' => '  Ana Pérez '])->assertOk()->assertJsonPath('data.name', 'Ana Pérez');
         $this->withClubToken($token)->patchJson('/api/me', ['name' => ''])->assertUnprocessable()->assertJsonValidationErrors('name');

@@ -36,7 +36,7 @@ class AlertsCommandTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_rule_1_consecutive_unjustified_absences_alerts_coach_and_coordinator_without_duplicates(): void
+    public function test_rule_1_consecutive_unjustified_absences_alerts_coach_and_admin_without_duplicates(): void
     {
         Carbon::setTestNow('2027-04-10 10:00:00');
 
@@ -45,7 +45,7 @@ class AlertsCommandTest extends TestCase
         $otherCoachUser = User::factory()->create();
 
         $this->clubToken($this->tenantA(), $coachUser, ['coach']);
-        $this->clubToken($this->tenantA(), $coordUser, ['coordinator']);
+        $this->clubToken($this->tenantA(), $coordUser, ['admin']);
         $this->clubToken($this->tenantA(), $otherCoachUser, ['coach']);
 
         $player = $this->inTenant($this->tenantA(), function () use ($coachUser, $otherCoachUser) {
@@ -227,7 +227,7 @@ class AlertsCommandTest extends TestCase
         $coordUser = User::factory()->create();
 
         $this->clubToken($this->tenantA(), $coachUser, ['coach']);
-        $this->clubToken($this->tenantA(), $coordUser, ['coordinator']);
+        $this->clubToken($this->tenantA(), $coordUser, ['admin']);
 
         $this->inTenant($this->tenantA(), function () use ($coachUser) {
             $sport = Sport::factory()->create();
@@ -287,7 +287,7 @@ class AlertsCommandTest extends TestCase
         $this->artisan('alerts:run', ['--club' => $this->tenantA()->slug])->assertSuccessful();
 
         $notifications = $this->inTenant($this->tenantA(), fn () => Notification::query()->where('type', 'requirement_expiring')->get());
-        $this->assertCount(2, $notifications); // Coach and coordinator
+        $this->assertCount(2, $notifications); // Coach and admin
         $this->assertStringContainsString('Apto Médico', $notifications->first()->title);
         $this->assertStringContainsString('Mateo González', $notifications->first()->body);
 
@@ -304,7 +304,7 @@ class AlertsCommandTest extends TestCase
         $coordUser = User::factory()->create();
 
         $this->clubToken($this->tenantA(), $coachUser, ['coach']);
-        $this->clubToken($this->tenantA(), $coordUser, ['coordinator']);
+        $this->clubToken($this->tenantA(), $coordUser, ['admin']);
 
         $this->inTenant($this->tenantA(), function () use ($coachUser) {
             $sport = Sport::factory()->create();
@@ -367,7 +367,7 @@ class AlertsCommandTest extends TestCase
         $coordUser = User::factory()->create();
 
         $this->clubToken($this->tenantA(), $coachUser, ['coach']);
-        $this->clubToken($this->tenantA(), $coordUser, ['coordinator']);
+        $this->clubToken($this->tenantA(), $coordUser, ['admin']);
 
         $match = $this->inTenant($this->tenantA(), function () use ($coachUser) {
             $sport = Sport::factory()->create();
@@ -424,7 +424,7 @@ class AlertsCommandTest extends TestCase
         $this->clubToken($this->tenantA(), $futbolCoachUser, ['coach']);
         $this->clubToken($this->tenantA(), $basquetCoachUser, ['coach']);
         $this->clubToken($this->tenantA(), $futbolCoordUser, ['sport_coordinator']);
-        $this->clubToken($this->tenantA(), $generalCoordUser, ['coordinator']);
+        $this->clubToken($this->tenantA(), $generalCoordUser, ['admin']);
 
         $this->inTenant($this->tenantA(), function () use ($futbolCoachUser, $basquetCoachUser, $futbolCoordUser) {
             $futbol = Sport::factory()->create(['name' => 'Fútbol']);
@@ -469,7 +469,7 @@ class AlertsCommandTest extends TestCase
             $this->assertTrue(Notification::query()->where('club_user_id', $futbolCoachId)->exists());
             // Futbol sport coordinator received it
             $this->assertTrue(Notification::query()->where('club_user_id', $futbolCoordId)->exists());
-            // General coordinator received it
+            // Admin received it
             $this->assertTrue(Notification::query()->where('club_user_id', $generalCoordId)->exists());
             // Basketball coach DID NOT receive it
             $this->assertFalse(Notification::query()->where('club_user_id', $basquetCoachId)->exists());
@@ -483,8 +483,8 @@ class AlertsCommandTest extends TestCase
         $userA = User::factory()->create();
         $userB = User::factory()->create();
 
-        $this->clubToken($this->tenantA(), $userA, ['coordinator']);
-        $this->clubToken($this->tenantB(), $userB, ['coordinator']);
+        $this->clubToken($this->tenantA(), $userA, ['admin']);
+        $this->clubToken($this->tenantB(), $userB, ['admin']);
 
         $this->inTenant($this->tenantA(), function () {
             $sport = Sport::factory()->create();
@@ -510,7 +510,7 @@ class AlertsCommandTest extends TestCase
         Carbon::setTestNow('2027-04-01 10:00:00');
 
         $user = User::factory()->create();
-        $this->clubToken($this->tenantA(), $user, ['coordinator']);
+        $this->clubToken($this->tenantA(), $user, ['admin']);
 
         $this->inTenant($this->tenantA(), function () {
             $sport = Sport::factory()->create();
@@ -537,7 +537,7 @@ class AlertsCommandTest extends TestCase
         Carbon::setTestNow('2027-04-01 10:00:00');
 
         $userB = User::factory()->create();
-        $this->clubToken($this->tenantB(), $userB, ['coordinator']);
+        $this->clubToken($this->tenantB(), $userB, ['admin']);
 
         $this->inTenant($this->tenantB(), function () {
             $sport = Sport::factory()->create();

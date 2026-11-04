@@ -27,13 +27,13 @@ class ClubActivityTest extends TestCase
             Player::factory()->create(['first_name' => 'Caro', 'last_name' => 'Jugadora']),
         ]);
 
-        $this->withClubToken($token)->patchJson("/api/club-users/{$memberId}", ['roles' => ['coordinator']])->assertOk();
+        $this->withClubToken($token)->patchJson("/api/club-users/{$memberId}", ['roles' => ['sport_coordinator']])->assertOk();
         $this->withClubToken($token)->deleteJson("/api/players/{$player->id}")->assertNoContent();
 
         $logs = collect($this->withClubToken($token)->getJson('/api/audit-logs')->assertOk()->json('data'));
         $roles = $logs->firstWhere('action', 'club_user.roles_updated');
         $this->assertSame(['Profe'], $roles['metadata']['roles']['from']);
-        $this->assertSame(['Coordinador deportivo'], $roles['metadata']['roles']['to']);
+        $this->assertSame(['Coordinador de deporte'], $roles['metadata']['roles']['to']);
         $this->assertSame('Beto Profe', $roles['metadata']['name']);
         $this->assertSame('Ana Admin', $roles['actor']['name']);
         $this->assertNotNull($roles['created_at']);

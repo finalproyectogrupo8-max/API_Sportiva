@@ -142,7 +142,7 @@ class SquadApiTest extends TestCase
 
         $this->withClubToken($coachToken)->getJson("/api/categories/{$u15->id}/memberships")->assertNotFound();
 
-        $this->withClubToken($this->token('coordinator'))
+        $this->withClubToken($this->token('admin'))
             ->postJson("/api/categories/{$u15->id}/coaches", ['coach_id' => $coach->id, 'assignment_type' => 'head_coach'])
             ->assertCreated();
 

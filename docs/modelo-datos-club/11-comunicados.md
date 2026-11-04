@@ -43,7 +43,7 @@ Se crea al enviar: la lista queda congelada, así el historial dice a quién se 
 {
   "categories": [{ "category_id": 3, "players": true, "tutors": true, "coaches": false }],
   "players": { "player_ids": [41], "players": true, "tutors": true },
-  "role_slugs": ["coordinator"],
+  "role_slugs": ["admin"],
   "club_user_ids": [7]
 }
 ```

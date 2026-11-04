@@ -14,15 +14,16 @@ class PermissionCatalogTest extends TestCase
         $roles = $catalog->standardRoles();
 
         $this->assertSame(
-            ['admin', 'coordinator', 'sport_coordinator', 'coach', 'physical_trainer', 'inventory_manager', 'maintenance_manager'],
+            ['admin', 'sport_coordinator', 'coach', 'physical_trainer', 'inventory_manager', 'maintenance_manager'],
             array_keys($roles),
         );
         $this->assertSame($catalog->names(), array_keys($roles['admin']['permissions']));
-        $this->assertSame('sport', $roles['sport_coordinator']['permissions']['players.view']);
+        $this->assertSame([
+            'seasons.view' => 'all',
+            'categories.view' => 'sport',
+            'competitions.view' => 'sport',
+        ], $roles['sport_coordinator']['permissions']);
         $this->assertSame('own', $roles['coach']['permissions']['players.view']);
-        // TIZ-30: el coordinador aprueba indumentaria para todo el club; el de deporte no (approve no tiene alcance).
-        $this->assertSame('all', $roles['coordinator']['permissions']['apparel_orders.approve']);
-        $this->assertArrayNotHasKey('apparel_orders.approve', $roles['sport_coordinator']['permissions']);
         foreach ($roles as $slug => $role) {
             if ($slug !== 'admin') {
                 $this->assertArrayNotHasKey('material_orders.approve', $role['permissions'], "{$slug} no aprueba materiales");
@@ -34,8 +35,16 @@ class PermissionCatalogTest extends TestCase
     {
         $catalog = new PermissionCatalog;
 
-        foreach (['players', 'coaches', 'matches', 'physical_evaluations', 'project', 'apparel_orders', 'inventory', 'facilities', 'categories', 'club_users', 'announcements'] as $resource) {
+        foreach (['players', 'positions', 'coaches', 'matches', 'physical_evaluations', 'project', 'apparel_orders', 'inventory', 'facilities', 'categories', 'club_users', 'announcements'] as $resource) {
             $this->assertTrue($catalog->exists("{$resource}.view"), "{$resource}.view");
+        }
+
+        foreach ($catalog->standardRoles() as $slug => $role) {
+            if ($slug !== 'admin') {
+                foreach (['view', 'create', 'update', 'delete'] as $action) {
+                    $this->assertArrayNotHasKey("positions.{$action}", $role['permissions']);
+                }
+            }
         }
     }
 

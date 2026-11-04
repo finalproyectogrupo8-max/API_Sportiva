@@ -1,6 +1,6 @@
 # Modelo de datos de la base de cada club
 
-> **Estado: esquema migrado, ABM en curso.** Las 40 tablas existen como migraciones en `database/migrations/tenant/` y se aplican a **cada** base `club_<slug>`. Los modelos, endpoints y permisos de cada módulo siguen pasando por su change de OpenSpec (`/opsx:propose`). Si un change necesita cambiar una tabla, lo hace con una migración nueva (nunca editando una mergeada) y actualiza el documento del módulo.
+> **Estado: esquema migrado, ABM en curso.** Las tablas existen como migraciones en `database/migrations/tenant/` y se aplican a **cada** base `club_<slug>`. Los modelos, endpoints y permisos de cada módulo siguen pasando por su change de OpenSpec (`/opsx:propose`). Si un change necesita cambiar una tabla, lo hace con una migración nueva (nunca editando una mergeada) y actualiza el documento del módulo.
 
 Fuente: el borrador técnico *OLIM · Modelo relacional de bases de datos y autenticación multi-tenant* (PDF del equipo), adaptado a las convenciones de este repo. Las diferencias con el borrador están en [Diferencias con el borrador](#diferencias-con-el-borrador-y-con-el-repo).
 
@@ -13,7 +13,7 @@ Contexto general: [arquitectura multi-tenant](../arquitectura-multi-tenant.md) y
 | # | Módulo | Tablas |
 |---|---|---|
 | 1 | [Identidad local y autorización](01-identidad-y-autorizacion.md) | `club_users`, `roles`, `permissions`, `club_user_roles`, `role_permissions` |
-| 2 | [Deportes, temporadas y planteles](02-deportes-y-planteles.md) | `sports`, `seasons`, `categories`, `players`, `player_category_memberships`, `coaches`, `category_coaches` |
+| 2 | [Deportes, temporadas y planteles](02-deportes-y-planteles.md) | `sports`, `positions`, `seasons`, `categories`, `players`, `player_positions`, `player_category_memberships`, `coaches`, `category_coaches` |
 | 3 | [Pedidos e indumentaria](03-pedidos-e-indumentaria.md) | `orders`, `apparel_items`, `apparel_order_items`, `materials`, `material_order_items` |
 | 4 | [Depósitos e inventario](04-inventario.md) | `storage_locations`, `inventory_balances`, `inventory_movements` |
 | 5 | [Partidos, entrenamientos y asistencia](05-calendario-y-asistencia.md) | `matches`, `trainings`, `player_attendance`, `match_callups`, `venues` |
@@ -25,7 +25,7 @@ Contexto general: [arquitectura multi-tenant](../arquitectura-multi-tenant.md) y
 | 11 | [Comunicados por mail](11-comunicados.md) | `announcements`, `announcement_recipients` |
 | 12 | [Proyecto y Análisis](12-proyecto-y-analisis.md) | `season_objectives`, `competition_standings` |
 
-En total son 42 tablas, todas en la misma base del club: las 32 del borrador más `player_contacts` (TIZ-15), las 3 de competencias (TIZ-31), `documents` (TIZ-29), `player_requirements` (TIZ-32), `match_callups` (TIZ-33), `venues` (TIZ-39) y las 2 de comunicados (TIZ-24).
+En total son 44 tablas, todas en la misma base del club: las 32 del borrador más `player_contacts` (TIZ-15), las 3 de competencias (TIZ-31), `documents` (TIZ-29), `player_requirements` (TIZ-32), `match_callups` (TIZ-33), `venues` (TIZ-39), las 2 de comunicados (TIZ-24) y las 2 de posiciones deportivas.
 
 ## Decisiones de modelado
 

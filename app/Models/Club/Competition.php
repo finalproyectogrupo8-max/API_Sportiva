@@ -68,10 +68,25 @@ class Competition extends Model
      */
     public function scopeVisibleTo(Builder $query, ClubAccess $access): void
     {
-        $categoryIds = $access->scopedCategoryIds('competitions.view');
+        if (! $access->has('competitions.view')) {
+            $query->whereKey([0]);
 
-        if ($categoryIds !== null) {
-            $query->whereHas('categories', fn (Builder $query) => $query->whereIn('categories.id', $categoryIds ?: [0]));
+            return;
         }
+
+        $scope = $access->scope('competitions.view');
+
+        if ($scope === Permission::SCOPE_ALL) {
+            return;
+        }
+
+        if ($scope === Permission::SCOPE_SPORT) {
+            $query->whereIn('sport_id', $access->sportIds() ?: [0]);
+
+            return;
+        }
+
+        $categoryIds = $access->scopedCategoryIds('competitions.view');
+        $query->whereHas('categories', fn (Builder $query) => $query->whereIn('categories.id', $categoryIds ?: [0]));
     }
 }

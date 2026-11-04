@@ -60,8 +60,8 @@ class ClubUserApiTest extends TestCase
         [, $token] = $this->admin();
         $existing = User::factory()->create(['email' => 'ya@club.test']);
 
-        $this->withClubToken($token)->postJson('/api/club-users', ['email' => 'ya@club.test', 'roles' => ['coordinator']])
-            ->assertCreated()->assertJsonPath('meta.invited', false)->assertJsonPath('data.roles.0.slug', 'coordinator');
+        $this->withClubToken($token)->postJson('/api/club-users', ['email' => 'ya@club.test', 'roles' => ['sport_coordinator']])
+            ->assertCreated()->assertJsonPath('meta.invited', false)->assertJsonPath('data.roles.0.slug', 'sport_coordinator');
 
         Notification::assertNothingSent();
         $this->assertSame(1, User::where('email', 'ya@club.test')->count());

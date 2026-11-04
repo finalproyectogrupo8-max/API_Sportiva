@@ -69,7 +69,7 @@ class RequirementExpiringAlertRule
                     $recipientIds = array_merge($recipientIds, $this->recipients->forCategory($category));
                 }
             } else {
-                $recipientIds = $this->recipients->generalCoordinators();
+                $recipientIds = $this->recipients->administrators();
             }
 
             $recipientIds = array_values(array_unique($recipientIds));

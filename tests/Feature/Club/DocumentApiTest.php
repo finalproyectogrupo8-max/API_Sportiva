@@ -141,7 +141,7 @@ class DocumentApiTest extends TestCase
         $tenant = $this->tenantA();
         $token = $this->token();
 
-        $this->withClubToken($this->token('coordinator'))->post('/api/club/logo', ['logo' => UploadedFile::fake()->create('escudo.png', 80, 'image/png')], ['Accept' => 'application/json'])->assertForbidden();
+        $this->withClubToken($this->token('sport_coordinator'))->post('/api/club/logo', ['logo' => UploadedFile::fake()->create('escudo.png', 80, 'image/png')], ['Accept' => 'application/json'])->assertForbidden();
         $this->withClubToken($token)->post('/api/club/logo', ['logo' => $this->pdf()], ['Accept' => 'application/json'])
             ->assertUnprocessable()->assertJsonValidationErrors(['logo' => 'El escudo tiene que ser PNG, JPG o WEBP.']);
 

@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /** ABM de jugadores (TIZ-15). Con alcance "sus categorías", el profe ve solo los de sus categorías. */
@@ -35,7 +36,7 @@ class PlayerController extends Controller
 
         $players = Player::query()
             ->visibleTo($this->access())
-            ->with(['activeMemberships.category', 'photo'])
+            ->with(['activeMemberships.category', 'photo', 'positions.sport'])
             ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query->where(fn (Builder $query) => $query
                 ->where('first_name', 'like', "%{$search}%")
                 ->orWhere('last_name', 'like', "%{$search}%")
@@ -57,10 +58,18 @@ class PlayerController extends Controller
     public function store(StorePlayerRequest $request): JsonResponse
     {
         $this->authorizeClub('players.create');
+        $data = $request->validated();
+        $positionIds = $data['position_ids'] ?? [];
+        unset($data['position_ids']);
 
-        $player = Player::create(['status' => 'active', ...$request->validated()]);
+        $player = DB::connection('tenant')->transaction(function () use ($data, $positionIds) {
+            $player = Player::create(['status' => 'active', ...$data]);
+            $player->positions()->sync($positionIds);
 
-        return PlayerResource::make($player->refresh())->response()->setStatusCode(201);
+            return $player;
+        });
+
+        return PlayerResource::make($player->refresh()->load('positions.sport'))->response()->setStatusCode(201);
     }
 
     public function show(Player $player): PlayerResource
@@ -68,7 +77,7 @@ class PlayerController extends Controller
         $this->authorizeClub('players.view');
         $this->ensurePlayerVisible($player);
 
-        return PlayerResource::make($player->load(['activeMemberships.category', 'photo']));
+        return PlayerResource::make($player->load(['activeMemberships.category', 'photo', 'positions.sport']));
     }
 
     public function update(UpdatePlayerRequest $request, Player $player): PlayerResource
@@ -88,9 +97,18 @@ class PlayerController extends Controller
             }
         }
 
-        $player->update($data);
+        $positionIds = $data['position_ids'] ?? [];
+        $hasPositions = array_key_exists('position_ids', $data);
+        unset($data['position_ids']);
 
-        return PlayerResource::make($player->refresh()->load(['activeMemberships.category', 'photo']));
+        DB::connection('tenant')->transaction(function () use ($player, $data, $positionIds, $hasPositions) {
+            $player->update($data);
+            if ($hasPositions) {
+                $player->positions()->sync($positionIds);
+            }
+        });
+
+        return PlayerResource::make($player->refresh()->load(['activeMemberships.category', 'photo', 'positions.sport']));
     }
 
     /** Baja lógica. Las asignaciones activas se cierran: el jugador deja de figurar en el plantel. */
