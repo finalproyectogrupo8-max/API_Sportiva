@@ -8,11 +8,13 @@ Para el día a día (comandos, tests, migraciones) está [desarrollo-local.md](d
 
 | Requisito | Detalle |
 | --- | --- |
-| Windows | 10 (22H2 o posterior) u 11, de 64 bits |
+| Windows | 10 versión 2004 (build 19041) o posterior, u 11, de 64 bits |
+| Virtualización | Activada en el BIOS/UEFI (Intel VT-x o AMD-V/SVM). Casi todas las PCs la traen activada; el script avisa si no |
+| Memoria | 8 GB de RAM o más |
+| Espacio en disco | Unos 20 GB libres (Ubuntu, Docker, las imágenes y las dependencias) |
 | Internet | Para bajar WSL, Ubuntu, Docker Desktop y las imágenes |
-| Espacio en disco | Unos 10 GB libres |
-| Permisos | Una cuenta de usuario normal. El script pide UAC una sola vez para activar WSL |
-| Cuenta de GitHub | Con acceso a los repos del proyecto (el front y la API se clonan desde GitHub) |
+| Permisos | Correr el script con una cuenta normal, pero que pueda **aprobar el aviso de Windows (UAC)** una vez: ser administrador o saber la contraseña de uno |
+| Cuenta de GitHub | **No hace falta**: los repos son públicos. Solo sirve si vas a hacer commits |
 
 No instales nada a mano: el script se encarga de WSL, Ubuntu, Docker Desktop, Git y VS Code.
 
@@ -28,10 +30,10 @@ irm https://raw.githubusercontent.com/finalproyectogrupo8-max/API_Sportiva/main/
 
 | Paso | Qué hace | Qué tenés que hacer vos |
 | --- | --- | --- |
-| WSL 2 | Lo activa si falta | Aceptar el **UAC** una vez. Si Windows pide reiniciar, aceptá: al volver a iniciar sesión el script sigue solo |
+| WSL 2 | Activa WSL y la Plataforma de máquina virtual si faltan | Responder **s** y tocar **Sí** en el aviso de Windows (UAC). Si pide reiniciar, aceptá: al volver a iniciar sesión el script sigue solo |
 | Ubuntu | Lo instala sin la ventana de primer uso | Elegir **usuario y contraseña de Linux** (la contraseña es para `sudo`) |
 | Docker Desktop | Lo instala y lo arranca | Nada |
-| Git | Configura el acceso a GitHub en WSL | Escribir tu **usuario de GitHub** |
+| Git | Verifica el acceso a los repos y pregunta tu usuario de GitHub | **Opcional:** dejalo vacío y tocá Enter si no vas a hacer commits |
 | Proyectos | Clona la API y el front dentro de WSL | Nada |
 | VS Code | Lo instala con la extensión WSL | Aceptar las extensiones recomendadas cuando las ofrezca |
 
@@ -160,7 +162,9 @@ La app queda en <http://127.0.0.1:3000> y la API en <http://127.0.0.1:8000>. La 
 | Síntoma | Qué hacer |
 | --- | --- |
 | `EPROTO: The TLS handshake failed` o `ERR_SSL_PROTOCOL_ERROR` | Estás usando `https://` contra un puerto local que habla HTTP. Usá `http://127.0.0.1:3000` y `http://127.0.0.1:8000` |
-| Docker dice "Virtual Machine Platform is not enabled" | El script activa esa característica de Windows y reinicia; si no lo hizo, corré el comando como administrador y reiniciá |
+| `The requested operation requires elevation` | Ese comando necesita una consola de administrador: menú Inicio, escribí **PowerShell**, clic derecho, **Ejecutar como administrador**. Lo más simple es volver a correr el script y tocar **Sí** en el aviso de Windows |
+| Docker dice "Virtual Machine Platform is not enabled" | El script activa esa característica de Windows y reinicia; si no lo hizo, corré `Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -All` en una consola de administrador y reiniciá |
+| El script avisa que la virtualización está apagada, o WSL da `0x80370102` | Reiniciá, entrá al BIOS/UEFI (F2, F10, Supr o Esc al prender), activá **Intel Virtualization Technology / VT-x** o **SVM / AMD-V**, guardá y volvé a correr el script |
 | La PC es una VM y Docker/WSL no arrancan | Habilitá **virtualización anidada** en el hipervisor (VirtualBox: "Enable Nested VT-x/AMD-V"; VMware: "Virtualize Intel VT-x/EPT") |
 | Docker no puede bajar una imagen (`context deadline exceeded`) | Es la conexión a Docker Hub. Reintentá; el visor de base es opcional y el resto funciona igual |
 | "El puerto 3000 está en uso" | Cerrá el otro programa o levantá el front con `pnpm dev --port 3001` y actualizá `FRONTEND_URL` en la API |
