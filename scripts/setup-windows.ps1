@@ -64,6 +64,9 @@ $VsCodeWslExtension = 'ms-vscode-remote.remote-wsl'
 $DryRun = [bool]$WhatIfPreference
 $script:Plan = New-Object System.Collections.Generic.List[string]
 
+# Con -WhatIf, la primera carga del modulo de CIM (Get-CimInstance) anuncia cada alias que define: se carga antes, sin WhatIf.
+& { $WhatIfPreference = $false; Import-Module CimCmdlets -ErrorAction SilentlyContinue }
+
 $LogPath = Join-Path $env:TEMP ('api-sportiva-setup-{0:yyyyMMdd-HHmmss}.log' -f (Get-Date))
 try { Start-Transcript -Path $LogPath -WhatIf:$false | Out-Null } catch { $LogPath = $null }
 
@@ -87,8 +90,10 @@ function Stop-WithHelp([string]$Message) {
 }
 
 # Una fase del setup. Si falla (o se lanza Stop-WithHelp), se anota como pendiente y el script sigue.
-# Se corre con dot-sourcing (". $Body") para que las variables que define la fase sigan visibles
-# para las fases siguientes.
+# Se llama con punto (". Invoke-Phase ...") y corre el cuerpo con ". $Body": asi todo corre en el
+# alcance del script y las variables de una fase ($wslReady, $distroReady, $gitReady...) llegan a las
+# siguientes. Llamada sin punto, la funcion tiene su propio alcance y esas variables se pierden al volver.
+# La CI verifica que ninguna fase se llame sin punto.
 $script:Pending = New-Object System.Collections.Generic.List[string]
 function Invoke-Phase([string]$Name, [scriptblock]$Body) {
     try {
@@ -232,14 +237,15 @@ function Get-OptionalFeatureState([string]$Name) {
 # Activa caracteristicas de Windows en una ventana elevada (UAC). EncodedCommand evita problemas de comillas.
 function Enable-WindowsFeatures([string[]]$Names) {
     $quoted = ($Names | ForEach-Object { "'$_'" }) -join ','
-    $inner = "`$ProgressPreference='SilentlyContinue'; Enable-WindowsOptionalFeature -Online -FeatureName $quoted -All -NoRestart | Out-Null"
+    # try/catch + exit 1: sin esto, un error de Enable-WindowsOptionalFeature deja el codigo de salida en 0.
+    $inner = "`$ProgressPreference='SilentlyContinue'; `$ErrorActionPreference='Stop'; try { Enable-WindowsOptionalFeature -Online -FeatureName $quoted -All -NoRestart | Out-Null; exit 0 } catch { Write-Host `$_.Exception.Message; Start-Sleep -Seconds 10; exit 1 }"
     $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($inner))
     $exe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
     try {
         $process = Start-Process -FilePath $exe -ArgumentList '-NoProfile', '-EncodedCommand', $encoded -Verb RunAs -Wait -PassThru
     } catch {
         Stop-WithHelp ("No se pudo abrir la ventana de administrador para activar: " + ($Names -join ', ') +
-            ". Acepta el UAC cuando aparezca y volve a correr el script.")
+            ". Cuando Windows pregunte si permitis que PowerShell haga cambios, toca 'Si' (hace falta una cuenta con permisos de administrador). Despues volve a correr el script.")
     }
     if ($process.ExitCode -ne 0) {
         Stop-WithHelp "Activar las caracteristicas de Windows termino con codigo $($process.ExitCode)."
@@ -537,7 +543,46 @@ if (Test-IsAdmin) {
     }
 }
 
-Invoke-Phase 'WSL 2' {
+# ---------------------------------------------------------------------------
+# Chequeos previos: avisan temprano lo que despues haria fallar a WSL o a Docker.
+# ---------------------------------------------------------------------------
+Write-Step 'Revisando la PC'
+$osBuild = [Environment]::OSVersion.Version.Build
+if ($osBuild -lt 19041) {
+    Write-Host ("`n!! Windows build ${osBuild}: WSL 2 y Docker Desktop piden Windows 10 version 2004 (build 19041) o superior, " +
+        "o Windows 11. Actualiza Windows (Configuracion > Windows Update) y volve a correr el script.") -ForegroundColor Yellow
+    Stop-Log
+    return
+}
+Write-Ok "Windows build $osBuild"
+
+# VirtualizationFirmwareEnabled = False: la virtualizacion (Intel VT-x / AMD-V / SVM) esta apagada en el BIOS.
+# Con Hyper-V o WSL ya andando, Windows informa False o nada aunque este prendida: solo se avisa, no se corta.
+try {
+    $cpu = Get-CimInstance -ClassName Win32_Processor -ErrorAction Stop | Select-Object -First 1
+    $hypervisor = (Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop).HypervisorPresent
+    if (-not $hypervisor -and $cpu.VirtualizationFirmwareEnabled -eq $false) {
+        Write-Host ("`n!! La virtualizacion esta apagada en el BIOS/UEFI de esta PC. Sin ella, WSL 2 y Docker no arrancan.`n" +
+            "   Reinicia, entra al BIOS (suele ser F2, F10, Supr o Esc al prender), busca 'Intel Virtualization Technology',`n" +
+            "   'VT-x', 'SVM Mode' o 'AMD-V', activala, guarda y volve a correr el script.") -ForegroundColor Yellow
+        if (-not (Confirm-Action 'Seguir igual (por ejemplo, si ya la activaste)' -AlwaysAsk)) { Stop-Log; return }
+    } else {
+        Write-Ok 'virtualizacion disponible'
+    }
+} catch {
+    Write-Note 'No se pudo consultar si la virtualizacion esta activa en el BIOS; se sigue igual.'
+}
+
+try {
+    $freeGb = [math]::Floor((Get-PSDrive -Name ($env:SystemDrive.TrimEnd(':'))).Free / 1GB)
+    if ($freeGb -lt 20) {
+        Write-Host "`n!! Quedan $freeGb GB libres en $($env:SystemDrive). Docker, Ubuntu y las dependencias ocupan unos 15-20 GB." -ForegroundColor Yellow
+    } else {
+        Write-Ok "$freeGb GB libres en $($env:SystemDrive)"
+    }
+} catch { }
+
+. Invoke-Phase 'WSL 2' {
 # ---------------------------------------------------------------------------
 # 1. WSL 2
 # ---------------------------------------------------------------------------
@@ -558,16 +603,19 @@ if ($missingFeatures.Count -gt 0) {
         Enable-WindowsFeatures -Names $missingFeatures
     }
     if ($result -eq 'declined') {
-        Stop-WithHelp ("Docker no arranca sin esas caracteristicas. Activalas en PowerShell como administrador: " +
-            "Enable-WindowsOptionalFeature -Online -FeatureName " + ($missingFeatures -join ',') + " -All")
+        Stop-WithHelp ("Docker no arranca sin esas caracteristicas. Volve a correr el script y responde 's' (y 'Si' en la ventana de Windows), " +
+            "o activalas a mano: menu Inicio > escribi PowerShell > clic derecho > 'Ejecutar como administrador' y ahi corre: " +
+            "Enable-WindowsOptionalFeature -Online -FeatureName " + ($missingFeatures -join ',') + " -All   (despues reinicia Windows).")
     }
     if ($result -eq 'done') {
         Write-Ok 'caracteristicas activadas: hace falta reiniciar'
         Request-Reboot
         return
     }
-} else {
+} elseif ($vmPlatform -eq 'Enabled') {
     Write-Ok 'VirtualMachinePlatform esta habilitado'
+} else {
+    Write-Note "No se pudo confirmar el estado de VirtualMachinePlatform ($vmPlatform); se sigue igual."
 }
 $wslInstalledThisRun = $false
 if ($wslReady) {
@@ -590,7 +638,7 @@ if ($wslReady) {
 
 }
 
-Invoke-Phase 'Distro de Linux' {
+. Invoke-Phase 'Distro de Linux' {
 # ---------------------------------------------------------------------------
 # 2. Distro y usuario de Linux
 # ---------------------------------------------------------------------------
@@ -655,7 +703,7 @@ if ($distroReady) {
 
 }
 
-Invoke-Phase 'Docker Desktop' {
+. Invoke-Phase 'Docker Desktop' {
 # ---------------------------------------------------------------------------
 # 3. Docker Desktop
 # ---------------------------------------------------------------------------
@@ -692,7 +740,7 @@ if ($dockerExe) {
 
 }
 
-Invoke-Phase 'Docker dentro de WSL' {
+. Invoke-Phase 'Docker dentro de WSL' {
 # ---------------------------------------------------------------------------
 # 4. docker dentro de WSL (integracion de Docker Desktop), con reparacion escalonada
 # ---------------------------------------------------------------------------
@@ -769,7 +817,7 @@ if (-not ($distroReady -and $dockerReady)) {
 
 }
 
-Invoke-Phase 'git en WSL' {
+. Invoke-Phase 'git en WSL' {
 # ---------------------------------------------------------------------------
 # 5. git y credenciales dentro de WSL
 # ---------------------------------------------------------------------------
@@ -812,6 +860,8 @@ if (-not $distroReady) {
         }
     }
     if ($hasAccess) { Write-Ok "git tiene acceso a $RepoUrl" }
+    # Con acceso al repo ya se puede clonar: la identidad de abajo solo hace falta para hacer commits.
+    $gitReady = $hasAccess
 
     # El git de WSL es otro git, distinto del de Windows, y arranca sin identidad: sin esto el primer
     # commit falla, o queda con un email que GitHub no asocia a la cuenta (commit "sin usuario").
@@ -825,9 +875,13 @@ if (-not $distroReady) {
         $null = Request-Change 'Configurar nombre y email de git en WSL (email noreply de tu cuenta de GitHub)' { }
     } else {
         Write-Note 'git en WSL no tiene nombre y/o email configurados.'
+        if (-not $GitHubUser -and -not $Yes) {
+            Write-Note 'Solo hace falta para hacer commits. Para usar la app, deja vacio y toca Enter.'
+            $GitHubUser = (Read-Host '    Tu usuario de GitHub (opcional)').Trim()
+        }
         if (-not $GitHubUser) {
-            if ($Yes) { Stop-WithHelp 'Falta la identidad de git en WSL. Volve a correr con -GitHubUser <tu-usuario-de-GitHub>.' }
-            $GitHubUser = (Read-Host '    Tu usuario de GitHub (por ejemplo, nobodyh-ctrl)').Trim()
+            Write-Note 'Se sigue sin identidad de git: el proyecto se clona y se levanta igual. Para hacer commits despues: git config --global user.name / user.email.'
+            return
         }
         if ($GitHubUser -notmatch '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$') { Stop-WithHelp "'$GitHubUser' no es un usuario de GitHub valido." }
         try {
@@ -848,12 +902,11 @@ if (-not $distroReady) {
         }
         Write-Ok "git en WSL firma como: $newName <$newEmail>"
     }
-    $gitReady = $true
 }
 
 }
 
-Invoke-Phase 'Clonado y setup de la API' {
+. Invoke-Phase 'Clonado y setup de la API' {
 # ---------------------------------------------------------------------------
 # 6. Clonar dentro de WSL y correr el setup del proyecto
 # ---------------------------------------------------------------------------
@@ -901,7 +954,7 @@ if (-not ($cloneReady -and $dockerReady)) {
 # ---------------------------------------------------------------------------
 # 6b. Front (Next.js): clonar dentro de WSL y correr su scripts/setup.sh
 # ---------------------------------------------------------------------------
-Invoke-Phase 'Front' {
+. Invoke-Phase 'Front' {
 Write-Step "Clonando el front en ~/$FrontTargetDir (dentro de WSL)"
 
 $frontReady = $false
@@ -935,7 +988,7 @@ if (-not $frontReady) {
 }
 }
 
-Invoke-Phase 'VS Code' {
+. Invoke-Phase 'VS Code' {
 # ---------------------------------------------------------------------------
 # 7. VS Code con la extension WSL
 # ---------------------------------------------------------------------------

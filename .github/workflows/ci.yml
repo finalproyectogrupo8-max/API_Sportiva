@@ -45,6 +45,13 @@ jobs:
             Write-Output "::error file=$path::Tiene caracteres no ASCII: Windows PowerShell 5.1 los lee mal."
             exit 1
           }
+          # Cada fase se llama con punto: sin el, sus variables no llegan a las fases siguientes
+          # y el setup saltea la distro, el clonado y el levantado de la API y el front.
+          $undotted = Select-String -Path $path -Pattern '^\s*Invoke-Phase\s'
+          if ($undotted) {
+            $undotted | ForEach-Object { Write-Output "::error file=$path,line=$($_.LineNumber)::Llama a Invoke-Phase sin punto: usa '. Invoke-Phase'." }
+            exit 1
+          }
           # Caracteres de control (salvo tab, LF y CR): por ejemplo, un backspace que se colo al
           # escapar mal "\b" en una ruta. Parsea bien pero rompe la ruta en silencio.
           if ($bytes | Where-Object { $_ -lt 32 -and $_ -notin 9, 10, 13 }) {
