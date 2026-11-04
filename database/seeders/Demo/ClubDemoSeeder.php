@@ -86,9 +86,11 @@ class ClubDemoSeeder extends Seeder
         $this->facilities();
         $this->coaches();
         $this->players();
+        $this->positions();
         $this->documentsAndRequirements();
         $this->trainingsAndMatches();
         $this->attendanceAndEvaluations();
+        $this->seasonHistory();
         $this->inventory();
         $this->orders();
         $this->maintenance();
@@ -114,10 +116,11 @@ class ClubDemoSeeder extends Seeder
             $this->sport[$name] = $this->t('sports')->insertGetId(['name' => $name, 'is_active' => true] + $this->ts());
         }
 
-        // El coordinador de deporte solo ve fútbol.
+        // Cada coordinador de deporte ve solo el suyo: Pablo, fútbol; Diego, básquet.
         $this->t('club_user_sports')->insert([
-            'club_user_id' => $this->club['coordinador.futbol@sportiva.com'], 'sport_id' => $this->sport['Fútbol'],
-        ] + $this->ts());
+            ['club_user_id' => $this->club['coordinador.futbol@sportiva.com'], 'sport_id' => $this->sport['Fútbol']] + $this->ts(),
+            ['club_user_id' => $this->club['coordinador@sportiva.com'], 'sport_id' => $this->sport['Básquet']] + $this->ts(),
+        ]);
     }
 
     private function seasons(): void
@@ -358,6 +361,34 @@ class ClubDemoSeeder extends Seeder
         }
     }
 
+    /** Posiciones de cada deporte y la de cada jugador (según su posición preferida). */
+    private function positions(): void
+    {
+        $bySport = [
+            'Fútbol' => ['Arquero', 'Defensor', 'Mediocampista', 'Delantero'],
+            'Básquet' => ['Base', 'Escolta', 'Alero', 'Ala-pívot', 'Pivot'],
+            'Hockey' => ['Arquera', 'Defensora', 'Volante', 'Delantera'],
+        ];
+        $ids = [];
+        foreach ($bySport as $sport => $names) {
+            foreach ($names as $name) {
+                $ids[$sport][$name] = $this->t('positions')->insertGetId(['sport_id' => $this->sport[$sport], 'name' => $name, 'is_active' => true] + $this->ts());
+            }
+        }
+
+        // Las dos primeras categorías son de fútbol y la tercera de básquet.
+        $masculine = ['Arquera' => 'Arquero', 'Defensora' => 'Defensor', 'Delantera' => 'Delantero'];
+        $players = $this->t('players')->whereIn('id', $this->player)->pluck('preferred_position', 'id');
+        foreach ($this->player as $i => $playerId) {
+            $sport = $i < 12 ? 'Fútbol' : 'Básquet';
+            $name = (string) $players[$playerId];
+            $positionId = $ids[$sport][$name] ?? $ids[$sport][$masculine[$name] ?? ''] ?? null;
+            if ($positionId) {
+                $this->t('player_positions')->insert(['player_id' => $playerId, 'position_id' => $positionId] + $this->ts());
+            }
+        }
+    }
+
     private function documentsAndRequirements(): void
     {
         $profe = $this->club['profe@sportiva.com'];
@@ -525,6 +556,116 @@ class ClubDemoSeeder extends Seeder
                 ['evaluation_id' => $evaluationId, 'metric_key' => 'salto_horizontal', 'metric_name' => 'Salto horizontal', 'numeric_value' => 160 + $n * 4, 'unit' => 'cm', 'text_value' => null, 'notes' => null],
                 ['evaluation_id' => $evaluationId, 'metric_key' => 'lesiones', 'metric_name' => 'Lesiones previas', 'numeric_value' => null, 'unit' => null, 'text_value' => 'Ninguna', 'notes' => null],
             ]);
+        }
+    }
+
+    /**
+     * Tres meses de temporada para que Análisis y el inicio muestren tendencias: dos entrenamientos
+     * por semana y un partido cada dos semanas por categoría, con su asistencia, y evaluaciones
+     * físicas repetidas para ver la evolución. Usa una semilla fija: siempre genera lo mismo.
+     */
+    private function seasonHistory(): void
+    {
+        mt_srand(2026);
+        $recordedBy = $this->club['profe@sportiva.com'];
+        $monday = $this->now->copy()->startOfWeek();
+
+        // Qué tan seguido viene cada jugador (de 100). Mía (índice 10) dejó de venir las últimas semanas.
+        $commitment = [92, 88, 95, 80, 90, 72, 94, 86, 90, 97, 85, 78, 90, 84, 88, 93, 70, 82];
+        $categoryPlayers = [array_slice($this->player, 0, 6, true), array_slice($this->player, 6, 6, true), array_slice($this->player, 12, 6, true)];
+        $coaches = [$this->coach[0], $this->coach[0], $this->coach[2]];
+        $places = ['Cancha Principal', 'Parque Deportivo Norte', 'Gimnasio Central'];
+        $objectives = ['Pase y control orientado.', 'Defensa en bloque.', 'Transiciones rápidas.', 'Pelota parada.', 'Resistencia con pelota.', 'Juego reducido 4 vs 4.'];
+
+        $statusFor = function (int $playerIndex, int $weeksAgo) use ($commitment): string {
+            $chance = $commitment[$playerIndex];
+            if ($playerIndex === 10 && $weeksAgo <= 3) {
+                $chance = 15;
+            }
+            $roll = mt_rand(1, 100);
+
+            return match (true) {
+                $roll <= $chance - 6 => 'present',
+                $roll <= $chance => 'late',
+                $roll <= $chance + (100 - $chance) / 2 => 'excused',
+                default => 'absent',
+            };
+        };
+
+        $record = function (array $players, ?int $trainingId, ?int $matchId, int $weeksAgo) use ($statusFor, $recordedBy): void {
+            $rows = [];
+            foreach ($players as $index => $playerId) {
+                $status = $statusFor($index, $weeksAgo);
+                $rows[] = [
+                    'player_id' => $playerId, 'training_id' => $trainingId, 'match_id' => $matchId, 'status' => $status,
+                    'notes' => $status === 'excused' ? 'Avisó por WhatsApp.' : null, 'recorded_by' => $recordedBy,
+                ] + $this->ts();
+            }
+            $this->t('player_attendance')->insert($rows);
+        };
+
+        // Entrenamientos: martes y jueves (fútbol) o lunes y miércoles (básquet), de hace 12 semanas a la pasada.
+        for ($weeksAgo = 12; $weeksAgo >= 1; $weeksAgo--) {
+            foreach ($categoryPlayers as $c => $players) {
+                foreach ($c === 2 ? [0, 2] : [1, 3] as $dayOffset) {
+                    $start = $monday->copy()->subWeeks($weeksAgo)->addDays($dayOffset)->setTime($c === 2 ? 19 : 18, 0);
+                    $trainingId = $this->t('trainings')->insertGetId([
+                        'category_id' => $this->cat[$c], 'coach_id' => $coaches[$c],
+                        'starts_at' => $start, 'ends_at' => $start->copy()->addMinutes(90),
+                        'location' => $places[$c], 'objectives' => $objectives[($weeksAgo + $dayOffset + $c) % count($objectives)], 'notes' => null, 'deleted_at' => null,
+                    ] + $this->ts());
+                    $record($players, $trainingId, null, $weeksAgo);
+                }
+            }
+        }
+
+        // Partidos jugados: un sábado (fútbol) o viernes (básquet) cada dos semanas.
+        $opponents = [
+            ['Tigre Juniors', 'Club Náutico Hacoaj', 'Atlético Pacheco', 'San Fernando FC', 'Villa La Ñata', 'Don Torcuato'],
+            ['Las Leonas de Nordelta', 'Club Benavídez', 'Escobar Fútbol', 'Unión Pacheco', 'Rincón FC', 'Garín Sport'],
+            ['Náutico San Isidro', 'Atenas de Tigre', 'Club Pilar Básquet', 'Olimpo Escobar', 'Don Bosco', 'Racing de Garín'],
+        ];
+        // Resultados [a favor, en contra], en orden de la más vieja a la más reciente.
+        $scores = [
+            [[2, 1], [0, 0], [1, 2], [3, 0], [2, 2], [1, 0]],
+            [[1, 3], [2, 2], [2, 0], [0, 1], [3, 1], [2, 1]],
+            [[58, 61], [72, 64], [66, 66], [70, 55], [61, 68], [77, 70]],
+        ];
+        foreach ($categoryPlayers as $c => $players) {
+            foreach ([12, 10, 8, 6, 4, 2] as $n => $weeksAgo) {
+                [$our, $their] = $scores[$c][$n];
+                $date = $monday->copy()->subWeeks($weeksAgo)->addDays($c === 2 ? 4 : 5)->setTime($c === 2 ? 20 : 10, 0);
+                $home = $n % 2 === 0;
+                $matchId = $this->t('matches')->insertGetId([
+                    'category_id' => $this->cat[$c], 'competition_id' => $this->competition[$c === 2 ? 1 : 0], 'opponent' => $opponents[$c][$n],
+                    'match_date' => $date, 'meet_at' => $date->copy()->subMinutes(45),
+                    'venue_id' => $home ? $this->venue[0] : null, 'venue' => $home ? 'Cancha Principal' : 'Cancha de '.$opponents[$c][$n], 'maps_url' => null,
+                    'is_home' => $home, 'uniform' => $home ? 'home' : 'away', 'uniform_color' => $home ? 'Azul' : 'Blanco', 'what_to_bring' => null,
+                    'our_score' => $our, 'opponent_score' => $their, 'status' => 'played', 'notes' => null,
+                    'callup_published_at' => $date->copy()->subDays(2), 'public_token' => Str::random(32), 'updated_after_publish' => false, 'deleted_at' => null,
+                ] + $this->ts());
+                $record($players, null, $matchId, $weeksAgo);
+            }
+        }
+
+        // Evaluaciones físicas cada mes: sprint que baja y salto que sube de a poco.
+        $evaluator = $this->coach[1];
+        foreach ([0, 1] as $c) {
+            foreach ($categoryPlayers[$c] as $index => $playerId) {
+                foreach ([80, 50] as $round => $daysAgo) {
+                    $evaluationId = $this->t('physical_evaluations')->insertGetId([
+                        'player_id' => $playerId, 'category_id' => $this->cat[$c], 'evaluator_coach_id' => $evaluator,
+                        'evaluated_at' => $this->now->copy()->subDays($daysAgo + $index)->setTime(17, 0),
+                        'summary' => $round === 0 ? 'Evaluación de inicio de temporada.' : 'Control de mitad de temporada: viene mejorando.',
+                        'recommendations' => $round === 0 ? 'Trabajo de fuerza y técnica de carrera.' : 'Sumar pasadas cortas al final del entrenamiento.', 'deleted_at' => null,
+                    ] + $this->ts());
+                    $base = 4.9 + ($index % 3) * 0.1;
+                    $this->t('physical_measurements')->insert([
+                        ['evaluation_id' => $evaluationId, 'metric_key' => 'sprint_30m', 'metric_name' => 'Sprint 30 m', 'numeric_value' => round($base - $round * 0.15, 2), 'unit' => 's', 'text_value' => null, 'notes' => null],
+                        ['evaluation_id' => $evaluationId, 'metric_key' => 'salto_horizontal', 'metric_name' => 'Salto horizontal', 'numeric_value' => 150 + $index * 3 + $round * 6, 'unit' => 'cm', 'text_value' => null, 'notes' => null],
+                    ]);
+                }
+            }
         }
     }
 

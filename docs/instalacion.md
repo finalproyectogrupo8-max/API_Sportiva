@@ -204,7 +204,7 @@ Abrí <http://127.0.0.1:3000> y usá cualquiera de estas cuentas. La base ya vie
 | Email | Contraseña | Qué es | Dónde entra |
 | --- | --- | --- | --- |
 | `admin.club@sportiva.com` | `demo1234` | Administrador del club | Club **Demo Sportiva** (`/c/demo`) |
-| `coordinador@sportiva.com` | `demo1234` | Coordinador deportivo | Club Demo |
+| `coordinador@sportiva.com` | `demo1234` | Coordinador de Básquet | Club Demo |
 | `coordinador.futbol@sportiva.com` | `demo1234` | Coordinador de Fútbol | Club Demo |
 | `profe@sportiva.com` | `demo1234` | Profe (Sub-13 y Sub-15) | Club Demo |
 | `preparador@sportiva.com` | `demo1234` | Preparador físico | Club Demo |

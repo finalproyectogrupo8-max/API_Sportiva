@@ -36,7 +36,7 @@ class DemoSeeder extends Seeder
     /** Usuarios del club: email => [nombre, rol(es), deportes (nombre)]. */
     public const CLUB_USERS = [
         'admin.club@sportiva.com' => ['Laura Gómez', ['admin'], []],
-        'coordinador@sportiva.com' => ['Diego Herrera', ['coordinator'], []],
+        'coordinador@sportiva.com' => ['Diego Herrera', ['sport_coordinator'], ['Básquet']],
         'coordinador.futbol@sportiva.com' => ['Pablo Ruiz', ['sport_coordinator'], ['Fútbol']],
         'profe@sportiva.com' => ['Martín Ledesma', ['coach'], []],
         'preparador@sportiva.com' => ['Sofía Bianchi', ['physical_trainer'], []],
