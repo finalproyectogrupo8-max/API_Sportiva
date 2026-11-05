@@ -62,7 +62,9 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-            'throw' => false,
+            // Si el bucket falla (credenciales, permisos), que la subida corte con error: con false,
+            // storeAs devuelve false y quedaría un documento registrado sin archivo.
+            'throw' => true,
             'report' => false,
         ],
 
