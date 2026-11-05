@@ -106,7 +106,7 @@ Ver [mail-produccion.md](mail-produccion.md): `MAIL_MAILER=resend`, `RESEND_API_
 
 | Variable | Valor | Nota |
 | --- | --- | --- |
-| `DOCUMENTS_DISK` | `s3` | Aptos médicos y fotos. Privado. **Ver los [pendientes](#11-pendientes-antes-de-producción)**: hoy falta el paquete para S3 |
+| `DOCUMENTS_DISK` | `s3` | Aptos médicos, fotos y escudos de los clubes. Privado: la API los sirve, el bucket nunca se expone. Sin esto, se borran en cada deploy |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`, `AWS_ENDPOINT`, `AWS_URL` | Los del bucket | Laravel Cloud los inyecta si se conecta un bucket (Object Storage) al entorno. El bucket tiene que ser **privado** |
 
 ## 4. Variables de entorno del front
@@ -196,6 +196,7 @@ Los horarios del scheduler están en UTC (`timezone` de `config/app.php`), no en
 | Las bases de club están al día | Laravel Cloud → Commands: `php artisan tenants:migrate --force` | "Migrando..." con ✔ en cada club y sin migraciones pendientes |
 | La cola procesa | `php artisan mail:test tu-direccion@tudominio.com` | El mail llega. Si no llega, ver la [sección 7](#7-cola-y-scheduler) |
 | El mail sale sin depender de la cola | `php artisan mail:test tu-direccion@tudominio.com --sync` | El mail llega |
+| Los documentos van al bucket | Subir un apto médico a un jugador, hacer un deploy y volver a descargarlo | Se descarga igual después del deploy. Si la subida da error 500, revisar las variables `AWS_*` |
 | El alta de clubes funciona | Crear un club de prueba desde el panel de admin | Pasa de `provisioning` a `active` en menos de un minuto |
 | El front habla con la API | Login en el front del entorno | Entra y lista los clubes |
 
@@ -253,7 +254,6 @@ Lo que hoy falta en el código o en la configuración para que este runbook func
 | Pendiente | Por qué | Qué hacer |
 | --- | --- | --- |
 | `aws/aws-sdk-php` no está en `composer.json` | La managed queue lo requiere | Agregarlo cuando se elija la managed queue, o usar el worker propio |
-| `league/flysystem-aws-s3-v3` no está en `composer.json` | Sin él, `DOCUMENTS_DISK=s3` falla al subir o leer documentos | Agregarlo y probar subir un apto médico en staging |
 | El usuario de la base tiene permisos amplios | Puede crear y borrar cualquier base del cluster: un SQL injection tendría un impacto alto (ADR 0002) | Separar un usuario de operación y otro de provisión (pendiente en `docs/decisions.md`) |
 | El deploy no espera a la CI | Laravel Cloud despliega con cada push, aunque los tests fallen | Desactivar el deploy automático y dispararlo con un *deploy hook* desde la CI cuando pase (ADR 0002) |
 | La región no está elegida | Latencia entre Vercel y Laravel Cloud | Decidir y anotarlo en `docs/decisions.md` |
