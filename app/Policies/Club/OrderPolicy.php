@@ -119,18 +119,26 @@ class OrderPolicy
 
     public function approve(User $user, Order $order): bool
     {
-        return $this->hasTypePermission($user, $order->type, 'approve');
+        return $this->hasTypePermission($user, $order->type, 'approve') && $this->inScope($user, $order, 'approve');
     }
 
     /** Rechaza quien aprueba, o quien puede editar ese pedido (con su alcance: sus categorías o lo que pidió). */
     public function reject(User $user, Order $order): bool
     {
-        return $this->hasTypePermission($user, $order->type, 'approve')
+        return $this->approve($user, $order)
             || $this->update($user, $order);
     }
 
     public function deliver(User $user, Order $order): bool
     {
-        return $this->hasTypePermission($user, $order->type, 'deliver');
+        return $this->hasTypePermission($user, $order->type, 'deliver') && $this->inScope($user, $order, 'deliver');
+    }
+
+    /** Con alcance limitado (su deporte), solo los pedidos de sus categorías. */
+    private function inScope(User $user, Order $order, string $action): bool
+    {
+        $scoped = $this->scopedCategoryIds($user, $order->type, $action);
+
+        return $scoped === null || ($order->category_id !== null && in_array($order->category_id, $scoped, true));
     }
 }

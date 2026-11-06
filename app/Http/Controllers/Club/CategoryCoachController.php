@@ -46,6 +46,7 @@ class CategoryCoachController extends Controller
     public function store(StoreCategoryCoachRequest $request, Category $category): JsonResponse
     {
         $this->authorizeClub('categories.manage_coaches');
+        $this->ensureCategoryInScope($category, 'categories.manage_coaches');
 
         $data = $request->validated();
 
@@ -71,6 +72,7 @@ class CategoryCoachController extends Controller
     public function end(EndAssignmentRequest $request, CategoryCoach $categoryCoach): CategoryCoachResource
     {
         $this->authorizeClub('categories.manage_coaches');
+        $this->ensureCategoryInScope($categoryCoach->category, 'categories.manage_coaches');
 
         $end = Carbon::parse($request->validated('end_date') ?? today());
         if ($categoryCoach->start_date && $end->lt($categoryCoach->start_date)) {
