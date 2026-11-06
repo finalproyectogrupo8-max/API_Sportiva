@@ -215,6 +215,8 @@ return [
                 'material_orders.view:own', 'material_orders.create:own', 'material_orders.update:own',
                 'facilities.view', 'repairs.view', 'repairs.create',
                 'venues.view',
+                // Las temporadas de sus categorías y las del club: Proyecto arma su selector con ellas.
+                'seasons.view:own',
                 'categories.view:own',
                 'competitions.view:own',
                 'player_requirements.view:own', 'player_requirements.update:own',
@@ -234,6 +236,8 @@ return [
                 'material_orders.view:own', 'material_orders.create:own', 'material_orders.update:own',
                 'facilities.view', 'repairs.view', 'repairs.create',
                 'venues.view',
+                // Las temporadas de sus categorías y las del club: Proyecto arma su selector con ellas.
+                'seasons.view:own',
                 'categories.view:own',
                 'competitions.view:own',
                 'player_requirements.view:own',
