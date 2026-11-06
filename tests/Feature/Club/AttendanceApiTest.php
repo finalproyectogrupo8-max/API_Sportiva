@@ -7,6 +7,7 @@ use App\Models\Club\ClubUser;
 use App\Models\Club\Coach;
 use App\Models\Club\Document;
 use App\Models\Club\GameMatch;
+use App\Models\Club\MatchCallup;
 use App\Models\Club\Player;
 use App\Models\Club\PlayerAttendance;
 use App\Models\Club\PlayerCategoryMembership;
@@ -14,6 +15,7 @@ use App\Models\Club\Training;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\Concerns\InteractsWithTenants;
 use Tests\TestCase;
 
@@ -23,7 +25,10 @@ class AttendanceApiTest extends TestCase
     use InteractsWithTenants;
     use RefreshDatabase;
 
-    /** Profe de U15 con dos jugadores en el plantel y un partido y un entrenamiento de cada categoría. */
+    /**
+     * Profe de U15 con tres jugadoras en el plantel (Ana y Bea convocadas al partido, Caro no) y un
+     * partido y un entrenamiento de cada categoría.
+     */
     private function setUpClub(): array
     {
         $user = User::factory()->create();
@@ -37,14 +42,20 @@ class AttendanceApiTest extends TestCase
 
             $ana = Player::factory()->create(['first_name' => 'Ana', 'last_name' => 'Acosta']);
             $bea = Player::factory()->create(['first_name' => 'Bea', 'last_name' => 'Benítez']);
+            $caro = Player::factory()->create(['first_name' => 'Caro', 'last_name' => 'Castro']);
             $other = Player::factory()->create();
-            foreach ([[$ana, $u15, 4], [$bea, $u15, 7], [$other, $u17, 9]] as [$player, $category, $number]) {
+            foreach ([[$ana, $u15, 4], [$bea, $u15, 7], [$caro, $u15, 10], [$other, $u17, 9]] as [$player, $category, $number]) {
                 PlayerCategoryMembership::create(['player_id' => $player->id, 'category_id' => $category->id, 'start_date' => '2026-03-01', 'shirt_number' => $number, 'status' => 'active']);
             }
 
+            $match = GameMatch::factory()->create(['category_id' => $u15->id, 'match_date' => '2026-11-07 10:00:00']);
+            foreach ([$ana, $bea] as $player) {
+                MatchCallup::create(['match_id' => $match->id, 'player_id' => $player->id, 'token' => 'club-a.'.Str::random(40)]);
+            }
+
             return [
-                'ana' => $ana, 'bea' => $bea, 'other' => $other,
-                'match' => GameMatch::factory()->create(['category_id' => $u15->id, 'match_date' => '2026-11-07 10:00:00']),
+                'ana' => $ana, 'bea' => $bea, 'caro' => $caro, 'other' => $other,
+                'match' => $match,
                 'foreignMatch' => GameMatch::factory()->create(['category_id' => $u17->id, 'match_date' => '2026-11-08 10:00:00']),
                 'training' => Training::factory()->create(['category_id' => $u15->id, 'starts_at' => '2026-11-04 18:00:00', 'ends_at' => '2026-11-04 19:30:00']),
             ];
@@ -106,6 +117,34 @@ class AttendanceApiTest extends TestCase
         $this->withClubToken($token)
             ->putJson("/api/trainings/{$d['training']->id}/attendance", ['records' => [['player_id' => $d['ana']->id, 'status' => 'tarde']]])
             ->assertUnprocessable()->assertJsonValidationErrors('records.0.status');
+    }
+
+    public function test_match_attendance_is_only_for_called_up_players(): void
+    {
+        [$token, $d] = $this->setUpClub();
+        $url = "/api/matches/{$d['match']->id}/attendance";
+
+        // Caro está en el plantel pero no fue convocada: no aparece ni se le puede cargar asistencia.
+        $this->withClubToken($token)->getJson($url)->assertOk()->assertJsonCount(2, 'data')
+            ->assertJsonMissing(['player_id' => $d['caro']->id]);
+        $this->withClubToken($token)
+            ->putJson($url, ['records' => [['player_id' => $d['caro']->id, 'status' => 'present']]])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['records.0.player_id' => 'El jugador no está convocado a este partido.']);
+
+        // En el entrenamiento sí cuenta todo el plantel.
+        $this->withClubToken($token)->getJson("/api/trainings/{$d['training']->id}/attendance")->assertOk()->assertJsonCount(3, 'data');
+    }
+
+    public function test_match_without_callup_has_no_one_to_take_attendance(): void
+    {
+        [$token, $d] = $this->setUpClub();
+        $match = $this->inTenant($this->tenantA(), fn () => GameMatch::factory()->create(['category_id' => $d['match']->category_id, 'match_date' => '2026-11-14 10:00:00']));
+
+        $this->withClubToken($token)->getJson("/api/matches/{$match->id}/attendance")->assertOk()->assertJsonCount(0, 'data');
+        $this->withClubToken($token)
+            ->putJson("/api/matches/{$match->id}/attendance", ['records' => [['player_id' => $d['ana']->id, 'status' => 'present']]])
+            ->assertUnprocessable();
     }
 
     public function test_coach_only_sees_events_of_own_categories(): void

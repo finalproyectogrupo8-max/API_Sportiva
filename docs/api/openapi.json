@@ -1724,7 +1724,8 @@
                                                         "type": [
                                                             "integer",
                                                             "null"
-                                                        ]
+                                                        ],
+                                                        "description": "En un partido, el n\u00famero de la convocatoria; si no tiene, el del plantel."
                                                     },
                                                     "photo_document_id": {
                                                         "type": "integer",
@@ -1816,7 +1817,8 @@
                                                         "type": [
                                                             "integer",
                                                             "null"
-                                                        ]
+                                                        ],
+                                                        "description": "En un partido, el n\u00famero de la convocatoria; si no tiene, el del plantel."
                                                     },
                                                     "photo_document_id": {
                                                         "type": "integer",
@@ -1903,7 +1905,8 @@
                                                         "type": [
                                                             "integer",
                                                             "null"
-                                                        ]
+                                                        ],
+                                                        "description": "En un partido, el n\u00famero de la convocatoria; si no tiene, el del plantel."
                                                     },
                                                     "photo_document_id": {
                                                         "type": "integer",
@@ -1995,7 +1998,8 @@
                                                         "type": [
                                                             "integer",
                                                             "null"
-                                                        ]
+                                                        ],
+                                                        "description": "En un partido, el n\u00famero de la convocatoria; si no tiene, el del plantel."
                                                     },
                                                     "photo_document_id": {
                                                         "type": "integer",
