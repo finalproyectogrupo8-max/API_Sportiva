@@ -74,6 +74,7 @@ class CompetitionController extends Controller
     public function update(StoreCompetitionRequest $request, Competition $competition): CompetitionResource
     {
         $this->authorizeClub('competitions.update');
+        $this->ensureCanChange($competition, 'competitions.update');
         $data = $request->validated();
 
         DB::connection('tenant')->transaction(function () use ($competition, $data) {
@@ -92,6 +93,7 @@ class CompetitionController extends Controller
     public function destroy(Competition $competition): Response
     {
         $this->authorizeClub('competitions.delete');
+        $this->ensureCanChange($competition, 'competitions.delete');
 
         $competition->delete();
 
@@ -102,6 +104,7 @@ class CompetitionController extends Controller
     public function copy(CopyCompetitionRequest $request, Competition $competition): JsonResponse
     {
         $this->authorizeClub('competitions.create');
+        $this->ensureCanChange($competition, 'competitions.create');
         $data = $request->validated();
 
         $copy = DB::connection('tenant')->transaction(function () use ($competition, $data) {
@@ -125,6 +128,13 @@ class CompetitionController extends Controller
     private function ensureVisible(Competition $competition): void
     {
         abort_unless(Competition::query()->visibleTo($this->access())->whereKey($competition->getKey())->exists(), 404);
+    }
+
+    /** Fuera de su alcance responde 404; con alcance "sus deportes", solo cambia las de su deporte. */
+    private function ensureCanChange(Competition $competition, string $permission): void
+    {
+        $this->ensureVisible($competition);
+        abort_unless($this->access()->allowsSport($permission, $competition->sport_id), 403);
     }
 
     /**

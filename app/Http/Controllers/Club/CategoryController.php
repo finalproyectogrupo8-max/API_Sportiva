@@ -62,6 +62,7 @@ class CategoryController extends Controller
     public function update(UpdateCategoryRequest $request, Category $category): CategoryResource
     {
         Gate::authorize('update', $category);
+        $this->ensureCanChange($category, 'categories.update');
         $data = $request->validated();
 
         // TIZ-40: no se puede pasar a una rama que contradiga el plantel activo.
@@ -77,10 +78,19 @@ class CategoryController extends Controller
     public function destroy(Category $category): Response
     {
         Gate::authorize('delete', $category);
+        $this->ensureCanChange($category, 'categories.delete');
 
         $category->update(['is_active' => false]);
 
         return response()->noContent();
+    }
+
+    /** Fuera de su alcance responde 404; con alcance "sus deportes", solo cambia las de su deporte. */
+    private function ensureCanChange(Category $category, string $permission): void
+    {
+        $access = request()->user()->clubAccess();
+        abort_unless(Category::query()->visibleTo($access)->whereKey($category->getKey())->exists(), 404);
+        abort_unless($access->allowsSport($permission, $category->sport_id), 403);
     }
 
     private function ensureSquadFitsBranch(Category $category, ?string $branch): void

@@ -33,7 +33,7 @@ Las claves siguen [guia-abm §9](guia-abm.md#9-autorización-policies-y-permisos
 | | `attendance` | `view`, `record` | sí |
 | **Análisis** (`analisis`) | `physical_evaluations` | `view`, `create`, `update`, `delete` | sí |
 | **Proyecto** (`competencia`) | `project` | `view`, `update` | — |
-| **Habilitación** (`habilitacion`) | `competitions` (ligas, torneos y sus requisitos, TIZ-31) | `view`, `create`, `update`, `delete` | sí, solo `view` |
+| **Habilitación** (`habilitacion`) | `competitions` (ligas, torneos y sus requisitos, TIZ-31) | `view`, `create`, `update`, `delete` | sí |
 | | `player_requirements` (papeles de cada jugador, TIZ-32) | `view`, `update` (presentar), `approve` (aprobar o rechazar) | sí, `view` y `update` |
 | **Indumentaria** (`indumentaria`) | `apparel_items` (catálogo de prendas) | `view`, `create`, `update`, `delete` | — |
 | | `apparel_orders` | `view`, `create`, `update`, `delete`, `approve`, `deliver` | sí |
@@ -46,8 +46,8 @@ Las claves siguen [guia-abm §9](guia-abm.md#9-autorización-policies-y-permisos
 | | `maintenance` | `view`, `create`, `update`, `delete` | — |
 | **Configuración** | `club` (perfil del club) | `update` | — |
 | | `sports` | `view`, `create`, `update`, `delete` | — |
-| | `seasons` | `view`, `create`, `update`, `delete` | — |
-| | `categories` | `view`, `create`, `update`, `delete` | sí, solo `view` (TIZ-36) |
+| | `seasons` | `view`, `create`, `update`, `delete` | sí (por deporte) |
+| | `categories` | `view`, `create`, `update`, `delete` | sí |
 | | `venues` (sedes del club, TIZ-39) | `view`, `create`, `update`, `delete` | — |
 | **Equipo del club** | `club_users` | `view`, `invite`, `update`, `disable` | — |
 | | `roles` | `view`, `create`, `update`, `delete`, `assign` | — |
@@ -108,7 +108,7 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, **(d)** = sol
 | `categories.manage_players` | — | — | — | — | — |
 | `player_contacts` | ver (d) | ver (s) | — | — | — |
 | `player_documents` | ver (d) | ver, subir (s) | — | — | — |
-| `competitions` | ver (d) | ver (s) | ver (s) | — | — |
+| `competitions` | ver, crear, editar, eliminar (d) | ver (s) | ver (s) | — | — |
 | `player_requirements` | ver (d) | ver, presentar (s) | ver (s) | — | — |
 | `coaches` | ver (d) | ver (s) | ver (s) | — | — |
 | `categories.manage_coaches` | — | — | — | — | — |
@@ -127,8 +127,8 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, **(d)** = sol
 | `repairs` | ver | ver, crear | ver, crear | ver, crear | ✓ todas, incluida `assign` |
 | `maintenance` | ver | — | — | — | ✓ ver, crear, editar, eliminar |
 | `sports` | — | — | — | — | — |
-| `seasons` | ver (club) | — | — | — | — |
-| `categories` | ver (d) | ver (s) | ver (s) | — | — |
+| `seasons` | ver, crear, editar, eliminar (d) | — | — | — | — |
+| `categories` | ver, crear, editar, eliminar (d) | ver (s) | ver (s) | — | — |
 | `venues` (sedes, TIZ-39) | — | ver | ver | ver | ver |
 | `club.update` | — | — | — | — | — |
 | `club_users`, `roles` | — | — | — | — | — |
@@ -138,7 +138,7 @@ El Administrador del club conserva todos los permisos del catálogo en todo el c
 
 Notas:
 
-- **Coordinador de deporte (`sport_coordinator`):** consulta todo lo deportivo de sus deportes asignados (jugadores, profes, partidos, entrenamientos, convocatorias, asistencia, análisis, habilitación, proyecto y pedidos), nunca lo de otro deporte. También ve lo compartido del club que no pertenece a ningún deporte: catálogo de prendas, stock y canchas. Temporadas se consultan a nivel del club porque no están asociadas a un deporte. No carga ni modifica nada, no ve Equipo, roles ni comunicados, y no configura el club. En Proyecto ve los objetivos generales del club y los de sus categorías.
+- **Coordinador de deporte (`sport_coordinator`):** consulta todo lo deportivo de sus deportes asignados (jugadores, profes, partidos, entrenamientos, convocatorias, asistencia, análisis, habilitación, proyecto y pedidos), nunca lo de otro deporte. También ve lo compartido del club que no pertenece a ningún deporte: catálogo de prendas, stock y canchas. Arma las temporadas, categorías y competencias de sus deportes: ve las temporadas del club y las de sus deportes, y solo crea, edita o borra las de sus deportes. Fuera de eso no carga ni modifica nada, no ve Equipo, roles ni comunicados, y no configura el club (perfil, deportes, sedes). En Proyecto ve los objetivos generales del club y los de sus categorías.
 - **Aprobación y gestión general:** las tareas generales del club corresponden al Administrador. Los permisos de aprobación de pedidos no se asignan al Coordinador de deporte.
 - `delete` en pedidos solo aplica a pedidos en `draft` (lo valida la Policy, no el permiso).
 

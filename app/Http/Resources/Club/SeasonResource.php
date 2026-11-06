@@ -13,6 +13,9 @@ class SeasonResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            // null: temporada de todo el club.
+            'sport_id' => $this->sport_id,
+            'sport' => $this->whenLoaded('sport', fn () => $this->sport ? ['id' => $this->sport->id, 'name' => $this->sport->name] : null),
             'name' => $this->name,
             'start_date' => $this->start_date->toDateString(),
             'end_date' => $this->end_date->toDateString(),

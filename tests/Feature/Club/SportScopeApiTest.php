@@ -27,7 +27,7 @@ class SportScopeApiTest extends TestCase
     use InteractsWithTenants;
     use RefreshDatabase;
 
-    public function test_sport_coordinator_only_receives_read_permissions_limited_to_their_sport(): void
+    public function test_sport_coordinator_permissions_are_limited_to_their_sport(): void
     {
         $token = $this->clubToken($this->tenantA(), roles: ['sport_coordinator']);
 
@@ -42,82 +42,114 @@ class SportScopeApiTest extends TestCase
         // Lo compartido del club, que no es de ningún deporte.
         $this->assertSame('all', $scopes['inventory.view']);
         $this->assertSame('all', $scopes['facilities.view']);
-        // Solo consulta: nada de cargar, aprobar, gestionar el equipo ni configurar el club.
-        foreach (array_keys($scopes) as $permission) {
-            $this->assertStringEndsWith('.view', $permission);
+        // Arma temporadas, categorías y competencias de su deporte; del resto solo consulta.
+        foreach ($scopes as $permission => $scope) {
+            if (preg_match('/^(seasons|categories|competitions)\./', $permission)) {
+                $this->assertSame('sport', $scope, $permission);
+            } else {
+                $this->assertStringEndsWith('.view', $permission);
+            }
         }
         foreach (['club_users.view', 'roles.view', 'audit.view', 'sports.view', 'venues.view', 'announcements.view'] as $permission) {
             $this->assertArrayNotHasKey($permission, $scopes);
         }
     }
 
-    public function test_sport_coordinator_cannot_modify_seasons_categories_or_competitions(): void
+    public function test_sport_coordinator_manages_seasons_categories_and_competitions_only_of_their_sport(): void
     {
         $user = User::factory()->create();
         $token = $this->clubToken($this->tenantA(), $user, ['sport_coordinator']);
 
-        [$season, $football, $footballCategory, $basketballCategory, $footballCompetition, $basketballCompetition] = $this->inTenant($this->tenantA(), function () use ($user) {
+        [$football, $basketball, $clubSeason, $footballSeason, $basketballSeason, $basketballCategory, $basketballCompetition] = $this->inTenant($this->tenantA(), function () use ($user) {
             $football = Sport::factory()->create(['name' => 'Fútbol']);
             $basketball = Sport::factory()->create(['name' => 'Básquet']);
-            $season = Season::factory()->create(['name' => '2027']);
-            $clubUser = ClubUser::query()->where('global_user_id', $user->id)->sole();
-            $clubUser->sports()->attach($football->id);
+            ClubUser::query()->where('global_user_id', $user->id)->sole()->sports()->attach($football->id);
 
-            $footballCategory = Category::factory()->create([
-                'sport_id' => $football->id,
-                'season_id' => $season->id,
-                'name' => 'Fútbol U15',
-            ]);
-            $basketballCategory = Category::factory()->create([
-                'sport_id' => $basketball->id,
-                'season_id' => $season->id,
-                'name' => 'Básquet U15',
-            ]);
+            $clubSeason = Season::factory()->create(['name' => 'Club 2027']);
+            $footballSeason = Season::factory()->create(['name' => 'Fútbol 2027', 'sport_id' => $football->id]);
+            $basketballSeason = Season::factory()->create(['name' => 'Básquet 2027', 'sport_id' => $basketball->id]);
 
             return [
-                $season,
-                $football,
-                $footballCategory,
-                $basketballCategory,
-                Competition::factory()->create(['sport_id' => $football->id, 'season_id' => $season->id]),
-                Competition::factory()->create(['sport_id' => $basketball->id, 'season_id' => $season->id]),
+                $football, $basketball, $clubSeason, $footballSeason, $basketballSeason,
+                Category::factory()->create(['sport_id' => $basketball->id, 'season_id' => $basketballSeason->id]),
+                Competition::factory()->create(['sport_id' => $basketball->id, 'season_id' => $basketballSeason->id]),
             ];
         });
 
-        $this->withClubToken($token)->getJson('/api/seasons')
-            ->assertOk()->assertJsonCount(1, 'data');
-        $this->withClubToken($token)->getJson('/api/categories')
-            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $footballCategory->id);
-        $this->withClubToken($token)->getJson('/api/competitions')
-            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.sport_id', $football->id);
-        $this->withClubToken($token)->getJson('/api/positions')->assertForbidden();
+        $client = $this->withClubToken($token);
+        $season = fn (array $extra) => ['name' => 'Nueva', 'start_date' => '2028-01-01', 'end_date' => '2028-12-31', 'status' => 'planned', ...$extra];
 
-        $this->withClubToken($token)->postJson('/api/seasons', [
-            'name' => '2028', 'start_date' => '2028-01-01', 'end_date' => '2028-12-31', 'status' => 'planned',
-        ])->assertForbidden();
-        $this->withClubToken($token)->patchJson("/api/seasons/{$season->id}", ['name' => '2028'])->assertForbidden();
-        $this->withClubToken($token)->deleteJson("/api/seasons/{$season->id}")->assertForbidden();
+        // Temporadas: ve las del club y las de su deporte; crea y cambia solo las de su deporte.
+        $names = array_column($client->getJson('/api/seasons')->assertOk()->json('data'), 'name');
+        sort($names);
+        $this->assertSame(['Club 2027', 'Fútbol 2027'], $names);
+        $client->getJson("/api/seasons/{$basketballSeason->id}")->assertNotFound();
 
-        $categoryPayload = [
-            'sport_id' => $football->id,
-            'season_id' => $season->id,
-            'name' => 'Fútbol U17',
-        ];
-        $this->withClubToken($token)->postJson('/api/categories', $categoryPayload)->assertForbidden();
-        $this->withClubToken($token)->patchJson("/api/categories/{$footballCategory->id}", ['name' => 'Nuevo nombre'])->assertForbidden();
-        $this->withClubToken($token)->deleteJson("/api/categories/{$footballCategory->id}")->assertForbidden();
+        $client->postJson('/api/seasons', $season(['sport_id' => $football->id]))
+            ->assertCreated()->assertJsonPath('data.sport_id', $football->id)->assertJsonPath('data.sport.name', 'Fútbol');
+        $client->postJson('/api/seasons', $season([]))->assertUnprocessable()->assertJsonValidationErrors('sport_id');
+        $client->postJson('/api/seasons', $season(['sport_id' => $basketball->id]))->assertUnprocessable()->assertJsonValidationErrors('sport_id');
 
-        $competitionPayload = [
-            'sport_id' => $football->id,
-            'season_id' => $season->id,
-            'name' => 'Liga 2027',
-        ];
-        $this->withClubToken($token)->postJson('/api/competitions', $competitionPayload)->assertForbidden();
-        $this->withClubToken($token)->patchJson("/api/competitions/{$footballCompetition->id}", ['name' => 'Nueva liga'])->assertForbidden();
-        $this->withClubToken($token)->deleteJson("/api/competitions/{$footballCompetition->id}")->assertForbidden();
+        $client->patchJson("/api/seasons/{$footballSeason->id}", ['name' => 'Fútbol 2027 (Apertura)'])->assertOk();
+        $client->patchJson("/api/seasons/{$footballSeason->id}", ['sport_id' => null])->assertUnprocessable()->assertJsonValidationErrors('sport_id');
+        $client->patchJson("/api/seasons/{$clubSeason->id}", ['name' => 'Otra'])->assertForbidden();
+        $client->patchJson("/api/seasons/{$basketballSeason->id}", ['name' => 'Otra'])->assertNotFound();
+        $client->deleteJson("/api/seasons/{$basketballSeason->id}")->assertNotFound();
 
-        $this->withClubToken($token)->getJson("/api/categories/{$basketballCategory->id}")->assertNotFound();
-        $this->withClubToken($token)->getJson("/api/competitions/{$basketballCompetition->id}")->assertNotFound();
+        // Categorías: solo de su deporte, en una temporada de su deporte o del club.
+        $category = fn (array $extra) => ['sport_id' => $football->id, 'season_id' => $footballSeason->id, 'name' => 'Sub-15', ...$extra];
+        $created = $client->postJson('/api/categories', $category([]))->assertCreated()->json('data.id');
+        $client->postJson('/api/categories', $category(['season_id' => $clubSeason->id]))->assertCreated();
+        $client->postJson('/api/categories', $category(['name' => 'Sub-17', 'season_id' => $basketballSeason->id]))
+            ->assertUnprocessable()->assertJsonValidationErrors('season_id');
+        $client->postJson('/api/categories', $category(['name' => 'Sub-17', 'sport_id' => $basketball->id, 'season_id' => $clubSeason->id]))
+            ->assertUnprocessable()->assertJsonValidationErrors('sport_id');
+        $client->patchJson("/api/categories/{$created}", ['name' => 'Sub-16'])->assertOk();
+        $client->patchJson("/api/categories/{$basketballCategory->id}", ['name' => 'Otra'])->assertNotFound();
+        $client->deleteJson("/api/categories/{$basketballCategory->id}")->assertNotFound();
+        $client->deleteJson("/api/categories/{$created}")->assertNoContent();
+
+        // Competencias: igual.
+        $competition = fn (array $extra) => ['sport_id' => $football->id, 'season_id' => $footballSeason->id, 'name' => 'Liga', ...$extra];
+        $competitionId = $client->postJson('/api/competitions', $competition([]))->assertCreated()->json('data.id');
+        $client->postJson('/api/competitions', $competition(['sport_id' => $basketball->id, 'season_id' => $clubSeason->id]))
+            ->assertUnprocessable()->assertJsonValidationErrors('sport_id');
+        $client->postJson('/api/competitions', $competition(['season_id' => $basketballSeason->id]))
+            ->assertUnprocessable()->assertJsonValidationErrors('season_id');
+        $client->patchJson("/api/competitions/{$competitionId}", ['name' => 'Liga Oficial'])->assertOk();
+        $client->patchJson("/api/competitions/{$basketballCompetition->id}", ['name' => 'Otra'])->assertNotFound();
+        $client->postJson("/api/competitions/{$basketballCompetition->id}/copy", ['season_id' => $footballSeason->id])->assertNotFound();
+        $client->deleteJson("/api/competitions/{$competitionId}")->assertNoContent();
+
+        // Sigue sin tocar la configuración general del club.
+        $client->postJson('/api/sports', ['name' => 'Hockey'])->assertForbidden();
+        $client->getJson('/api/positions')->assertForbidden();
+    }
+
+    public function test_categories_and_competitions_cannot_use_a_season_of_another_sport(): void
+    {
+        $token = $this->clubToken($this->tenantA(), roles: ['admin']);
+
+        [$football, $basketball, $footballSeason, $category] = $this->inTenant($this->tenantA(), function () {
+            $football = Sport::factory()->create(['name' => 'Fútbol']);
+            $basketball = Sport::factory()->create(['name' => 'Básquet']);
+            $footballSeason = Season::factory()->create(['sport_id' => $football->id]);
+
+            return [$football, $basketball, $footballSeason, Category::factory()->create(['sport_id' => $football->id, 'season_id' => $footballSeason->id])];
+        });
+
+        $client = $this->withClubToken($token);
+        $client->postJson('/api/categories', ['sport_id' => $basketball->id, 'season_id' => $footballSeason->id, 'name' => 'U15'])
+            ->assertUnprocessable()->assertJsonValidationErrors('season_id');
+        $client->postJson('/api/competitions', ['sport_id' => $basketball->id, 'season_id' => $footballSeason->id, 'name' => 'Liga'])
+            ->assertUnprocessable()->assertJsonValidationErrors('season_id');
+        // La temporada ya tiene categorías de fútbol: no se puede pasar a básquet.
+        $client->patchJson("/api/seasons/{$footballSeason->id}", ['sport_id' => $basketball->id])
+            ->assertUnprocessable()->assertJsonValidationErrors('sport_id');
+        // El admin sí crea temporadas del club (sin deporte).
+        $client->postJson('/api/seasons', ['name' => 'Club 2028', 'start_date' => '2028-01-01', 'end_date' => '2028-12-31', 'status' => 'planned'])
+            ->assertCreated()->assertJsonPath('data.sport_id', null);
+        $this->assertNotNull($category);
     }
 
     public function test_sport_coordinator_only_sees_categories_of_assigned_sports(): void

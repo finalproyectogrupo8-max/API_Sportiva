@@ -22,7 +22,9 @@ class SeasonObjectiveController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorizeClub('project.view');
-        $seasonId = $request->integer('season_id') ?: Season::query()->where('status', 'active')->orderByDesc('start_date')->value('id');
+        // Temporada en curso: con alcance "sus deportes", la de su deporte o la del club.
+        $seasonId = $request->integer('season_id') ?: Season::query()->visibleTo($this->access(), 'project.view')
+            ->where('status', 'active')->orderByDesc('start_date')->value('id');
         $scoped = $this->access()->scopedCategoryIds('project.view');
 
         $objectives = SeasonObjective::query()

@@ -15,6 +15,8 @@ class IndexSeasonRequest extends FormRequest
     {
         return [
             'search' => ['sometimes', 'string', 'max:100'],
+            // Las temporadas que puede usar ese deporte: las suyas y las del club.
+            'sport_id' => ['sometimes', 'integer'],
             'status' => ['sometimes', 'string', 'in:planned,active,closed'],
             'sort' => ['sometimes', 'string', 'in:name,-name,start_date,-start_date,created_at,-created_at'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
