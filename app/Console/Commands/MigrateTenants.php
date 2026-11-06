@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Club\Coaches\CoachAccounts;
 use App\Models\Tenant;
 use App\Tenancy\TenantDatabase;
 use Illuminate\Console\Command;
@@ -54,6 +55,12 @@ class MigrateTenants extends Command
                 // Roles y permisos al día con el catálogo (idempotente).
                 if ($this->call('club:sync-permissions', ['--tenant' => $tenant->slug]) !== self::SUCCESS) {
                     $hasError = true;
+                }
+
+                // Profes con su ficha vinculada (los de antes de que se vinculara sola).
+                $linked = $tenantDatabase->run($tenant, fn () => app(CoachAccounts::class)->backfill());
+                if ($linked > 0) {
+                    $this->info("✔ {$linked} profe(s) vinculado(s) con su ficha.");
                 }
             } catch (Throwable $e) {
                 $this->error("✖ Error al migrar base [{$tenant->database_name}]: {$e->getMessage()}");

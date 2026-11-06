@@ -107,7 +107,7 @@ class ClubUserController extends Controller
             $membership->save();
 
             return DB::connection('tenant')->transaction(function () use ($user, $data, $membership, $audit) {
-                $clubUser = $this->members->ensure($user, $data['roles'], sportIds: $data['sport_ids'] ?? null);
+                $clubUser = $this->members->ensure($user, $data['roles'], sportIds: $data['sport_ids'] ?? null, coachProfile: true);
                 $audit->recordMembershipRoles($membership, [], $clubUser->roles()->pluck('slug')->all());
                 app(ClubAudit::class)->record('club_user.added', 'club_user', $clubUser->id, ['name' => $clubUser->display_name, 'roles' => ['to' => $clubUser->roles()->pluck('name')->all()]]);
 
@@ -173,7 +173,7 @@ class ClubUserController extends Controller
                 }
                 if (isset($data['roles']) || array_key_exists('sport_ids', $data)) {
                     $user = User::findOrFail($clubUser->global_user_id);
-                    $this->members->ensure($user, $data['roles'] ?? null, reactivate: false, sportIds: $data['sport_ids'] ?? null);
+                    $this->members->ensure($user, $data['roles'] ?? null, reactivate: false, sportIds: $data['sport_ids'] ?? null, coachProfile: true);
                 }
                 if ($membership && isset($data['roles'])) {
                     $audit->recordMembershipRoles($membership, $before, $clubUser->roles()->pluck('slug')->all());
