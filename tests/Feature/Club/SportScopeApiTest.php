@@ -340,6 +340,33 @@ class SportScopeApiTest extends TestCase
         $client->postJson('/api/season-objectives', $objective(null))->assertForbidden();
     }
 
+    public function test_coach_sees_seasons_of_their_categories_and_of_the_club(): void
+    {
+        $user = User::factory()->create();
+        $token = $this->clubToken($this->tenantA(), $user, ['coach']);
+
+        $this->inTenant($this->tenantA(), function () use ($user) {
+            $football = Sport::factory()->create(['name' => 'Fútbol']);
+            $basketball = Sport::factory()->create(['name' => 'Básquet']);
+            Season::factory()->create(['name' => 'Club 2027']);
+            $footballSeason = Season::factory()->create(['name' => 'Fútbol 2027', 'sport_id' => $football->id]);
+            Season::factory()->create(['name' => 'Básquet 2027', 'sport_id' => $basketball->id]);
+
+            $category = Category::factory()->create(['sport_id' => $football->id, 'season_id' => $footballSeason->id]);
+            $coach = Coach::factory()->create(['club_user_id' => ClubUser::query()->where('global_user_id', $user->id)->sole()->id]);
+            DB::connection('tenant')->table('category_coaches')->insert([
+                'category_id' => $category->id, 'coach_id' => $coach->id, 'assignment_type' => 'head_coach',
+            ]);
+        });
+
+        // Proyecto arma su selector con estas temporadas: sin ellas mostraba "No hay temporadas".
+        $names = array_column($this->withClubToken($token)->getJson('/api/seasons')->assertOk()->json('data'), 'name');
+        sort($names);
+        $this->assertSame(['Club 2027', 'Fútbol 2027'], $names);
+        $this->withClubToken($token)->postJson('/api/seasons', ['name' => 'X', 'start_date' => '2028-01-01', 'end_date' => '2028-12-31', 'status' => 'planned'])
+            ->assertForbidden();
+    }
+
     public function test_broadest_scope_wins_when_user_has_multiple_roles(): void
     {
         $user = User::factory()->create();
