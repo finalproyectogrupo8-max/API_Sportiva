@@ -31,6 +31,7 @@ erDiagram
     }
     seasons {
         bigint id PK
+        bigint sport_id FK "null = de todo el club"
         varchar name
         date start_date
         date end_date
@@ -110,11 +111,14 @@ erDiagram
 | Columna | Tipo | Null | Restricciones | Descripción |
 |---|---|---|---|---|
 | `id` | BIGINT UNSIGNED | no | PK | |
+| `sport_id` | BIGINT UNSIGNED | sí | FK → `sports.id` | Deporte de la temporada. `NULL`: de todo el club, la usan todos los deportes |
 | `name` | VARCHAR(80) | no | | "Temporada 2027" |
 | `start_date` | DATE | no | | |
 | `end_date` | DATE | no | `CHECK (end_date >= start_date)` | |
 | `status` | VARCHAR(20) | no | | `planned` / `active` / `closed` |
 | `created_at`, `updated_at` | TIMESTAMP | sí | | |
+
+Cada coordinador arma las temporadas de su deporte. Una categoría o competencia solo puede ir en una temporada de su mismo deporte o en una del club, y una temporada con categorías o competencias no se puede pasar a otro deporte.
 
 ## `categories`
 

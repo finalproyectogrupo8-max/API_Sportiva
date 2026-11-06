@@ -82,7 +82,7 @@ return [
         'habilitacion' => [
             'label' => 'Habilitación',
             'resources' => [
-                'competitions' => ['label' => 'Competencias y requisitos', 'actions' => $crud, 'scoped' => ['view']],
+                'competitions' => ['label' => 'Competencias y requisitos', 'actions' => $crud, 'scoped' => $crud],
                 'player_requirements' => ['label' => 'Papeles de cada jugador', 'actions' => ['view', 'update', 'approve'], 'scoped' => ['view', 'update']],
             ],
         ],
@@ -123,8 +123,8 @@ return [
             'resources' => [
                 'club' => ['label' => 'Perfil del club', 'actions' => ['update']],
                 'sports' => ['label' => 'Deportes', 'actions' => $crud],
-                'seasons' => ['label' => 'Temporadas', 'actions' => $crud],
-                'categories' => ['label' => 'Categorías', 'actions' => $crud, 'scoped' => ['view']],
+                'seasons' => ['label' => 'Temporadas', 'actions' => $crud, 'scoped' => $crud],
+                'categories' => ['label' => 'Categorías', 'actions' => $crud, 'scoped' => $crud],
                 'venues' => ['label' => 'Sedes', 'actions' => $crud],
             ],
         ],
@@ -152,14 +152,15 @@ return [
         ],
         'sport_coordinator' => [
             'name' => 'Coordinador de deporte',
-            'description' => 'Consulta todo lo deportivo de sus deportes asignados, sin modificar ni configurar el club.',
-            // Ve todo lo de sus deportes (":sport", nunca otro deporte) y lo compartido del club que no
-            // pertenece a ningún deporte (catálogo de prendas, stock, canchas). No ve Equipo, roles,
-            // comunicados ni la configuración del admin, y no aprueba pedidos.
+            'description' => 'Arma las temporadas, categorías y competencias de sus deportes y consulta todo lo deportivo de ellos.',
+            // Todo con alcance ":sport": nunca toca otro deporte. Además consulta lo compartido del club que
+            // no pertenece a ningún deporte (catálogo de prendas, stock, canchas). No ve Equipo, roles,
+            // comunicados ni la configuración general del club, y no aprueba pedidos.
             'permissions' => [
-                'seasons.view',
-                'categories.view:sport',
-                'competitions.view:sport',
+                // Arma la temporada de su deporte: temporadas, categorías y competencias.
+                'seasons.view:sport', 'seasons.create:sport', 'seasons.update:sport', 'seasons.delete:sport',
+                'categories.view:sport', 'categories.create:sport', 'categories.update:sport', 'categories.delete:sport',
+                'competitions.view:sport', 'competitions.create:sport', 'competitions.update:sport', 'competitions.delete:sport',
                 'players.view:sport',
                 'player_contacts.view:sport',
                 'player_documents.view:sport',

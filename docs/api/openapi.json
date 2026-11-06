@@ -14182,6 +14182,14 @@
                         }
                     },
                     {
+                        "name": "sport_id",
+                        "in": "query",
+                        "description": "Las temporadas que puede usar ese deporte: las suyas y las del club.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
                         "name": "status",
                         "in": "query",
                         "schema": {
@@ -14229,7 +14237,17 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/SeasonResource"
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/SeasonResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "sport"
+                                                        ]
+                                                    }
+                                                ]
                                             }
                                         },
                                         "links": {
@@ -14393,7 +14411,17 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/SeasonResource"
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/SeasonResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "sport"
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -14441,7 +14469,17 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/SeasonResource"
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/SeasonResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "sport"
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -14496,7 +14534,17 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/SeasonResource"
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/SeasonResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "sport"
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -21396,6 +21444,31 @@
                     "id": {
                         "type": "integer"
                     },
+                    "sport_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "null: temporada de todo el club."
+                    },
+                    "sport": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
                     "name": {
                         "type": "string"
                     },
@@ -21417,6 +21490,7 @@
                 },
                 "required": [
                     "id",
+                    "sport_id",
                     "name",
                     "start_date",
                     "end_date",
@@ -23010,6 +23084,13 @@
             "StoreSeasonRequest": {
                 "type": "object",
                 "properties": {
+                    "sport_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Sin deporte, la temporada es de todo el club (solo con alcance \"todo el club\")."
+                    },
                     "name": {
                         "type": "string",
                         "maxLength": 80
@@ -24555,6 +24636,12 @@
             "UpdateSeasonRequest": {
                 "type": "object",
                 "properties": {
+                    "sport_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
                     "name": {
                         "type": "string",
                         "maxLength": 80

@@ -175,6 +175,49 @@ class ClubAccess
     }
 
     /**
+     * Deportes sobre los que el usuario puede usar el permiso:
+     * - null: alcance "all" (todos los deportes).
+     * - list<int>: alcance "sport" (sus deportes asignados) u "own" (los deportes de sus categorías).
+     * - []: no tiene el permiso.
+     *
+     * @return list<int>|null
+     */
+    public function scopedSportIds(string $permission): ?array
+    {
+        $scope = $this->scope($permission);
+
+        if ($scope === null) {
+            return [];
+        }
+
+        if ($scope === Permission::SCOPE_ALL) {
+            return null;
+        }
+
+        if ($scope === Permission::SCOPE_SPORT) {
+            return $this->sportIds();
+        }
+
+        $categoryIds = $this->ownCategoryIds();
+
+        return $categoryIds === [] ? [] : DB::connection('tenant')->table('categories')
+            ->whereIn('id', $categoryIds)
+            ->distinct()
+            ->pluck('sport_id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    /** Si el usuario puede usar el permiso sobre registros de ese deporte. */
+    public function allowsSport(string $permission, ?int $sportId): bool
+    {
+        $sportIds = $this->scopedSportIds($permission);
+
+        return $sportIds === null || ($sportId !== null && in_array($sportId, $sportIds, true));
+    }
+
+    /**
      * IDs de categorías alcanzables para el permiso dado:
      * - null: alcance "all" (todo el club, no filtrar).
      * - list<int>: alcance "sport" (categorías de sus deportes) u "own" (sus categorías como profe).

@@ -27,6 +27,11 @@ class SeasonController extends Controller
         $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
 
         $seasons = Season::query()
+            ->with('sport')
+            ->visibleTo($request->user()->clubAccess())
+            ->when($filters['sport_id'] ?? null, fn ($query, $sportId) => $query->where(
+                fn ($q) => $q->whereNull('sport_id')->orWhere('sport_id', $sportId),
+            ))
             ->when($filters['search'] ?? null, fn ($query, $search) => $query->where('name', 'like', "%{$search}%"))
             ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
             ->orderBy($column, $direction)
@@ -42,28 +47,31 @@ class SeasonController extends Controller
 
         $season = Season::create($request->validated());
 
-        return SeasonResource::make($season->refresh())->response()->setStatusCode(201);
+        return SeasonResource::make($season->refresh()->load('sport'))->response()->setStatusCode(201);
     }
 
     public function show(Season $season): SeasonResource
     {
         Gate::authorize('view', $season);
+        $this->ensureVisible($season);
 
-        return SeasonResource::make($season);
+        return SeasonResource::make($season->load('sport'));
     }
 
     public function update(UpdateSeasonRequest $request, Season $season): SeasonResource
     {
         Gate::authorize('update', $season);
+        $this->ensureCanChange($season, 'seasons.update');
 
         $season->update($request->validated());
 
-        return SeasonResource::make($season->refresh());
+        return SeasonResource::make($season->refresh()->load('sport'));
     }
 
     public function destroy(Season $season): Response|JsonResponse
     {
         Gate::authorize('delete', $season);
+        $this->ensureCanChange($season, 'seasons.delete');
 
         if ($season->categories()->exists()) {
             return ApiError::conflict('resource_in_use');
@@ -80,5 +88,18 @@ class SeasonController extends Controller
         }
 
         return response()->noContent();
+    }
+
+    /** Fuera de su alcance responde 404: no se revela que existe. */
+    private function ensureVisible(Season $season): void
+    {
+        abort_unless(Season::query()->visibleTo(request()->user()->clubAccess())->whereKey($season->getKey())->exists(), 404);
+    }
+
+    /** Con alcance "sus deportes" solo cambia las de su deporte, no las del club ni las de otro. */
+    private function ensureCanChange(Season $season, string $permission): void
+    {
+        $this->ensureVisible($season);
+        abort_unless(request()->user()->clubAccess()->allowsSport($permission, $season->sport_id), 403);
     }
 }
