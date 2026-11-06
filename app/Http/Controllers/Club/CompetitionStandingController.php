@@ -24,10 +24,13 @@ class CompetitionStandingController extends Controller
     public function index(Request $request, Competition $competition): JsonResponse
     {
         $this->authorizeClub('project.view');
+        // Alcance "su deporte": solo las tablas de sus categorías.
+        $scoped = $this->access()->scopedCategoryIds('project.view');
 
         $rows = CompetitionStanding::query()
             ->where('competition_id', $competition->id)
             ->when($request->integer('category_id'), fn ($q, $id) => $q->where('category_id', $id))
+            ->when($scoped !== null, fn ($q) => $q->whereIn('category_id', $scoped ?: [0]))
             ->orderBy('category_id')->orderBy('position')
             ->get();
 

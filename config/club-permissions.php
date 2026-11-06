@@ -76,7 +76,7 @@ return [
         'competencia' => [
             'label' => 'Proyecto',
             'resources' => [
-                'project' => ['label' => 'Objetivos y tabla', 'actions' => ['view', 'update']],
+                'project' => ['label' => 'Objetivos y tabla', 'actions' => ['view', 'update'], 'scoped' => ['view']],
             ],
         ],
         'habilitacion' => [
@@ -152,11 +152,34 @@ return [
         ],
         'sport_coordinator' => [
             'name' => 'Coordinador de deporte',
-            'description' => 'Consulta temporadas, categorías y competencias de sus deportes asignados.',
+            'description' => 'Consulta todo lo deportivo de sus deportes asignados, sin modificar ni configurar el club.',
+            // Ve todo lo de sus deportes (":sport", nunca otro deporte) y lo compartido del club que no
+            // pertenece a ningún deporte (catálogo de prendas, stock, canchas). No ve Equipo, roles,
+            // comunicados ni la configuración del admin, y no aprueba pedidos.
             'permissions' => [
                 'seasons.view',
                 'categories.view:sport',
                 'competitions.view:sport',
+                'players.view:sport',
+                'player_contacts.view:sport',
+                'player_documents.view:sport',
+                'player_requirements.view:sport',
+                'coaches.view:sport',
+                'matches.view:sport',
+                'trainings.view:sport',
+                'attendance.view:sport',
+                'callups.view:sport',
+                'physical_evaluations.view:sport',
+                'project.view:sport',
+                'apparel_orders.view:sport',
+                'material_orders.view:sport',
+                'apparel_items.view',
+                'materials.view',
+                'storage_locations.view',
+                'inventory.view',
+                'facilities.view',
+                'repairs.view',
+                'maintenance.view',
             ],
         ],
         'coach' => [

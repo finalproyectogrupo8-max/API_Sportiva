@@ -18,11 +18,16 @@ class PermissionCatalogTest extends TestCase
             array_keys($roles),
         );
         $this->assertSame($catalog->names(), array_keys($roles['admin']['permissions']));
-        $this->assertSame([
-            'seasons.view' => 'all',
-            'categories.view' => 'sport',
-            'competitions.view' => 'sport',
-        ], $roles['sport_coordinator']['permissions']);
+        $coordinator = $roles['sport_coordinator']['permissions'];
+        $this->assertSame('all', $coordinator['seasons.view']);
+        $this->assertSame('sport', $coordinator['categories.view']);
+        $this->assertSame('sport', $coordinator['players.view']);
+        $this->assertSame('sport', $coordinator['project.view']);
+        $this->assertSame('all', $coordinator['inventory.view']);
+        foreach (array_keys($coordinator) as $permission) {
+            $this->assertStringEndsWith('.view', $permission, 'el coordinador solo consulta');
+        }
+        $this->assertArrayNotHasKey('club_users.view', $coordinator);
         $this->assertSame('own', $roles['coach']['permissions']['players.view']);
         foreach ($roles as $slug => $role) {
             if ($slug !== 'admin') {
