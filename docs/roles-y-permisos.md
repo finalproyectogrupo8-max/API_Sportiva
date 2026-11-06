@@ -127,7 +127,7 @@ Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, **(d)** = sol
 | `repairs` | ✓ todas, incluida `assign` | ver, crear | ver, crear | ver, crear | ✓ todas, incluida `assign` |
 | `maintenance` | ✓ ver, crear, editar, eliminar | — | — | — | ✓ ver, crear, editar, eliminar |
 | `sports` | — | — | — | — | — |
-| `seasons` | ver, crear, editar, eliminar (d) | — | — | — | — |
+| `seasons` | ver, crear, editar, eliminar (d) | ver (s) | ver (s) | — | — |
 | `categories` | ver, crear, editar, eliminar (d) | ver (s) | ver (s) | — | — |
 | `venues` (sedes, TIZ-39) | — | ver | ver | ver | ver |
 | `club.update` | — | — | — | — | — |
