@@ -27,16 +27,21 @@ class PermissionCatalogTest extends TestCase
         $this->assertSame('sport', $coordinator['players.view']);
         $this->assertSame('sport', $coordinator['project.view']);
         $this->assertSame('all', $coordinator['inventory.view']);
-        // Fuera de temporadas, categorías y competencias de su deporte, solo consulta.
-        foreach (array_keys($coordinator) as $permission) {
-            if (! preg_match('/^(seasons|categories|competitions)\./', $permission)) {
-                $this->assertStringEndsWith('.view', $permission, "{$permission}: el coordinador solo consulta");
-            }
+        // Opera su deporte y lo compartido del club, pero no gestiona el equipo ni configura el club.
+        $this->assertSame('sport', $coordinator['players.create']);
+        $this->assertSame('sport', $coordinator['categories.manage_coaches']);
+        $this->assertSame('sport', $coordinator['apparel_orders.approve']);
+        $this->assertSame('sport', $coordinator['announcements.send']);
+        $this->assertSame('all', $coordinator['facilities.update']);
+        foreach (['club.update', 'sports.create', 'venues.create', 'positions.create', 'roles.assign', 'club_users.invite'] as $permission) {
+            $this->assertArrayNotHasKey($permission, $coordinator, $permission);
         }
         $this->assertArrayNotHasKey('club_users.view', $coordinator);
         $this->assertSame('own', $roles['coach']['permissions']['players.view']);
+        // Aprueban pedidos de materiales el admin y el coordinador (solo los de su deporte).
+        $this->assertSame('sport', $coordinator['material_orders.approve']);
         foreach ($roles as $slug => $role) {
-            if ($slug !== 'admin') {
+            if (! in_array($slug, ['admin', 'sport_coordinator'], true)) {
                 $this->assertArrayNotHasKey('material_orders.approve', $role['permissions'], "{$slug} no aprueba materiales");
             }
         }
@@ -52,8 +57,14 @@ class PermissionCatalogTest extends TestCase
 
         foreach ($catalog->standardRoles() as $slug => $role) {
             if ($slug !== 'admin') {
-                foreach (['view', 'create', 'update', 'delete'] as $action) {
+                // Las posiciones las configura el admin; el coordinador solo ve las de su deporte.
+                foreach (['create', 'update', 'delete'] as $action) {
                     $this->assertArrayNotHasKey("positions.{$action}", $role['permissions']);
+                }
+                if ($slug === 'sport_coordinator') {
+                    $this->assertSame('sport', $role['permissions']['positions.view']);
+                } else {
+                    $this->assertArrayNotHasKey('positions.view', $role['permissions']);
                 }
             }
         }

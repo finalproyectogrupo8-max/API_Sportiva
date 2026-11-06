@@ -86,7 +86,7 @@ class EligibilityController extends Controller
     public function approve(Request $request, Player $player, CompetitionRequirement $requirement): PlayerEligibilityResource
     {
         $this->authorizeClub('player_requirements.approve');
-        $this->ensurePlayerVisible($player, 'player_requirements.view');
+        $this->ensurePlayerVisible($player, 'player_requirements.approve');
         $data = $request->validate([
             'document_id' => ['nullable', 'integer'],
             'expires_at' => ['nullable', 'date', 'after:today'],
@@ -115,7 +115,7 @@ class EligibilityController extends Controller
     public function reject(Request $request, Player $player, CompetitionRequirement $requirement): PlayerEligibilityResource
     {
         $this->authorizeClub('player_requirements.approve');
-        $this->ensurePlayerVisible($player, 'player_requirements.view');
+        $this->ensurePlayerVisible($player, 'player_requirements.approve');
         $data = $request->validate(['reason' => ['required', 'string', 'max:255']], ['reason.required' => 'Contá por qué se rechaza.']);
         $this->ensureApplies($requirement, $player);
 

@@ -80,7 +80,7 @@ class DocumentController extends Controller
     public function destroy(Request $request, Document $document, AuditLogger $auditLogger): Response
     {
         $this->authorizeClub('player_documents.delete');
-        $this->ensureOwnerVisible($document, 'player_documents.view');
+        $this->ensureOwnerVisible($document, 'player_documents.delete');
 
         $this->store->delete($document);
         $auditLogger->recordDocument($document, $request->attributes->get('tenant'), 'deleted');

@@ -45,17 +45,17 @@ return [
             'label' => 'Jugadores',
             'resources' => [
                 'players' => ['label' => 'Jugadores', 'actions' => $crud, 'scoped' => $crud],
-                'positions' => ['label' => 'Posiciones por deporte', 'actions' => $crud],
+                'positions' => ['label' => 'Posiciones por deporte', 'actions' => $crud, 'scoped' => ['view']],
                 'categories' => ['label' => 'Planteles', 'actions' => ['manage_players'], 'scoped' => ['manage_players']],
                 'player_contacts' => ['label' => 'Contactos y tutores', 'actions' => ['view', 'update'], 'scoped' => ['view', 'update']],
-                'player_documents' => ['label' => 'Documentos (apto, ficha, DNI)', 'actions' => ['view', 'upload', 'delete'], 'scoped' => ['view', 'upload']],
+                'player_documents' => ['label' => 'Documentos (apto, ficha, DNI)', 'actions' => ['view', 'upload', 'delete'], 'scoped' => ['view', 'upload', 'delete']],
             ],
         ],
         'profes' => [
             'label' => 'Profes',
             'resources' => [
                 'coaches' => ['label' => 'Profes', 'actions' => $crud, 'scoped' => ['view']],
-                'categories' => ['label' => 'Profes por categoría', 'actions' => ['manage_coaches']],
+                'categories' => ['label' => 'Profes por categoría', 'actions' => ['manage_coaches'], 'scoped' => ['manage_coaches']],
             ],
         ],
         'partidos' => [
@@ -76,14 +76,14 @@ return [
         'competencia' => [
             'label' => 'Proyecto',
             'resources' => [
-                'project' => ['label' => 'Objetivos y tabla', 'actions' => ['view', 'update'], 'scoped' => ['view']],
+                'project' => ['label' => 'Objetivos y tabla', 'actions' => ['view', 'update'], 'scoped' => ['view', 'update']],
             ],
         ],
         'habilitacion' => [
             'label' => 'Habilitación',
             'resources' => [
                 'competitions' => ['label' => 'Competencias y requisitos', 'actions' => $crud, 'scoped' => $crud],
-                'player_requirements' => ['label' => 'Papeles de cada jugador', 'actions' => ['view', 'update', 'approve'], 'scoped' => ['view', 'update']],
+                'player_requirements' => ['label' => 'Papeles de cada jugador', 'actions' => ['view', 'update', 'approve'], 'scoped' => ['view', 'update', 'approve']],
             ],
         ],
         'indumentaria' => [
@@ -93,7 +93,7 @@ return [
                 'apparel_orders' => [
                     'label' => 'Pedidos de indumentaria',
                     'actions' => [...$crud, 'approve', 'deliver'],
-                    'scoped' => $crud,
+                    'scoped' => [...$crud, 'approve', 'deliver'],
                 ],
             ],
         ],
@@ -106,7 +106,7 @@ return [
                 'material_orders' => [
                     'label' => 'Pedidos de materiales',
                     'actions' => [...$crud, 'approve', 'deliver'],
-                    'scoped' => $crud,
+                    'scoped' => [...$crud, 'approve', 'deliver'],
                 ],
             ],
         ],
@@ -152,35 +152,48 @@ return [
         ],
         'sport_coordinator' => [
             'name' => 'Coordinador de deporte',
-            'description' => 'Arma las temporadas, categorías y competencias de sus deportes y consulta todo lo deportivo de ellos.',
-            // Todo con alcance ":sport": nunca toca otro deporte. Además consulta lo compartido del club que
-            // no pertenece a ningún deporte (catálogo de prendas, stock, canchas). No ve Equipo, roles,
-            // comunicados ni la configuración general del club, y no aprueba pedidos.
+            'description' => 'Gestiona todo lo deportivo de sus deportes asignados y opera lo compartido del club.',
+            // Lo deportivo, con alcance ":sport": nunca toca otro deporte. Lo compartido del club que no
+            // es de ningún deporte (prendas, stock, depósitos, canchas) lo opera completo. No gestiona
+            // Equipo ni roles, ni la configuración general del club (perfil, deportes, sedes, posiciones).
             'permissions' => [
-                // Arma la temporada de su deporte: temporadas, categorías y competencias.
+                // Arma la temporada de su deporte.
                 'seasons.view:sport', 'seasons.create:sport', 'seasons.update:sport', 'seasons.delete:sport',
                 'categories.view:sport', 'categories.create:sport', 'categories.update:sport', 'categories.delete:sport',
                 'competitions.view:sport', 'competitions.create:sport', 'competitions.update:sport', 'competitions.delete:sport',
-                'players.view:sport',
-                'player_contacts.view:sport',
-                'player_documents.view:sport',
-                'player_requirements.view:sport',
-                'coaches.view:sport',
-                'matches.view:sport',
-                'trainings.view:sport',
-                'attendance.view:sport',
-                'callups.view:sport',
-                'physical_evaluations.view:sport',
-                'project.view:sport',
-                'apparel_orders.view:sport',
-                'material_orders.view:sport',
-                'apparel_items.view',
-                'materials.view',
-                'storage_locations.view',
-                'inventory.view',
-                'facilities.view',
-                'repairs.view',
-                'maintenance.view',
+                // Jugadores y planteles.
+                'players.view:sport', 'players.create:sport', 'players.update:sport', 'players.delete:sport',
+                'positions.view:sport',
+                'categories.manage_players:sport',
+                'player_contacts.view:sport', 'player_contacts.update:sport',
+                'player_documents.view:sport', 'player_documents.upload:sport', 'player_documents.delete:sport',
+                'player_requirements.view:sport', 'player_requirements.update:sport', 'player_requirements.approve:sport',
+                // Profes: los ve y los asigna a sus categorías.
+                'coaches.view:sport', 'coaches.create', 'coaches.update',
+                'categories.manage_coaches:sport',
+                // Partidos, entrenamientos, convocatorias y asistencia.
+                'matches.view:sport', 'matches.create:sport', 'matches.update:sport', 'matches.delete:sport',
+                'trainings.view:sport', 'trainings.create:sport', 'trainings.update:sport', 'trainings.delete:sport',
+                'attendance.view:sport', 'attendance.record:sport',
+                'callups.view:sport', 'callups.update:sport', 'callups.publish:sport',
+                // Análisis y proyecto.
+                'physical_evaluations.view:sport', 'physical_evaluations.create:sport', 'physical_evaluations.update:sport', 'physical_evaluations.delete:sport',
+                'project.view:sport', 'project.update:sport',
+                // Pedidos de sus categorías, incluida la aprobación y la entrega.
+                'apparel_orders.view:sport', 'apparel_orders.create:sport', 'apparel_orders.update:sport', 'apparel_orders.delete:sport',
+                'apparel_orders.approve:sport', 'apparel_orders.deliver:sport',
+                'material_orders.view:sport', 'material_orders.create:sport', 'material_orders.update:sport', 'material_orders.delete:sport',
+                'material_orders.approve:sport', 'material_orders.deliver:sport',
+                // Comunicados a sus categorías.
+                'announcements.view:sport', 'announcements.send:sport',
+                // Lo compartido del club.
+                'apparel_items.view', 'apparel_items.create', 'apparel_items.update', 'apparel_items.delete',
+                'materials.view', 'materials.create', 'materials.update', 'materials.delete',
+                'storage_locations.view', 'storage_locations.create', 'storage_locations.update', 'storage_locations.delete',
+                'inventory.view', 'inventory.adjust', 'inventory.transfer',
+                'facilities.view', 'facilities.create', 'facilities.update', 'facilities.delete',
+                'repairs.view', 'repairs.create', 'repairs.update', 'repairs.delete', 'repairs.assign',
+                'maintenance.view', 'maintenance.create', 'maintenance.update', 'maintenance.delete',
             ],
         ],
         'coach' => [

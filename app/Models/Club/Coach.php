@@ -60,12 +60,19 @@ class Coach extends Model
         }
 
         $clubUserId = $access->clubUser?->id;
+        $current = fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', today()->toDateString());
 
         $query->where(fn (Builder $query) => $query
             ->when($clubUserId, fn (Builder $query) => $query->where('club_user_id', $clubUserId))
             ->orWhereIn('id', fn ($sub) => $sub->select('coach_id')
                 ->from('category_coaches')
                 ->whereIn('category_id', $categoryIds ?: [0])
-                ->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', today()->toDateString()))));
+                ->where($current))
+            // El coordinador también ve los profes sin categoría vigente, para poder asignarlos: no son
+            // de otro deporte.
+            ->when($access->isSportScope('coaches.view'), fn (Builder $query) => $query->orWhereNotIn('id', fn ($sub) => $sub
+                ->select('coach_id')
+                ->from('category_coaches')
+                ->where($current))));
     }
 }

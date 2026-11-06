@@ -46,6 +46,7 @@ class SeasonObjectiveController extends Controller
     public function store(StoreSeasonObjectiveRequest $request): JsonResponse
     {
         $this->authorizeClub('project.update');
+        $this->ensureCanEdit($request->validated('category_id'));
         $objective = SeasonObjective::create($request->validated());
 
         return SeasonObjectiveResource::make($objective->refresh()->load('category'))->response()->setStatusCode(201);
@@ -63,6 +64,10 @@ class SeasonObjectiveController extends Controller
     public function update(StoreSeasonObjectiveRequest $request, SeasonObjective $seasonObjective): SeasonObjectiveResource
     {
         $this->authorizeClub('project.update');
+        $this->ensureCanEdit($seasonObjective->category_id);
+        if ($request->has('category_id')) {
+            $this->ensureCanEdit($request->validated('category_id'));
+        }
         $seasonObjective->update($request->validated());
 
         return SeasonObjectiveResource::make($seasonObjective->refresh()->load('category'));
@@ -71,8 +76,17 @@ class SeasonObjectiveController extends Controller
     public function destroy(SeasonObjective $seasonObjective): Response
     {
         $this->authorizeClub('project.update');
+        $this->ensureCanEdit($seasonObjective->category_id);
         $seasonObjective->delete();
 
         return response()->noContent();
+    }
+
+    /** Con alcance "sus deportes" edita los objetivos de sus categorías, no los generales del club. */
+    private function ensureCanEdit(?int $categoryId): void
+    {
+        $scoped = $this->access()->scopedCategoryIds('project.update');
+
+        abort_if($scoped !== null && ($categoryId === null || ! in_array($categoryId, $scoped, true)), 403);
     }
 }

@@ -41,6 +41,9 @@ class CompetitionStandingController extends Controller
     {
         $this->authorizeClub('project.update');
         $data = $request->validated();
+        // Alcance "su deporte": solo las tablas de sus categorías.
+        $scoped = $this->access()->scopedCategoryIds('project.update');
+        abort_if($scoped !== null && ! in_array((int) $data['category_id'], $scoped, true), 403);
 
         if (! $competition->categories()->whereKey($data['category_id'])->exists()) {
             throw ValidationException::withMessages(['category_id' => 'La categoría no juega esta competencia.']);
