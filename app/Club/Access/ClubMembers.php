@@ -2,6 +2,7 @@
 
 namespace App\Club\Access;
 
+use App\Club\Coaches\CoachAccounts;
 use App\Models\Club\ClubUser;
 use App\Models\Club\Role;
 use App\Models\Club\Sport;
@@ -19,12 +20,13 @@ class ClubMembers
 {
     /**
      * Crea el club_user del usuario (o lo reactiva, con $reactivate). Si vienen roles, reemplaza
-     * los que tenía. Si vienen sportIds, sincroniza sus deportes.
+     * los que tenía. Si vienen sportIds, sincroniza sus deportes. Con $coachProfile, si queda con
+     * rol de profe o preparador físico, le crea o vincula su ficha de profe (CoachAccounts).
      *
      * @param  list<string>|null  $roleSlugs
      * @param  list<int>|null  $sportIds
      */
-    public function ensure(User $user, ?array $roleSlugs = null, bool $reactivate = true, ?array $sportIds = null): ClubUser
+    public function ensure(User $user, ?array $roleSlugs = null, bool $reactivate = true, ?array $sportIds = null, bool $coachProfile = false): ClubUser
     {
         $roleIds = $roleSlugs === null ? null : $this->roleIds($roleSlugs);
         $validSportIds = $sportIds === null ? null : $this->validateSportIds($sportIds);
@@ -42,6 +44,10 @@ class ClubMembers
 
         if ($validSportIds !== null) {
             $clubUser->sports()->sync($validSportIds);
+        }
+
+        if ($coachProfile) {
+            app(CoachAccounts::class)->ensureFor($clubUser, $user);
         }
 
         return $clubUser;

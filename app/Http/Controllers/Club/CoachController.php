@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Club;
 
+use App\Club\Coaches\CoachAccounts;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Club\IndexCoachRequest;
 use App\Http\Requests\Club\StoreCoachRequest;
@@ -44,6 +45,8 @@ class CoachController extends Controller
         Gate::authorize('create', Coach::class);
 
         $coach = Coach::create($request->validated());
+        // Con el mail de un usuario del club, queda vinculada: así ese profe ve sus categorías.
+        app(CoachAccounts::class)->linkByEmail($coach);
 
         return CoachResource::make($coach->refresh())->response()->setStatusCode(201);
     }
@@ -62,6 +65,7 @@ class CoachController extends Controller
         $this->ensureVisible($coach);
 
         $coach->update($request->validated());
+        app(CoachAccounts::class)->linkByEmail($coach);
 
         return CoachResource::make($coach->refresh());
     }

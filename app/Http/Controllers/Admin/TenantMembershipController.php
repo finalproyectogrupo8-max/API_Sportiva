@@ -74,6 +74,7 @@ class TenantMembershipController extends Controller
                     $membership->user,
                     $request->validated('roles'),
                     sportIds: $request->has('sport_ids') ? $request->validated('sport_ids') : null,
+                    coachProfile: true,
                 )
             ));
             $auditLogger->recordMembershipRoles($membership, [], $roles);
@@ -122,6 +123,7 @@ class TenantMembershipController extends Controller
                         $rolesToSet,
                         reactivate: false,
                         sportIds: $sportsToSet,
+                        coachProfile: true,
                     );
 
                     return [$from, $this->roleSlugs($after)];
