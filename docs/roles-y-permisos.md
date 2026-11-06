@@ -87,7 +87,7 @@ Se cargan en cada club al darlo de alta, con `is_system = true`. Todos se pueden
 | `slug` | Nombre | Para quién |
 |---|---|---|
 | `admin` | Administrador del club | Comisión directiva o gerente |
-| `sport_coordinator` | Coordinador de deporte | Consulta temporadas, categorías y competencias |
+| `sport_coordinator` | Coordinador de deporte | Consulta todo lo deportivo de sus deportes, sin modificar |
 | `coach` | Profe | Entrenador de una o más categorías |
 | `physical_trainer` | Preparador físico | Evaluaciones físicas de sus categorías |
 | `inventory_manager` | Utilero / Encargado | Materiales, indumentaria y entregas |
@@ -99,33 +99,33 @@ Al sincronizar el catálogo en un club existente, la API elimina el rol estánda
 
 **Administrador del club: todos los permisos del catálogo, con alcance "todo el club".** Cuando se agrega un permiso nuevo al catálogo, el admin lo recibe automáticamente.
 
-Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, **(d)** = solo lectura en las secciones indicadas y categorías/competencias de sus deportes, — = nada.
+Para el resto: ✓ = todo el club, **(s)** = solo sus categorías, **(d)** = solo lo de sus deportes (las categorías de sus deportes asignados), — = nada.
 
 | Recurso | Coordinador de deporte | Profe | Preparador físico | Utilero / Encargado | Mantenimiento |
 |---|---|---|---|---|---|
-| `players` | — | ver (s) | ver (s) | — | — |
+| `players` | ver (d) | ver (s) | ver (s) | — | — |
 | `positions` | — | — | — | — | — |
 | `categories.manage_players` | — | — | — | — | — |
-| `player_contacts` | — | ver (s) | — | — | — |
-| `player_documents` | — | ver, subir (s) | — | — | — |
+| `player_contacts` | ver (d) | ver (s) | — | — | — |
+| `player_documents` | ver (d) | ver, subir (s) | — | — | — |
 | `competitions` | ver (d) | ver (s) | ver (s) | — | — |
-| `player_requirements` | — | ver, presentar (s) | ver (s) | — | — |
-| `coaches` | — | ver (s) | ver (s) | — | — |
+| `player_requirements` | ver (d) | ver, presentar (s) | ver (s) | — | — |
+| `coaches` | ver (d) | ver (s) | ver (s) | — | — |
 | `categories.manage_coaches` | — | — | — | — | — |
-| `matches` | — | ver, crear, editar (s) | ver (s) | ver | ver |
-| `trainings` | — | ver, crear, editar (s) | ver (s) | ver | ver |
-| `callups` (convocatorias, TIZ-33) | — | ver, armar, publicar (s) | ver (s) | ver | — |
-| `attendance` | — | ver, registrar (s) | ver (s) | — | — |
-| `physical_evaluations` | — | ver (s) | ver, crear, editar, eliminar (s) | — | — |
-| `project` | — | ver | ver | — | — |
-| `apparel_items` | — | ver | — | ✓ ver, crear, editar, eliminar | — |
-| `apparel_orders` | — | ver, crear, editar (s) | — | ✓ ver, crear, editar, entregar | — |
-| `materials`, `storage_locations` | — | — | — | ✓ ver, crear, editar, eliminar | — |
-| `inventory` | — | — | — | ✓ ver, ajustar, transferir | — |
-| `material_orders` | — | ver, crear, editar (s) | ver, crear, editar (s) | ✓ ver, crear, editar, entregar | — |
-| `facilities` | — | ver | ver | ver | ✓ ver, crear, editar, eliminar |
-| `repairs` | — | ver, crear | ver, crear | ver, crear | ✓ todas, incluida `assign` |
-| `maintenance` | — | — | — | — | ✓ ver, crear, editar, eliminar |
+| `matches` | ver (d) | ver, crear, editar (s) | ver (s) | ver | ver |
+| `trainings` | ver (d) | ver, crear, editar (s) | ver (s) | ver | ver |
+| `callups` (convocatorias, TIZ-33) | ver (d) | ver, armar, publicar (s) | ver (s) | ver | — |
+| `attendance` | ver (d) | ver, registrar (s) | ver (s) | — | — |
+| `physical_evaluations` | ver (d) | ver (s) | ver, crear, editar, eliminar (s) | — | — |
+| `project` | ver (d) | ver | ver | — | — |
+| `apparel_items` | ver | ver | — | ✓ ver, crear, editar, eliminar | — |
+| `apparel_orders` | ver (d) | ver, crear, editar (s) | — | ✓ ver, crear, editar, entregar | — |
+| `materials`, `storage_locations` | ver | — | — | ✓ ver, crear, editar, eliminar | — |
+| `inventory` | ver | — | — | ✓ ver, ajustar, transferir | — |
+| `material_orders` | ver (d) | ver, crear, editar (s) | ver, crear, editar (s) | ✓ ver, crear, editar, entregar | — |
+| `facilities` | ver | ver | ver | ver | ✓ ver, crear, editar, eliminar |
+| `repairs` | ver | ver, crear | ver, crear | ver, crear | ✓ todas, incluida `assign` |
+| `maintenance` | ver | — | — | — | ✓ ver, crear, editar, eliminar |
 | `sports` | — | — | — | — | — |
 | `seasons` | ver (club) | — | — | — | — |
 | `categories` | ver (d) | ver (s) | ver (s) | — | — |
@@ -138,7 +138,7 @@ El Administrador del club conserva todos los permisos del catálogo en todo el c
 
 Notas:
 
-- **Coordinador de deporte (`sport_coordinator`):** sus únicos permisos estándar son consultar temporadas, categorías y competencias. Categorías y competencias se limitan a sus deportes; temporadas se consultan a nivel del club porque no están asociadas directamente a un deporte.
+- **Coordinador de deporte (`sport_coordinator`):** consulta todo lo deportivo de sus deportes asignados (jugadores, profes, partidos, entrenamientos, convocatorias, asistencia, análisis, habilitación, proyecto y pedidos), nunca lo de otro deporte. También ve lo compartido del club que no pertenece a ningún deporte: catálogo de prendas, stock y canchas. Temporadas se consultan a nivel del club porque no están asociadas a un deporte. No carga ni modifica nada, no ve Equipo, roles ni comunicados, y no configura el club. En Proyecto ve los objetivos generales del club y los de sus categorías.
 - **Aprobación y gestión general:** las tareas generales del club corresponden al Administrador. Los permisos de aprobación de pedidos no se asignan al Coordinador de deporte.
 - `delete` en pedidos solo aplica a pedidos en `draft` (lo valida la Policy, no el permiso).
 

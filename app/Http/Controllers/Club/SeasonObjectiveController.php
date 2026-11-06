@@ -23,11 +23,16 @@ class SeasonObjectiveController extends Controller
     {
         $this->authorizeClub('project.view');
         $seasonId = $request->integer('season_id') ?: Season::query()->where('status', 'active')->orderByDesc('start_date')->value('id');
+        $scoped = $this->access()->scopedCategoryIds('project.view');
 
         $objectives = SeasonObjective::query()
             ->with('category')
             ->where('season_id', $seasonId ?? 0)
             ->when($request->integer('category_id'), fn ($q, $id) => $q->where('category_id', $id))
+            // Alcance "su deporte": los objetivos generales del club y los de sus categorías.
+            ->when($scoped !== null, fn ($q) => $q->where(
+                fn ($q) => $q->whereNull('category_id')->orWhereIn('category_id', $scoped ?: [0]),
+            ))
             ->orderByRaw('category_id IS NOT NULL')
             ->orderBy('category_id')
             ->orderBy('id')
@@ -47,6 +52,8 @@ class SeasonObjectiveController extends Controller
     public function show(SeasonObjective $seasonObjective): SeasonObjectiveResource
     {
         $this->authorizeClub('project.view');
+        $scoped = $this->access()->scopedCategoryIds('project.view');
+        abort_if($scoped !== null && $seasonObjective->category_id !== null && ! in_array($seasonObjective->category_id, $scoped, true), 404);
 
         return SeasonObjectiveResource::make($seasonObjective->load('category'));
     }
